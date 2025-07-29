@@ -20,8 +20,8 @@ npm install lucide-react
 npm install openai
 npm install zod react-hook-form @hookform/resolvers
 
-# Install shadcn/ui
-npx shadcn-ui@latest init
+# Install shadcn/ui (Note: Updated to use @shadcn instead of deprecated shadcn-ui)
+npx shadcn@latest init
 # During init, select:
 # - TypeScript: Yes
 # - Style: Default
@@ -29,26 +29,26 @@ npx shadcn-ui@latest init
 # - CSS variables: Yes
 
 # Add shadcn/ui components
-npx shadcn-ui@latest add dialog
-npx shadcn-ui@latest add button
-npx shadcn-ui@latest add form
-npx shadcn-ui@latest add input
-npx shadcn-ui@latest add textarea
-npx shadcn-ui@latest add select
-npx shadcn-ui@latest add toast
-npx shadcn-ui@latest add card
-npx shadcn-ui@latest add table
-npx shadcn-ui@latest add badge
-npx shadcn-ui@latest add skeleton
-npx shadcn-ui@latest add dropdown-menu
+npx shadcn@latest add dialog
+npx shadcn@latest add button
+npx shadcn@latest add form
+npx shadcn@latest add input
+npx shadcn@latest add textarea
+npx shadcn@latest add select
+npx shadcn@latest add toast  # Note: toast is deprecated, use sonner instead
+npx shadcn@latest add card
+npx shadcn@latest add table
+npx shadcn@latest add badge
+npx shadcn@latest add skeleton
+npx shadcn@latest add dropdown-menu
 ```
 
 **Tasks**:
-- [ ] Configure TypeScript strict mode
-- [ ] Set up path aliases (@/*)
-- [ ] Configure Tailwind CSS v4
-- [ ] Set up environment variables
-- [ ] Configure ESLint and Prettier
+- [x] Configure TypeScript strict mode
+- [x] Set up path aliases (@/*)
+- [x] Configure Tailwind CSS v4
+- [x] Set up environment variables
+- [x] Configure ESLint and Prettier
 
 #### 1.2 Database Setup (Supabase)
 ```sql
@@ -137,11 +137,11 @@ CREATE POLICY "Users can view own manifest" ON public.gtm_manifests
 ```
 
 **Tasks**:
-- [ ] Create Supabase project
-- [ ] Run database migrations
-- [ ] Set up Row Level Security
-- [ ] Configure database functions/triggers
-- [ ] Test database connections
+- [x] Create Supabase project
+- [x] Run database migrations
+- [x] Set up Row Level Security
+- [x] Configure database functions/triggers
+- [x] Test database connections
 
 #### 1.3 Authentication (Supabase Auth)
 ```typescript
