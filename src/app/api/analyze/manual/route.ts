@@ -69,7 +69,7 @@ export async function POST() {
         // Add delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 1000))
       } catch (error) {
-        results.push({ taskId: task.id, status: 'error', error: error.message })
+        results.push({ taskId: task.id, status: 'error', error: error instanceof Error ? error.message : String(error) })
         console.error(`[Manual Analysis] Exception analyzing task ${task.id}:`, error)
       }
     }
