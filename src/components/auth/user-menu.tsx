@@ -60,7 +60,7 @@ export function UserMenu() {
             />
           ) : (
             <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors duration-200">
-              <span className="text-gray-700 text-sm font-medium">
+              <span className="text-gray-700 text-sm font-semibold">
                 {userName.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -70,8 +70,8 @@ export function UserMenu() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{userName}</p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-sm font-semibold leading-none">{userName}</p>
+            <p className="text-sm leading-none text-muted-foreground">
               {userEmail}
             </p>
           </div>

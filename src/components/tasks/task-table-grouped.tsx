@@ -88,7 +88,7 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
 
   const getPriorityColor = (priority?: number | null) => {
     if (!priority) return 'text-gray-500'
-    if (priority >= 8) return 'text-red-600 font-bold'
+    if (priority >= 8) return 'text-red-600 font-semibold'
     if (priority >= 6) return 'text-orange-600 font-semibold'
     if (priority >= 4) return 'text-yellow-600'
     return 'text-gray-600'
@@ -114,11 +114,11 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
       className="cursor-pointer "
       onClick={() => setSelectedTask(task)}
     >
-      <TableCell className="font-medium">
+      <TableCell className="font-semibold">
         <div className="max-w-md">
           <p className="truncate">{task.description}</p>
           {task.source && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Source: {task.source.replace('_', ' ')}
             </p>
           )}
@@ -139,7 +139,7 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
           {task.analysis?.complexity || 'analyzing'}
         </span>
         {task.analysis?.estimated_hours && (
-          <span className="text-xs text-muted-foreground ml-1">
+          <span className="text-sm text-muted-foreground ml-1">
             ({task.analysis.estimated_hours}h)
           </span>
         )}
@@ -173,7 +173,7 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs">Update Status</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-sm">Update Status</DropdownMenuLabel>
             {(['pending', 'in_progress', 'completed', 'blocked'] as const).map((status) => (
               <DropdownMenuItem
                 key={status}

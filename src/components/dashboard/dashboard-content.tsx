@@ -64,10 +64,10 @@ export function DashboardContent({
           <div className="container mx-auto px-4 py-8 space-y-6">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <h1 className="text-3xl font-semibold text-black">
+                <h1 className="text-2xl font-semibold text-black">
                   {getGreeting()}, {userName}
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-gray-600 leading-relaxed">
                   Here's what needs your attention today
                 </p>
               </div>
@@ -84,14 +84,14 @@ export function DashboardContent({
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               <Card className="p-4  transition-all duration-200 border-gray-200">
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-600">Pending</p>
+                  <p className="text-sm text-gray-600">Pending</p>
                   <p className="text-xl font-semibold text-black">{pendingTasks}</p>
                 </div>
               </Card>
               
               <Card className="p-4  transition-all duration-200 border-gray-200">
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-600">
+                  <p className="text-sm text-gray-600">
                     In Progress
                   </p>
                   <p className="text-xl font-semibold text-black">{inProgressTasks}</p>
@@ -100,7 +100,7 @@ export function DashboardContent({
               
               <Card className="p-4  transition-all duration-200 border-gray-200">
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-600">
+                  <p className="text-sm text-gray-600">
                     Blocked
                   </p>
                   <p className="text-xl font-semibold text-black">{blockedTasks}</p>
@@ -109,7 +109,7 @@ export function DashboardContent({
               
               <Card className="p-4  transition-all duration-200 border-gray-200">
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-600">
+                  <p className="text-sm text-gray-600">
                     Completed
                   </p>
                   <p className="text-xl font-semibold text-black">{completedTasks}</p>
@@ -118,14 +118,14 @@ export function DashboardContent({
               
               <Card className="p-4  transition-all duration-200 border-gray-200">
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-600">Total</p>
+                  <p className="text-sm text-gray-600">Total</p>
                   <p className="text-xl font-semibold text-black">{totalTasks}</p>
                 </div>
               </Card>
               
               <Card className="p-4  transition-all duration-200 border-gray-200">
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-600">Completion</p>
+                  <p className="text-sm text-gray-600">Completion</p>
                   <p className="text-xl font-semibold text-blue-500">
                     {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%
                   </p>
@@ -143,7 +143,7 @@ export function DashboardContent({
               <AlertTitle className="text-black">Improve AI Prioritization</AlertTitle>
               <AlertDescription className="mt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Set up your GTM context to get more accurate task prioritization based on your business goals.</span>
+                  <span className="text-gray-600 leading-relaxed">Set up your GTM context to get more accurate task prioritization based on your business goals.</span>
                   <Button asChild size="sm" variant="outline" className="ml-4 ">
                     <Link href="/onboarding">Set Up Now</Link>
                   </Button>
@@ -154,7 +154,7 @@ export function DashboardContent({
 
           {/* Quick Links */}
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-semibold text-black">Quick Access</h2>
+            <h2 className="text-lg font-semibold text-black">Quick Access</h2>
             <div className="flex gap-2">
               <Button asChild variant="ghost" size="sm">
                 <Link href="/tasks">
@@ -195,15 +195,15 @@ export function DashboardContent({
                       <Link href={`/tasks?highlight=${task.id}`}>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-black line-clamp-1">{task.description}</p>
+                            <p className="font-semibold text-black line-clamp-1">{task.description}</p>
                             <div className="flex items-center gap-3 mt-2">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-sm text-gray-500">
                                 {task.analysis?.[0]?.category || 'Uncategorized'}
                               </span>
-                              <span className="text-xs font-semibold text-blue-500">
+                              <span className="text-sm font-semibold text-blue-500">
                                 Priority: {task.analysis?.[0]?.priority || '-'}/10
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-sm text-gray-500">
                                 {task.analysis?.[0]?.estimated_hours ? `${task.analysis[0].estimated_hours}h` : ''}
                               </span>
                             </div>
@@ -220,17 +220,17 @@ export function DashboardContent({
                       <Link href={`/tasks?highlight=${task.id}`}>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-black line-clamp-1">{task.description}</p>
+                            <p className="font-semibold text-black line-clamp-1">{task.description}</p>
                             <div className="flex items-center gap-3 mt-2">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-sm text-gray-500">
                                 {task.analysis?.[0]?.category || 'Uncategorized'}
                               </span>
-                              <span className={`text-xs font-medium ${
+                              <span className={`text-sm font-semibold ${
                                 task.analysis?.[0]?.priority >= 6 ? 'text-black' : 'text-gray-600'
                               }`}>
                                 Priority: {task.analysis?.[0]?.priority || '-'}/10
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-sm text-gray-500">
                                 {task.analysis?.[0]?.estimated_hours ? `${task.analysis[0].estimated_hours}h` : ''}
                               </span>
                             </div>
@@ -266,22 +266,22 @@ export function DashboardContent({
                       <Link href={`/tasks?highlight=${task.id}`}>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-medium text-black line-clamp-1">{task.description}</p>
+                            <p className="font-semibold text-black line-clamp-1">{task.description}</p>
                             <div className="flex items-center gap-4 mt-2">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-sm text-gray-500">
                                 {task.analysis?.[0]?.category || 'Uncategorized'}
                               </span>
-                              <span className={`text-xs font-medium ${
+                              <span className={`text-sm font-semibold ${
                                 task.analysis?.[0]?.priority >= 8 ? 'text-blue-500' : 
                                 task.analysis?.[0]?.priority >= 6 ? 'text-black' : 
                                 'text-gray-600'
                               }`}>
                                 Priority: {task.analysis?.[0]?.priority || '-'}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-sm text-gray-500">
                                 {new Date(task.created_at).toLocaleDateString()}
                               </span>
-                              <span className={`text-xs font-medium ${
+                              <span className={`text-sm font-semibold ${
                                 task.status === 'completed' ? 'text-black' :
                                 task.status === 'in_progress' ? 'text-gray-700' :
                                 task.status === 'blocked' ? 'text-gray-900 font-semibold' :
@@ -305,7 +305,7 @@ export function DashboardContent({
             <Card className="p-12 text-center border-gray-200">
               <div className="max-w-md mx-auto space-y-4">
                 <h3 className="text-lg font-semibold text-black">No tasks yet</h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 leading-relaxed">
                   Start by adding your first task. Our AI will analyze and prioritize it for you.
                 </p>
                 <Button 

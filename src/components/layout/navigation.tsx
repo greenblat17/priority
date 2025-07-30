@@ -31,7 +31,7 @@ export function Navigation() {
           >
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center
                             group-hover:scale-110 transition-transform duration-200">
-              <span className="text-white font-bold text-sm">T</span>
+              <span className="text-white font-semibold text-sm">T</span>
             </div>
             <span className="font-semibold text-black text-lg">
               TaskPriority
@@ -55,7 +55,7 @@ export function Navigation() {
                       className={cn(
                         "relative group transition-colors duration-200",
                         isActive 
-                          ? "text-black font-medium" 
+                          ? "text-black font-semibold" 
                           : "text-gray-600 hover:text-black"
                       )}
                     >
@@ -106,7 +106,7 @@ export function Navigation() {
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
-                      "block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200",
+                      "block px-3 py-2 rounded-md text-base font-semibold transition-colors duration-200",
                       isActive
                         ? "bg-gray-100 text-black"
                         : "text-gray-600 hover:bg-gray-50 hover:text-black"

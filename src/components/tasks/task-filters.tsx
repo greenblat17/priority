@@ -35,7 +35,7 @@ export function TaskFilters({
     <div className="flex flex-wrap gap-4 mb-6">
       <div className="flex items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Filters:</span>
+        <span className="text-sm font-semibold">Filters:</span>
       </div>
       
       <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -66,7 +66,7 @@ export function TaskFilters({
       </Select>
 
       <div className="flex items-center gap-2 ml-auto">
-        <span className="text-sm font-medium">Sort by:</span>
+        <span className="text-sm font-semibold">Sort by:</span>
         <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
           <SelectTrigger className="w-[130px]">
             <SelectValue />
