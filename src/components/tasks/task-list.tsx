@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { TaskTableGrouped } from './task-table-grouped'
 import { TaskFilters } from './task-filters'
@@ -10,6 +10,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { TaskWithAnalysis } from '@/types/task'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
+import { useTasks, useUpdateTaskStatus } from '@/hooks/use-tasks'
+import { SkeletonTaskTable } from '@/components/ui/skeleton-task-table'
+import { Pagination } from '@/components/ui/pagination'
 
 export function TaskList() {
   const supabase = createClient()
@@ -20,50 +23,19 @@ export function TaskList() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'priority' | 'date' | 'status'>('priority')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
-  // Fetch tasks with analysis
-  const { data: tasks, isLoading, error } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select(`
-          *,
-          task_analyses!task_id (*),
-          task_groups!group_id (*)
-        `)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      
-      // Map to TaskWithAnalysis type with group info
-      return data?.map(task => ({
-        ...task,
-        analysis: task.task_analyses || null,
-        group: task.task_groups || null
-      })) as (TaskWithAnalysis & { group: TaskGroupType | null })[]
-    }
+  // Use optimized task hooks
+  const { data: tasks, isLoading, error } = useTasks({
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    category: categoryFilter !== 'all' ? categoryFilter : undefined,
+    sortBy: sortBy === 'date' ? 'date' : 'priority',
+    page: currentPage,
+    limit: itemsPerPage,
   })
 
-  // Update task status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ taskId, status }: { taskId: string; status: string }) => {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', taskId)
-
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Task status updated')
-    },
-    onError: (error) => {
-      toast.error('Failed to update task status')
-      console.error('Update error:', error)
-    }
-  })
+  const updateStatusMutation = useUpdateTaskStatus()
 
   // Delete task mutation
   const deleteTaskMutation = useMutation({
@@ -85,7 +57,13 @@ export function TaskList() {
     }
   })
 
-  // Filter and sort tasks
+  // Reset page when filters change
+  const handleFilterChange = (filterSetter: (value: string) => void) => (value: string) => {
+    setCurrentPage(1)
+    filterSetter(value)
+  }
+
+  // Filter and sort tasks (client-side for now, will move to server)
   const filteredAndSortedTasks = tasks
     ?.filter(task => {
       if (statusFilter !== 'all' && task.status !== statusFilter) return false
@@ -110,12 +88,30 @@ export function TaskList() {
       
       return sortOrder === 'asc' ? comparison : -comparison
     })
+  
+  // Calculate total pages (will be improved with server-side count)
+  const totalPages = Math.ceil((filteredAndSortedTasks?.length || 0) / itemsPerPage)
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-[250px]" />
-        <Skeleton className="h-[400px] w-full" />
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <Skeleton className="h-8 w-[200px] mb-2" />
+                <Skeleton className="h-4 w-[300px]" />
+              </div>
+              <Skeleton className="h-4 w-[80px]" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <SkeletonTaskTable />
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -152,9 +148,9 @@ export function TaskList() {
         <CardContent>
           <TaskFilters
             statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
+            setStatusFilter={handleFilterChange(setStatusFilter)}
             categoryFilter={categoryFilter}
-            setCategoryFilter={setCategoryFilter}
+            setCategoryFilter={handleFilterChange(setCategoryFilter)}
             sortBy={sortBy}
             setSortBy={setSortBy}
             sortOrder={sortOrder}
@@ -172,6 +168,15 @@ export function TaskList() {
               }
             }}
           />
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,13 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { PlusCircle, ListTodo, BarChart3, Settings, Sparkles } from 'lucide-react'
-import { QuickAddModal } from '@/components/tasks/quick-add-modal'
 import { useQuickAddShortcut } from '@/hooks/use-keyboard-shortcuts'
+
+// Lazy load the QuickAddModal component
+const QuickAddModal = dynamic(
+  () => import('@/components/tasks/quick-add-modal').then(mod => ({ default: mod.QuickAddModal })),
+  { 
+    loading: () => <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" />,
+    ssr: false 
+  }
+)
 
 interface DashboardContentProps {
   userName: string
