@@ -7,7 +7,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
 import { useCreateTask } from '@/hooks/use-tasks'
 
 import {
@@ -346,7 +345,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                 variant="ghost"
                 onClick={onClose}
                 disabled={createTaskMutation.isPending}
-                className="hover:bg-gray-50"
+                className=""
               >
                 Cancel
               </Button>

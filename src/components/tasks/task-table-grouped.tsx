@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { TaskDetailDialog } from './task-detail-dialog'
 import { TaskGroup } from './task-group'
-import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw } from 'lucide-react'
+import { MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
@@ -111,7 +111,7 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
   const renderTaskRow = (task: TaskWithGroup) => (
     <TableRow 
       key={task.id}
-      className="cursor-pointer hover:bg-muted/50"
+      className="cursor-pointer "
       onClick={() => setSelectedTask(task)}
     >
       <TableCell className="font-medium">
@@ -162,7 +162,6 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
               e.stopPropagation()
               setSelectedTask(task)
             }}>
-              <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
             {task.analysis?.implementation_spec && (
@@ -170,7 +169,6 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
                 e.stopPropagation()
                 copySpec(task.analysis.implementation_spec!)
               }}>
-                <Copy className="mr-2 h-4 w-4" />
                 Copy Spec
               </DropdownMenuItem>
             )}
@@ -185,7 +183,6 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
                 }}
                 disabled={task.status === status}
               >
-                <RefreshCw className="mr-2 h-4 w-4" />
                 {status.replace('_', ' ')}
               </DropdownMenuItem>
             ))}
@@ -197,7 +194,6 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
                 onDeleteTask(task.id)
               }}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

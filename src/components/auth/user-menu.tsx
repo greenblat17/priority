@@ -79,7 +79,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => router.push('/settings/gtm')}
-          className="cursor-pointer hover:bg-gray-50"
+          className="cursor-pointer"
         >
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
@@ -88,7 +88,7 @@ export function UserMenu() {
         <DropdownMenuItem
           onClick={handleSignOut}
           disabled={isLoading}
-          className="cursor-pointer text-red-600 hover:bg-red-50 focus:text-red-600"
+          className="cursor-pointer text-red-600 focus:text-red-600"
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
