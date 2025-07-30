@@ -1,9 +1,9 @@
-import { onCLS, onFCP, onFID, onLCP, onTTFB, ReportHandler } from 'web-vitals'
+import { onCLS, onFCP, onINP, onLCP, onTTFB, Metric } from 'web-vitals'
 
 const vitalsUrl = '/api/web-vitals'
 
 // Function to send analytics
-function sendToAnalytics(metric: any) {
+function sendToAnalytics(metric: Metric) {
   const body = JSON.stringify({
     id: metric.id,
     name: metric.name,
@@ -30,7 +30,7 @@ function sendToAnalytics(metric: any) {
 export function reportWebVitals() {
   onCLS(sendToAnalytics)
   onFCP(sendToAnalytics)
-  onFID(sendToAnalytics)
+  onINP(sendToAnalytics)  // INP replaced FID in web-vitals v5
   onLCP(sendToAnalytics)
   onTTFB(sendToAnalytics)
 }
@@ -39,7 +39,7 @@ export function reportWebVitals() {
 export function logWebVitals() {
   onCLS(console.log)
   onFCP(console.log)
-  onFID(console.log)
+  onINP(console.log)  // INP replaced FID in web-vitals v5
   onLCP(console.log)
   onTTFB(console.log)
 }
@@ -48,7 +48,7 @@ export function logWebVitals() {
 export const webVitalsThresholds = {
   CLS: { good: 0.1, needsImprovement: 0.25 },
   FCP: { good: 1800, needsImprovement: 3000 },
-  FID: { good: 100, needsImprovement: 300 },
+  INP: { good: 200, needsImprovement: 500 },  // INP replaced FID
   LCP: { good: 2500, needsImprovement: 4000 },
   TTFB: { good: 800, needsImprovement: 1800 },
 }

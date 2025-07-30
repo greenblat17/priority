@@ -148,7 +148,7 @@ experimental: {
 export function reportWebVitals() {
   onCLS(sendToAnalytics)    // Cumulative Layout Shift
   onFCP(sendToAnalytics)    // First Contentful Paint
-  onFID(sendToAnalytics)    // First Input Delay
+  onINP(sendToAnalytics)    // Interaction to Next Paint (replaced FID in v5)
   onLCP(sendToAnalytics)    // Largest Contentful Paint
   onTTFB(sendToAnalytics)   // Time to First Byte
 }
@@ -157,7 +157,9 @@ export function reportWebVitals() {
 **Thresholds Set**:
 - CLS: < 0.1 (good), < 0.25 (needs improvement)
 - FCP: < 1.8s (good), < 3s (needs improvement)
+- INP: < 200ms (good), < 500ms (needs improvement)
 - LCP: < 2.5s (good), < 4s (needs improvement)
+- TTFB: < 800ms (good), < 1.8s (needs improvement)
 
 **Benefits**:
 - Real-time performance monitoring
@@ -268,6 +270,11 @@ export function reportWebVitals() {
 2. **SEO Benefits**: Core Web Vitals affect rankings
 3. **Reduced Costs**: Less data transfer = lower hosting costs
 4. **Scalability**: Pagination enables handling more users
+
+## Important Notes
+
+### Web Vitals v5 Update
+During implementation, we updated from FID (First Input Delay) to INP (Interaction to Next Paint) as web-vitals v5 deprecated FID in favor of INP, which provides a more comprehensive measurement of interaction responsiveness throughout the page lifecycle.
 
 ## Conclusion
 
