@@ -669,11 +669,11 @@ export default function DashboardPage() {
 
 **Tasks**:
 
-- [ ] Create dashboard layout with shadcn/ui Card
-- [ ] Build task list with shadcn/ui Table
-- [ ] Implement sorting/filtering
-- [ ] Add copy-to-clipboard for specs
-- [ ] Create status update functionality
+- [x] Create dashboard layout with shadcn/ui Card
+- [x] Build task list with shadcn/ui Table
+- [x] Implement sorting/filtering
+- [x] Add copy-to-clipboard for specs
+- [x] Create status update functionality
 
 ### **Phase 3: Intelligence Layer (Week 5)**
 
