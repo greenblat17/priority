@@ -1,19 +1,24 @@
 # Design System Definition - Phase 1.2
 
 **Date**: 2025-01-30  
-**Philosophy**: Extreme minimalism - every design decision must justify its existence
+**Philosophy**: Modern minimalism - beautiful, smooth, and delightful to use
 
 ## Color System
 
-### Minimal Palette (5 Colors Only)
+### Modern Minimal Palette
 
 ```css
-/* Core Colors */
---color-background: #FFFFFF;    /* Pure white */
---color-foreground: #111111;    /* Near black for text */
---color-muted: #666666;         /* Gray for secondary text */
---color-border: #E5E5E5;        /* Light gray for subtle borders */
---color-accent: #2563EB;        /* Blue-600 for actions/priorities */
+/* Core Colors - Carefully chosen for modern appeal */
+--color-background: #FFFFFF;      /* Pure white */
+--color-foreground: #0A0A0A;      /* Rich black for contrast */
+--color-muted: #6B7280;           /* Warm gray for secondary text */
+--color-border: #E5E7EB;          /* Soft gray for elegant borders */
+--color-accent: #3B82F6;          /* Vibrant blue for delight */
+
+/* Subtle Additions for Depth */
+--color-surface: #FAFAFA;         /* Slight off-white for cards */
+--color-accent-light: #EBF5FF;    /* Very light blue for hover states */
+--color-success: #10B981;         /* Green for positive feedback */
 ```
 
 ### Color Usage Guidelines

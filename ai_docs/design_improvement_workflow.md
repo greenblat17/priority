@@ -1,19 +1,20 @@
-# Design Improvement Workflow - Minimalistic shadcn/ui Integration
+# Design Improvement Workflow - Modern Minimalistic shadcn/ui Integration
 
 ## Overview
-This workflow outlines a systematic approach to improving TaskPriority AI's design using shadcn/ui components while maintaining extreme simplicity and minimalism. The goal is to create a clean, distraction-free interface that helps solo founders focus on what matters.
+This workflow outlines a systematic approach to improving TaskPriority AI's design using shadcn/ui components while maintaining modern, beautiful simplicity. The goal is to create a delightful, smooth interface that users enjoy using while helping them focus on what matters.
 
 **Creation Date**: 2025-01-30  
-**Design Philosophy**: Less is more - every element must justify its existence
+**Design Philosophy**: Modern minimalism - beautiful, smooth, and pleasurable to use
 
 ## Design Principles
 
 ### Core Principles
-1. **Extreme Simplicity**: Remove anything that doesn't directly help users prioritize tasks
-2. **Minimalism**: Use whitespace, subtle borders, and restrained color palette
-3. **Consistency**: Unified design language across all components
-4. **Focus**: Draw attention only to what matters - the tasks and their priorities
-5. **Accessibility**: Maintain WCAG AA compliance with simple, clear interfaces
+1. **Modern Beauty**: Clean, contemporary design that feels premium and delightful
+2. **Smooth Experience**: Fluid interactions, subtle animations, and polished transitions
+3. **Simple but Not Boring**: Minimalist approach with sophisticated details
+4. **User Pleasure**: Every interaction should feel good and satisfying
+5. **Visual Hierarchy**: Clear focus without being stark or cold
+6. **Accessibility**: Beautiful design that works for everyone
 
 ### Visual Hierarchy
 - **Primary**: Task content and priority scores

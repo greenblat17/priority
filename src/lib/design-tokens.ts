@@ -4,15 +4,21 @@
  */
 
 export const colors = {
+  // Modern, carefully chosen colors
   background: '#FFFFFF',
-  foreground: '#111111',
-  muted: '#666666',
-  border: '#E5E5E5',
-  accent: '#2563EB',
+  foreground: '#0A0A0A',      // Richer black
+  muted: '#6B7280',           // Warmer gray
+  border: '#E5E7EB',          // Softer border
+  accent: '#3B82F6',          // Vibrant blue
+  surface: '#FAFAFA',         // Subtle off-white
+  accentLight: '#EBF5FF',     // Light blue for hovers
+  success: '#10B981',         // Green for positive
+  warning: '#F59E0B',         // Amber for priority
+  error: '#EF4444',           // Red for urgent
   // Semantic aliases
-  primary: '#2563EB',
-  textPrimary: '#111111',
-  textSecondary: '#666666',
+  primary: '#3B82F6',
+  textPrimary: '#0A0A0A',
+  textSecondary: '#6B7280',
 } as const
 
 export const typography = {
@@ -47,10 +53,27 @@ export const spacing = {
 export const borderRadius = {
   none: '0px',
   sm: '4px',
+  md: '8px',
+  lg: '12px',
+  xl: '16px',
+  full: '9999px',
+} as const
+
+export const shadows = {
+  none: 'none',
+  sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+  base: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+  md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+  xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
 } as const
 
 export const transitions = {
+  base: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
   colors: 'color 200ms ease-in-out, background-color 200ms ease-in-out, border-color 200ms ease-in-out',
+  transform: 'transform 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+  opacity: 'opacity 200ms ease-in-out',
+  shadow: 'box-shadow 200ms ease-in-out',
 } as const
 
 export const breakpoints = {
