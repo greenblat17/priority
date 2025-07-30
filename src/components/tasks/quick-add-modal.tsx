@@ -76,16 +76,34 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
 
       if (error) throw error
 
-      // Trigger AI analysis (placeholder for now)
+      // Trigger AI analysis
       try {
-        await fetch('/api/analyze', {
+        const response = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ taskId: task.id }),
+          credentials: 'include' // Important: Include cookies for authentication
         })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+          console.error('AI Analysis failed:', response.status, errorData)
+          
+          // Show user-friendly error message
+          if (response.status === 401) {
+            toast.error('Authentication error. Please login again.')
+          } else if (response.status === 503) {
+            toast.warning('AI service not configured. Analysis skipped.')
+          } else {
+            toast.warning(`AI analysis failed: ${errorData.error || 'Unknown error'}`)
+          }
+        } else {
+          const result = await response.json()
+          console.log('AI Analysis triggered successfully:', result)
+        }
       } catch (error) {
         console.error('Failed to trigger analysis:', error)
-        // Don't fail the mutation if analysis fails
+        toast.error('Failed to analyze task. You can retry later.')
       }
 
       return task
