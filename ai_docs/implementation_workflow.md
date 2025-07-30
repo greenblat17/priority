@@ -1,14 +1,17 @@
 # TaskPriority AI - MVP Implementation Workflow
 
 ## 🎯 Project Overview
+
 Building an AI-powered task management system for solo founders that transforms user feedback into prioritized action plans, saving 5-10 hours per week.
 
 ## 📋 Implementation Phases
 
 ### **Phase 1: Foundation (Week 1-2)**
+
 **Goal**: Set up core infrastructure and authentication
 
 #### 1.1 Project Setup & Configuration
+
 ```bash
 # Initialize Next.js project with TypeScript
 npx create-next-app@latest my-app --typescript --tailwind --app
@@ -44,13 +47,15 @@ npx shadcn@latest add dropdown-menu
 ```
 
 **Tasks**:
+
 - [x] Configure TypeScript strict mode
-- [x] Set up path aliases (@/*)
+- [x] Set up path aliases (@/\*)
 - [x] Configure Tailwind CSS v4
 - [x] Set up environment variables
 - [x] Configure ESLint and Prettier
 
 #### 1.2 Database Setup (Supabase)
+
 ```sql
 -- Create users table (extends Supabase auth.users)
 CREATE TABLE public.profiles (
@@ -137,6 +142,7 @@ CREATE POLICY "Users can view own manifest" ON public.gtm_manifests
 ```
 
 **Tasks**:
+
 - [x] Create Supabase project
 - [x] Run database migrations
 - [x] Set up Row Level Security
@@ -144,6 +150,7 @@ CREATE POLICY "Users can view own manifest" ON public.gtm_manifests
 - [x] Test database connections
 
 #### 1.3 Authentication (Supabase Auth)
+
 ```typescript
 // lib/supabase/client.ts
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -178,6 +185,7 @@ export async function GET(request: Request) {
 ```
 
 **Tasks**:
+
 - [x] Configure Supabase Auth providers (Google & GitHub)
 - [x] Set up auth helpers
 - [x] Create auth middleware
@@ -185,9 +193,11 @@ export async function GET(request: Request) {
 - [x] Test authentication flow
 
 ### **Phase 2: Core Features (Week 3-4)**
+
 **Goal**: Implement task input, AI analysis, and dashboard
 
 #### 2.1 Quick-Add Task Modal
+
 ```typescript
 // components/QuickAddModal.tsx
 import {
@@ -350,13 +360,15 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
 ```
 
 **Tasks**:
-- [ ] Create modal component with shadcn/ui Dialog
-- [ ] Implement keyboard shortcuts (Cmd+K)
-- [ ] Add form validation with Zod
-- [ ] Create task submission logic
-- [ ] Add loading/success states
+
+- [x] Create modal component with shadcn/ui Dialog
+- [x] Implement keyboard shortcuts (Cmd+K)
+- [x] Add form validation with Zod
+- [x] Create task submission logic
+- [x] Add loading/success states
 
 #### 2.2 AI Analysis Engine
+
 ```typescript
 // app/api/analyze/route.ts
 import OpenAI from 'openai'
@@ -364,7 +376,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 export async function POST(request: Request) {
@@ -386,23 +398,21 @@ export async function POST(request: Request) {
 
   // Build and send prompt
   const prompt = buildAnalysisPrompt(task, manifest)
-  
+
   const completion = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [{ role: "system", content: prompt }],
-    response_format: { type: "json_object" },
+    model: 'gpt-4',
+    messages: [{ role: 'system', content: prompt }],
+    response_format: { type: 'json_object' },
     temperature: 0.7,
   })
 
   const analysis = JSON.parse(completion.choices[0].message.content)
-  
+
   // Save analysis to database
-  const { error } = await supabase
-    .from('task_analyses')
-    .insert({
-      task_id: taskId,
-      ...analysis
-    })
+  const { error } = await supabase.from('task_analyses').insert({
+    task_id: taskId,
+    ...analysis,
+  })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -445,7 +455,6 @@ Analyze this task and provide:
    - Problem description
    - Proposed solution
    - Step-by-step implementation approach
-   - Required components/files to modify
    - Test cases to verify solution
    - Edge cases to consider
    - Expected user experience
@@ -459,6 +468,7 @@ Format response as JSON.
 ```
 
 **Tasks**:
+
 - [ ] Set up OpenAI client
 - [ ] Create analysis API endpoint
 - [ ] Implement prompt builder
@@ -466,6 +476,7 @@ Format response as JSON.
 - [ ] Add error handling and logging
 
 #### 2.3 Task Dashboard
+
 ```typescript
 // app/dashboard/page.tsx
 import {
@@ -494,7 +505,7 @@ import { Copy, MoreHorizontal } from "lucide-react"
 export default function DashboardPage() {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
-  
+
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
@@ -505,7 +516,7 @@ export default function DashboardPage() {
           analysis:task_analyses(*)
         `)
         .order('created_at', { ascending: false })
-      
+
       if (error) throw error
       return data
     }
@@ -657,6 +668,7 @@ export default function DashboardPage() {
 ```
 
 **Tasks**:
+
 - [ ] Create dashboard layout with shadcn/ui Card
 - [ ] Build task list with shadcn/ui Table
 - [ ] Implement sorting/filtering
@@ -664,21 +676,23 @@ export default function DashboardPage() {
 - [ ] Create status update functionality
 
 ### **Phase 3: Intelligence Layer (Week 5)**
+
 **Goal**: Add duplicate detection and GTM manifest
 
 #### 3.1 Duplicate Detection
+
 ```typescript
 // lib/duplicate-detection.ts
 import { OpenAI } from 'openai'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 export async function detectDuplicates(newTask: Task, existingTasks: Task[]) {
   // Get embeddings
   const newEmbedding = await getEmbedding(newTask.description)
-  
+
   const similarities = await Promise.all(
     existingTasks.map(async (task) => {
       const embedding = await getEmbedding(task.description)
@@ -689,16 +703,16 @@ export async function detectDuplicates(newTask: Task, existingTasks: Task[]) {
 
   // Filter high similarity
   return similarities
-    .filter(s => s.similarity > 0.85)
+    .filter((s) => s.similarity > 0.85)
     .sort((a, b) => b.similarity - a.similarity)
 }
 
 async function getEmbedding(text: string): Promise<number[]> {
   const response = await openai.embeddings.create({
-    model: "text-embedding-ada-002",
+    model: 'text-embedding-ada-002',
     input: text,
   })
-  
+
   return response.data[0].embedding
 }
 
@@ -711,6 +725,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 ```
 
 **Tasks**:
+
 - [ ] Implement embedding generation
 - [ ] Create similarity calculation
 - [ ] Add duplicate check to task creation
@@ -718,12 +733,13 @@ function cosineSimilarity(a: number[], b: number[]): number {
 - [ ] Test with real data
 
 #### 3.2 GTM Manifest Setup
+
 ```typescript
 // app/onboarding/page.tsx
 export default function OnboardingPage() {
   const supabase = createClientComponentClient()
   const router = useRouter()
-  
+
   const form = useForm<GTMManifest>({
     resolver: zodResolver(gtmManifestSchema)
   })
@@ -731,14 +747,14 @@ export default function OnboardingPage() {
   const mutation = useMutation({
     mutationFn: async (data: GTMManifest) => {
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       const { error } = await supabase
         .from('gtm_manifests')
         .upsert({
           user_id: user?.id,
           ...data
         })
-      
+
       if (error) throw error
     },
     onSuccess: () => {
@@ -750,11 +766,11 @@ export default function OnboardingPage() {
     <div className="max-w-2xl mx-auto p-8">
       <h1>Set Up Your Product Context</h1>
       <p>This helps our AI make better prioritization decisions</p>
-      
+
       <form onSubmit={form.handleSubmit(data => mutation.mutate(data))}>
         {/* Form fields for manifest */}
       </form>
-      
+
       <button type="button" onClick={() => router.push('/dashboard')}>
         Skip for now
       </button>
@@ -764,6 +780,7 @@ export default function OnboardingPage() {
 ```
 
 **Tasks**:
+
 - [ ] Create onboarding flow
 - [ ] Build manifest form
 - [ ] Add skip option
@@ -771,9 +788,11 @@ export default function OnboardingPage() {
 - [ ] Create settings page for updates
 
 ### **Phase 4: Polish & Launch (Week 6)**
+
 **Goal**: Testing, optimization, and deployment
 
 #### 4.1 Performance Optimization
+
 ```typescript
 // Performance optimizations
 - Implement React Query caching
@@ -784,6 +803,7 @@ export default function OnboardingPage() {
 ```
 
 **Tasks**:
+
 - [ ] Profile and optimize queries
 - [ ] Implement caching strategy
 - [ ] Add loading skeletons
@@ -791,6 +811,7 @@ export default function OnboardingPage() {
 - [ ] Test performance metrics
 
 #### 4.2 Testing Suite
+
 ```typescript
 // __tests__/task-analysis.test.ts
 describe('Task Analysis', () => {
@@ -811,6 +832,7 @@ describe('Task Analysis', () => {
 ```
 
 **Tasks**:
+
 - [ ] Write unit tests
 - [ ] Create integration tests
 - [ ] Add E2E tests with Playwright
@@ -818,6 +840,7 @@ describe('Task Analysis', () => {
 - [ ] Load test with 1000+ tasks
 
 #### 4.3 Deployment
+
 ```yaml
 # .github/workflows/deploy.yml
 name: Deploy to Production
@@ -837,6 +860,7 @@ jobs:
 ```
 
 **Tasks**:
+
 - [ ] Set up Vercel deployment
 - [ ] Configure environment variables
 - [ ] Set up monitoring (Sentry)
@@ -846,18 +870,21 @@ jobs:
 ## 🚀 Post-MVP Roadmap
 
 ### Month 2: Enhanced Features
+
 - Team accounts (2-5 users)
 - Advanced filtering and search
 - Bulk operations
 - API access for integrations
 
 ### Month 3: Integrations
+
 - Linear/Jira export
 - Slack notifications
 - Chrome extension
 - Webhook support
 
 ### Month 4-6: Scale
+
 - Mobile app (React Native)
 - Custom AI models
 - Enterprise features
@@ -866,12 +893,14 @@ jobs:
 ## 📊 Success Metrics
 
 ### Technical KPIs
+
 - Page load: <2 seconds
 - AI analysis: <5 seconds
 - Uptime: 99.9%
 - Error rate: <0.1%
 
 ### Business KPIs
+
 - User activation: 3+ tasks in first week
 - Retention: 40% weekly active
 - Conversion: 15% free to paid

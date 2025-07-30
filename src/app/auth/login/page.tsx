@@ -3,25 +3,28 @@ import { createClient } from '@/lib/supabase/server'
 import { LoginForm } from '@/components/auth/login-form'
 
 interface LoginPageProps {
-  searchParams: {
+  searchParams: Promise<{
     mode?: 'signin' | 'signup'
     error?: string
     next?: string
-  }
+  }>
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   // Check if user is already logged in
   const { data: { user } } = await supabase.auth.getUser()
   
+  // Await searchParams
+  const params = await searchParams
+  
   if (user) {
     // Redirect to dashboard or the 'next' URL if provided
-    redirect(searchParams.next || '/dashboard')
+    redirect(params.next || '/dashboard')
   }
 
-  const mode = searchParams.mode || 'signin'
+  const mode = params.mode || 'signin'
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
@@ -35,7 +38,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </p>
         </div>
         
-        {searchParams.error && (
+        {params.error && (
           <div className="mx-auto max-w-md rounded-md bg-destructive/10 p-3 text-center text-sm text-destructive">
             Authentication error. Please try again.
           </div>

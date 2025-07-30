@@ -2,8 +2,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Brain, Clock, Target, Zap } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Redirect authenticated users to dashboard
+  if (user) {
+    redirect('/dashboard');
+  }
   return (
     <div className="flex flex-col">
       {/* Hero Section */}

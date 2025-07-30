@@ -34,6 +34,11 @@ export default function SupabaseProvider({
 
       if (event === 'SIGNED_IN') {
         router.refresh()
+        // Redirect to dashboard if user is on auth pages
+        const currentPath = window.location.pathname
+        if (currentPath.startsWith('/auth/') || currentPath === '/') {
+          router.push('/dashboard')
+        }
       } else if (event === 'SIGNED_OUT') {
         router.refresh()
         router.push('/')
