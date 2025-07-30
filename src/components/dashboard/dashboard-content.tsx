@@ -28,6 +28,7 @@ interface DashboardContentProps {
   hasGTMManifest: boolean
   highPriorityTasks: any[]
   recentTasks: any[]
+  topPendingTasks: any[]
 }
 
 export function DashboardContent({ 
@@ -39,7 +40,8 @@ export function DashboardContent({
   blockedTasks,
   hasGTMManifest,
   highPriorityTasks,
-  recentTasks
+  recentTasks,
+  topPendingTasks
 }: DashboardContentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   
@@ -180,13 +182,13 @@ export function DashboardContent({
             </div>
           </div>
 
-          {/* High Priority Tasks Section */}
-          {highPriorityTasks.length > 0 && (
+          {/* High Priority Tasks Section - Show pending tasks if no high priority */}
+          {(highPriorityTasks.length > 0 || pendingTasks > 0) && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-black flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-blue-500" />
-                  High Priority Tasks
+                  {highPriorityTasks.length > 0 ? 'High Priority Tasks' : 'Pending Tasks'}
                 </h2>
                 <Button asChild variant="ghost" size="sm" className="hover:bg-gray-50">
                   <Link href="/tasks?priority=high">
@@ -195,31 +197,66 @@ export function DashboardContent({
                   </Link>
                 </Button>
               </div>
-              <div className="grid gap-3">
-                {highPriorityTasks.map((task) => (
-                  <Card key={task.id} className="p-4 hover:shadow-md transition-all duration-200 border-gray-200 cursor-pointer">
-                    <Link href={`/tasks?highlight=${task.id}`}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-black line-clamp-1">{task.description}</p>
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className="text-xs text-gray-500">
-                              {task.analysis?.[0]?.category || 'Uncategorized'}
-                            </span>
-                            <span className="text-xs font-semibold text-blue-500">
-                              Priority: {task.analysis?.[0]?.priority || '-'}/10
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {task.analysis?.[0]?.estimated_hours ? `${task.analysis[0].estimated_hours}h` : ''}
-                            </span>
+              
+              {highPriorityTasks.length > 0 ? (
+                <div className="grid gap-3">
+                  {highPriorityTasks.map((task) => (
+                    <Card key={task.id} className="p-4 hover:shadow-md transition-all duration-200 border-gray-200 cursor-pointer">
+                      <Link href={`/tasks?highlight=${task.id}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium text-black line-clamp-1">{task.description}</p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="text-xs text-gray-500">
+                                {task.analysis?.[0]?.category || 'Uncategorized'}
+                              </span>
+                              <span className="text-xs font-semibold text-blue-500">
+                                Priority: {task.analysis?.[0]?.priority || '-'}/10
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {task.analysis?.[0]?.estimated_hours ? `${task.analysis[0].estimated_hours}h` : ''}
+                              </span>
+                            </div>
                           </div>
+                          <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
                         </div>
-                        <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
-                      </div>
-                    </Link>
-                  </Card>
-                ))}
-              </div>
+                      </Link>
+                    </Card>
+                  ))}
+                </div>
+              ) : topPendingTasks.length > 0 ? (
+                <div className="grid gap-3">
+                  {topPendingTasks.map((task) => (
+                    <Card key={task.id} className="p-4 hover:shadow-md transition-all duration-200 border-gray-200 cursor-pointer">
+                      <Link href={`/tasks?highlight=${task.id}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium text-black line-clamp-1">{task.description}</p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="text-xs text-gray-500">
+                                {task.analysis?.[0]?.category || 'Uncategorized'}
+                              </span>
+                              <span className={`text-xs font-medium ${
+                                task.analysis?.[0]?.priority >= 6 ? 'text-black' : 'text-gray-600'
+                              }`}>
+                                Priority: {task.analysis?.[0]?.priority || '-'}/10
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {task.analysis?.[0]?.estimated_hours ? `${task.analysis[0].estimated_hours}h` : ''}
+                              </span>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                        </div>
+                      </Link>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card className="p-6 text-center border-gray-200">
+                  <p className="text-gray-600">No pending tasks. Great job!</p>
+                </Card>
+              )}
             </div>
           )}
 
