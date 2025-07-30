@@ -4,21 +4,35 @@
  */
 
 export const colors = {
-  // Modern, carefully chosen colors
+  // Black & White Foundation
   background: '#FFFFFF',
-  foreground: '#0A0A0A',      // Richer black
-  muted: '#6B7280',           // Warmer gray
-  border: '#E5E7EB',          // Softer border
-  accent: '#3B82F6',          // Vibrant blue
-  surface: '#FAFAFA',         // Subtle off-white
-  accentLight: '#EBF5FF',     // Light blue for hovers
-  success: '#10B981',         // Green for positive
-  warning: '#F59E0B',         // Amber for priority
-  error: '#EF4444',           // Red for urgent
+  foreground: '#0A0A0A',      // Rich black
+  
+  // Gray Scale
+  gray50: '#F5F5F5',          // Hover states
+  gray200: '#E5E7EB',         // Borders
+  gray500: '#6B7280',         // Secondary text
+  gray600: '#4B5563',         // Darker gray
+  
+  // Accent Colors (use sparingly)
+  blue: '#3B82F6',            // ONLY for priorities & key actions
+  green: '#10B981',           // Success states
+  amber: '#F59E0B',           // Warnings
+  red: '#EF4444',             // Errors
+  
+  // Legacy naming (for compatibility)
+  muted: '#6B7280',
+  border: '#E5E7EB',
+  accent: '#F5F5F5',          // Light gray for hovers
+  surface: '#FAFAFA',
+  
   // Semantic aliases
-  primary: '#3B82F6',
+  primary: '#0A0A0A',         // BLACK is primary
   textPrimary: '#0A0A0A',
   textSecondary: '#6B7280',
+  
+  // Special
+  blueAccent: '#3B82F6',      // When blue is needed
 } as const
 
 export const typography = {
