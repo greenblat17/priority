@@ -1,0 +1,149 @@
+/* Minimal globals.css - TaskPriority AI */
+/* Import our minimal design system */
+@import '../styles/design-system.css';
+
+/* Tailwind base (minimal) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Override Tailwind's default colors with our minimal palette */
+@layer base {
+  :root {
+    /* Map our minimal colors to Tailwind's CSS variables */
+    --background: 0 0% 100%;        /* white */
+    --foreground: 0 0% 6.7%;        /* #111111 */
+    --muted: 0 0% 40%;              /* #666666 */
+    --muted-foreground: 0 0% 40%;   /* #666666 */
+    --border: 0 0% 89.8%;           /* #E5E5E5 */
+    --input: 0 0% 89.8%;            /* #E5E5E5 */
+    --primary: 221.2 83.2% 53.3%;   /* #2563EB */
+    --primary-foreground: 0 0% 100%; /* white */
+    
+    /* Disable all other color variants */
+    --card: var(--background);
+    --card-foreground: var(--foreground);
+    --popover: var(--background);
+    --popover-foreground: var(--foreground);
+    --secondary: var(--muted);
+    --secondary-foreground: var(--foreground);
+    --accent: var(--muted);
+    --accent-foreground: var(--foreground);
+    --destructive: var(--primary);
+    --destructive-foreground: var(--primary-foreground);
+    --ring: var(--primary);
+    
+    /* Minimal radius */
+    --radius: 0.25rem; /* 4px */
+  }
+  
+  /* Remove dark mode - not needed for MVP */
+  .dark {
+    /* Dark mode disabled for simplicity */
+  }
+}
+
+/* Reset and base styles */
+* {
+  @apply border-border;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-feature-settings: "kern" 1;
+  text-rendering: optimizeLegibility;
+}
+
+/* Remove all animations for simplicity */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Minimal focus styles */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* Remove default button styles */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+}
+
+/* Minimal link styles */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Form elements */
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Remove spinner from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Minimal scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* Selection color */
+::selection {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Minimal print styles */
+@media print {
+  body {
+    color: black !important;
+    background: white !important;
+  }
+  
+  @page {
+    margin: 2cm;
+  }
+}
