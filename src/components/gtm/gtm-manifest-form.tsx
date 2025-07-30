@@ -137,7 +137,7 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
     const currentItems = (currentStack as any)[category] || []
     form.setValue(
       `tech_stack.${category}` as any,
-      currentItems.filter(i => i !== item)
+      currentItems.filter((i: string) => i !== item)
     )
   }
 
@@ -431,7 +431,7 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {(form.watch(`tech_stack.${category}`) || []).map((item) => (
+                  {(form.watch(`tech_stack.${category}`) || []).map((item: string) => (
                     <Badge key={item} variant="secondary" className="gap-1">
                       {item}
                       <button
