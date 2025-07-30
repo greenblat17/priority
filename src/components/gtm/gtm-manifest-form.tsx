@@ -124,7 +124,7 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
     const value = techStackInput[category].trim()
     if (value) {
       const currentStack = form.getValues('tech_stack') || {}
-      const currentItems = currentStack[category] || []
+      const currentItems = (currentStack as any)[category] || []
       if (!currentItems.includes(value)) {
         form.setValue(`tech_stack.${category}`, [...currentItems, value])
         setTechStackInput({ ...techStackInput, [category]: '' })
@@ -134,7 +134,7 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
 
   const removeTechStackItem = (category: string, item: string) => {
     const currentStack = form.getValues('tech_stack') || {}
-    const currentItems = currentStack[category] || []
+    const currentItems = (currentStack as any)[category] || []
     form.setValue(
       `tech_stack.${category}` as any,
       currentItems.filter(i => i !== item)
