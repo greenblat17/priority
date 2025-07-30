@@ -68,6 +68,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     }
   })
 
+  const [showAdvanced, setShowAdvanced] = useState(false)
+
   const createTaskMutation = useMutation({
     mutationFn: async (params: { 
       data: TaskInput, 
@@ -259,105 +261,101 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[525px]">
-        <DialogHeader>
-          <DialogTitle>Add New Task</DialogTitle>
-          <DialogDescription>
-            Describe your task or paste user feedback. Our AI will analyze and prioritize it.
+      <DialogContent className="max-w-lg bg-white rounded-2xl">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="text-xl font-semibold text-black">Add New Task</DialogTitle>
+          <DialogDescription className="text-gray-600">
+            Describe your task and our AI will analyze it for you
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-4">
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Task Description</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe the task, bug, or feature request..."
-                      className="min-h-[100px] resize-none"
+                      placeholder="What needs to be done?"
+                      className="min-h-[100px] text-base resize-none border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 transition-all duration-200"
+                      autoFocus
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Be as detailed as possible for better AI analysis
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="source"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Source</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Where did this task come from?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={TaskSource.CUSTOMER_EMAIL}>Customer Email</SelectItem>
-                      <SelectItem value={TaskSource.SUPPORT_TICKET}>Support Ticket</SelectItem>
-                      <SelectItem value={TaskSource.SOCIAL_MEDIA}>Social Media</SelectItem>
-                      <SelectItem value={TaskSource.INTERNAL}>Internal</SelectItem>
-                      <SelectItem value={TaskSource.OTHER}>Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Collapsible advanced options */}
+            <details className="group">
+              <summary className="cursor-pointer text-sm text-gray-600 hover:text-black transition-colors">
+                Advanced options
+              </summary>
+              <div className="mt-3 space-y-3">
+                <FormField
+                  control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Source</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="border-gray-200">
+                            <SelectValue placeholder="Where did this task come from?" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={TaskSource.CUSTOMER_EMAIL}>Customer Email</SelectItem>
+                          <SelectItem value={TaskSource.SUPPORT_TICKET}>Support Ticket</SelectItem>
+                          <SelectItem value={TaskSource.SOCIAL_MEDIA}>Social Media</SelectItem>
+                          <SelectItem value={TaskSource.INTERNAL}>Internal</SelectItem>
+                          <SelectItem value={TaskSource.OTHER}>Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="customerInfo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Customer Info</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Customer name or email" 
+                          className="border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </details>
             
-            <FormField
-              control={form.control}
-              name="customerInfo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Customer Info (Optional)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Customer name or email" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={onClose}
                 disabled={createTaskMutation.isPending}
+                className="hover:bg-gray-50"
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
                 disabled={createTaskMutation.isPending || isCheckingDuplicates}
+                className="bg-black hover:bg-gray-800 text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
-                {createTaskMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adding...
-                  </>
-                ) : isCheckingDuplicates ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Checking...
-                  </>
-                ) : (
-                  'Add Task'
-                )}
+                {createTaskMutation.isPending ? 'Adding...' : isCheckingDuplicates ? 'Checking...' : 'Add Task'}
               </Button>
             </div>
           </form>
