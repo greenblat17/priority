@@ -40,24 +40,14 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
   }
 
   const getCategoryVariant = (category?: string | null) => {
-    switch (category) {
-      case 'bug':
-        return 'destructive'
-      case 'feature':
-        return 'default'
-      case 'improvement':
-        return 'secondary'
-      case 'business':
-        return 'outline'
-      default:
-        return 'secondary'
-    }
+    // All categories use outline style for clean, minimal look
+    return 'outline'
   }
 
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'default'
+        return 'default' // Will be black (primary)
       case 'in_progress':
         return 'secondary'
       case 'blocked':
@@ -70,11 +60,11 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
   const getComplexityColor = (complexity?: string | null) => {
     switch (complexity) {
       case 'easy':
-        return 'text-green-600'
+        return 'text-gray-600'
       case 'medium':
-        return 'text-yellow-600'
+        return 'text-gray-700 font-medium'
       case 'hard':
-        return 'text-red-600'
+        return 'text-black font-semibold'
       default:
         return 'text-gray-500'
     }
@@ -82,16 +72,17 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
 
   const getPriorityColor = (priority?: number | null) => {
     if (!priority) return 'text-gray-500'
-    if (priority >= 8) return 'text-red-600 font-bold'
-    if (priority >= 6) return 'text-orange-600 font-semibold'
-    if (priority >= 4) return 'text-yellow-600'
+    // Blue ONLY for high priority (8+)
+    if (priority >= 8) return 'text-blue-500 font-semibold'
+    if (priority >= 6) return 'text-black font-semibold'
+    if (priority >= 4) return 'text-black'
     return 'text-gray-600'
   }
 
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No tasks found. Create your first task to get started!</p>
+        <p className="text-gray-600">No tasks found. Create your first task to get started!</p>
       </div>
     )
   }
@@ -99,66 +90,77 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
   return (
     <>
       <Table>
-        <TableCaption>
+        <TableCaption className="text-gray-600">
           {tasks.length} task{tasks.length !== 1 ? 's' : ''} • Click on a task to view details
         </TableCaption>
         <TableHeader>
-          <TableRow>
-            <TableHead className="w-[40%]">Task</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Complexity</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+          <TableRow className="border-b border-gray-100">
+            <TableHead className="w-[40%] text-black font-semibold">Task</TableHead>
+            <TableHead className="text-black font-semibold">Category</TableHead>
+            <TableHead className="text-black font-semibold">Priority</TableHead>
+            <TableHead className="text-black font-semibold">Complexity</TableHead>
+            <TableHead className="text-black font-semibold">Status</TableHead>
+            <TableHead className="text-right text-black font-semibold">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {tasks.map((task) => (
             <TableRow 
               key={task.id}
-              className="cursor-pointer hover:bg-muted/50"
+              className="cursor-pointer hover:bg-gray-50 transition-colors duration-200"
               onClick={() => setSelectedTask(task)}
             >
-              <TableCell className="font-medium">
+              <TableCell className="font-medium text-black">
                 <div className="max-w-md">
                   <p className="truncate">{task.description}</p>
                   {task.source && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Source: {task.source.replace('_', ' ')}
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {task.source.replace('_', ' ')}
                     </p>
                   )}
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant={getCategoryVariant(task.analysis?.category)}>
+                <Badge 
+                  variant={getCategoryVariant(task.analysis?.category)}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
                   {task.analysis?.category || 'pending'}
                 </Badge>
               </TableCell>
               <TableCell>
-                <span className={getPriorityColor(task.analysis?.priority)}>
+                <span className={`${getPriorityColor(task.analysis?.priority)} font-mono`}>
                   {task.analysis?.priority || '-'}/10
                 </span>
               </TableCell>
               <TableCell>
-                <span className={getComplexityColor(task.analysis?.complexity)}>
-                  {task.analysis?.complexity || 'analyzing'}
-                </span>
-                {task.analysis?.estimated_hours && (
-                  <span className="text-xs text-muted-foreground ml-1">
-                    ({task.analysis.estimated_hours}h)
+                <div className="flex items-center gap-1">
+                  <span className={getComplexityColor(task.analysis?.complexity)}>
+                    {task.analysis?.complexity || 'analyzing'}
                   </span>
-                )}
+                  {task.analysis?.estimated_hours && (
+                    <span className="text-xs text-gray-500">
+                      ({task.analysis.estimated_hours}h)
+                    </span>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
-                <Badge variant={getStatusVariant(task.status)}>
+                <Badge 
+                  variant={getStatusVariant(task.status)}
+                  className="font-medium"
+                >
                   {task.status.replace('_', ' ')}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <Button 
+                      variant="ghost" 
+                      className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors"
+                    >
+                      <MoreHorizontal className="h-4 w-4 text-gray-600" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

@@ -261,3 +261,39 @@
     @apply hidden;
   }
 }
+
+/* Disable all animations on dropdown and select components */
+[data-radix-popper-content-wrapper],
+[data-slot="dropdown-menu-content"],
+[data-slot="select-content"],
+[data-slot="dropdown-menu-sub-content"] {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Ensure dropdowns appear instantly */
+[data-state="open"],
+[data-state="closed"] {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Remove ALL borders, shadows, and outlines from dropdown elements */
+[data-radix-popper-content-wrapper],
+[data-radix-popper-content-wrapper] *,
+[data-slot="select-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="dropdown-menu-sub-content"],
+[role="listbox"],
+[role="menu"],
+div[style*="pointer-events: auto"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Keep only the shadow for depth, but ensure no border-like appearance */
+[data-slot="select-content"],
+[data-slot="dropdown-menu-content"] {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
