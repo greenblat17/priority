@@ -119,7 +119,7 @@ export default async function DashboardPage() {
   })
 
   // Now fetch the analyses separately for the pending tasks
-  let topPendingTasks = []
+  let topPendingTasks: any[] = []
   if (pendingTasksData && pendingTasksData.length > 0) {
     // Get task IDs
     const taskIds = pendingTasksData.map(t => t.id)

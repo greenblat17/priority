@@ -41,7 +41,7 @@ export async function POST() {
     console.log(`[Manual Analysis] Found ${tasksToAnalyze.length} tasks without analysis`)
 
     // Trigger analysis for each task
-    const results = []
+    const results: any[] = []
     for (const task of tasksToAnalyze) {
       try {
         // For internal API calls, we need to directly call the analyze function

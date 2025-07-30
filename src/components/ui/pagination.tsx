@@ -13,7 +13,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
 
   // Generate page numbers to show
   const getPageNumbers = () => {
-    const pages = []
+    const pages: (number | string)[] = []
     const showEllipsis = totalPages > 7
     
     if (!showEllipsis) {
