@@ -86,7 +86,15 @@ export async function POST(request: Request) {
         source: task.source,
         customer_info: task.customer_info
       },
-      manifest: manifest as GTMManifest | null
+      manifest: manifest ? {
+        product_name: manifest.product_name || undefined,
+        product_description: manifest.product_description || undefined,
+        target_audience: manifest.target_audience || undefined,
+        value_proposition: manifest.value_proposition || undefined,
+        current_stage: manifest.current_stage || undefined,
+        tech_stack: manifest.tech_stack,
+        business_model: manifest.business_model || undefined
+      } : null
     })
 
     // Call OpenAI with retry logic
