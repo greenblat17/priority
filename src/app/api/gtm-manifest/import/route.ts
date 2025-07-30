@@ -69,7 +69,7 @@ export async function POST(request: Request) {
                        $('meta[property="og:description"]').attr('content') || ''
     
     // Extract structured data if available
-    const structuredData = []
+    const structuredData: any[] = []
     $('script[type="application/ld+json"]').each((_, elem) => {
       try {
         const data = JSON.parse($(elem).html() || '{}')
