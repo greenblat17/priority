@@ -13,6 +13,11 @@ export function Navigation() {
   const pathname = usePathname()
   const { user } = useSupabase()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  
+  // Don't show navigation on auth pages
+  if (pathname.startsWith('/auth/')) {
+    return null
+  }
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
