@@ -46,6 +46,7 @@ export interface Task {
   source: string | null
   customer_info: string | null
   status: TaskStatusType
+  group_id: string | null
   created_at: string
   updated_at: string
 }

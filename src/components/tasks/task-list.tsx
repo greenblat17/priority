@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { TaskTable } from './task-table'
+import { TaskTableGrouped } from './task-table-grouped'
 import { TaskFilters } from './task-filters'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { TaskWithAnalysis } from '@/types/task'
+import { TaskGroup as TaskGroupType } from '@/types/task-group'
 
 export function TaskList() {
   const supabase = createClient()
@@ -28,17 +29,19 @@ export function TaskList() {
         .from('tasks')
         .select(`
           *,
-          task_analyses!task_id (*)
+          task_analyses!task_id (*),
+          task_groups!group_id (*)
         `)
         .order('created_at', { ascending: false })
 
       if (error) throw error
       
-      // Map to TaskWithAnalysis type
+      // Map to TaskWithAnalysis type with group info
       return data?.map(task => ({
         ...task,
-        analysis: task.task_analyses || null
-      })) as TaskWithAnalysis[]
+        analysis: task.task_analyses || null,
+        group: task.task_groups || null
+      })) as (TaskWithAnalysis & { group: TaskGroupType | null })[]
     }
   })
 
@@ -158,7 +161,7 @@ export function TaskList() {
             setSortOrder={setSortOrder}
           />
           
-          <TaskTable
+          <TaskTableGrouped
             tasks={filteredAndSortedTasks || []}
             onUpdateStatus={(taskId, status) => 
               updateStatusMutation.mutate({ taskId, status })

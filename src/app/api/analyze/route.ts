@@ -126,6 +126,9 @@ export async function POST(request: Request) {
       throw new Error('Invalid JSON response from AI')
     }
 
+    // Log the parsed response to debug
+    console.log('[AI Analysis] Parsed response:', JSON.stringify(parsedResponse, null, 2))
+    
     // Validate the response structure
     const validatedAnalysis = validateAnalysisResponse(parsedResponse)
 
