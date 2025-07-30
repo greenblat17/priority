@@ -4,7 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PlusCircle, ListTodo, BarChart3, Settings } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { PlusCircle, ListTodo, BarChart3, Settings, Sparkles } from 'lucide-react'
 import { QuickAddModal } from '@/components/tasks/quick-add-modal'
 import { useQuickAddShortcut } from '@/hooks/use-keyboard-shortcuts'
 
@@ -13,13 +14,15 @@ interface DashboardContentProps {
   totalTasks: number
   pendingTasks: number
   completedTasks: number
+  hasGTMManifest: boolean
 }
 
 export function DashboardContent({ 
   userName, 
   totalTasks, 
   pendingTasks, 
-  completedTasks 
+  completedTasks,
+  hasGTMManifest 
 }: DashboardContentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   
@@ -35,6 +38,22 @@ export function DashboardContent({
             Welcome back, {userName}!
           </p>
         </div>
+
+        {/* GTM Setup Alert */}
+        {!hasGTMManifest && (
+          <Alert className="mb-8">
+            <Sparkles className="h-4 w-4" />
+            <AlertTitle>Improve AI Prioritization</AlertTitle>
+            <AlertDescription className="mt-2">
+              <div className="flex items-center justify-between">
+                <span>Set up your GTM context to get more accurate task prioritization based on your business goals.</span>
+                <Button asChild size="sm" className="ml-4">
+                  <Link href="/onboarding">Set Up Now</Link>
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Quick Actions */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -59,9 +78,9 @@ export function DashboardContent({
             </Link>
           </Button>
           <Button asChild variant="outline" className="h-auto p-6 flex-col gap-2">
-            <Link href="/settings">
+            <Link href="/settings/gtm">
               <Settings className="h-6 w-6" />
-              <span>Settings</span>
+              <span>GTM Settings</span>
             </Link>
           </Button>
         </div>

@@ -474,6 +474,7 @@ Format response as JSON.
 - [x] Implement prompt builder
 - [x] Add retry logic for failures
 - [x] Add error handling and logging
+- [x] Increase token limit to 3000 for complete responses
 
 #### 2.3 Task Dashboard
 
@@ -726,11 +727,11 @@ function cosineSimilarity(a: number[], b: number[]): number {
 
 **Tasks**:
 
-- [ ] Implement embedding generation
-- [ ] Create similarity calculation
-- [ ] Add duplicate check to task creation
-- [ ] Add UI for duplicate review
-- [ ] Test with real data
+- [x] Implement embedding generation
+- [x] Create similarity calculation
+- [x] Add duplicate check to task creation
+- [x] Add UI for duplicate review
+- [x] Test with real data
 
 #### 3.2 GTM Manifest Setup
 
@@ -781,11 +782,69 @@ export default function OnboardingPage() {
 
 **Tasks**:
 
-- [ ] Create onboarding flow
-- [ ] Build manifest form
-- [ ] Add skip option
-- [ ] Integrate with AI prompts
-- [ ] Create settings page for updates
+- [x] Create onboarding flow
+- [x] Build manifest form
+- [x] Add skip option
+- [x] Integrate with AI prompts
+- [x] Create settings page for updates
+- [x] Add automatic import from landing page feature
+
+#### 3.2.1 Landing Page Import Feature (Enhancement)
+
+**Overview**: Automatically extract GTM information from landing pages to reduce onboarding friction.
+
+```typescript
+// components/gtm/gtm-manifest-form.tsx
+// Added import dialog and button
+<Button onClick={() => setShowImportDialog(true)}>
+  <Globe className="mr-2 h-4 w-4" />
+  Import from Landing Page
+</Button>
+
+// api/gtm-manifest/import/route.ts
+export async function POST(request: Request) {
+  const { url } = await request.json()
+  
+  // Fetch and parse landing page
+  const response = await fetch(url)
+  const html = await response.text()
+  const $ = cheerio.load(html)
+  
+  // Extract content
+  const pageContent = {
+    title: $('title').text(),
+    description: $('meta[name="description"]').attr('content'),
+    headings: $('h1, h2').text(),
+    mainContent: $('main').text().slice(0, 3000),
+    structuredData: $('script[type="application/ld+json"]').html()
+  }
+  
+  // Use AI to extract GTM data
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4-1106-preview',
+    messages: [{ role: 'system', content: extractionPrompt }],
+    response_format: { type: 'json_object' }
+  })
+  
+  return extractedManifest
+}
+```
+
+**Features Implemented**:
+- URL validation and security measures
+- HTML parsing with cheerio for content extraction
+- AI-powered analysis to structure the data
+- Pre-fills form with extracted information
+- User can review and edit before saving
+- Error handling for timeouts and invalid URLs
+
+**Tasks**:
+- [x] Add import button to GTM form UI
+- [x] Create URL input dialog
+- [x] Implement web scraping with cheerio
+- [x] Create AI extraction prompt
+- [x] Add loading states and error handling
+- [x] Test with various landing pages
 
 ### **Phase 4: Polish & Launch (Week 6)**
 
@@ -916,11 +975,11 @@ jobs:
 
 ## 🎯 MVP Completion Checklist
 
-- [ ] Authentication working (Google & GitHub via Supabase)
-- [ ] Tasks can be added and analyzed
-- [ ] Dashboard shows prioritized tasks
-- [ ] Duplicate detection functional
-- [ ] GTM manifest improves analysis
+- [x] Authentication working (Google & GitHub via Supabase)
+- [x] Tasks can be added and analyzed
+- [x] Dashboard shows prioritized tasks
+- [x] Duplicate detection functional
+- [x] GTM manifest improves analysis
 - [ ] Performance meets targets
 - [ ] 95%+ test coverage
 - [ ] Deployed to production

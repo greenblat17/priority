@@ -36,6 +36,13 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .eq('status', 'completed')
 
+  // Check if user has GTM manifest
+  const { data: manifest } = await supabase
+    .from('gtm_manifests')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
   const userName = profile?.name || user.email?.split('@')[0] || 'User'
 
   return (
@@ -44,6 +51,7 @@ export default async function DashboardPage() {
       totalTasks={totalTasks || 0}
       pendingTasks={pendingTasks || 0}
       completedTasks={completedTasks || 0}
+      hasGTMManifest={!!manifest}
     />
   )
 }

@@ -19,7 +19,7 @@ export function buildAnalysisPrompt(context: AnalysisPromptContext): string {
     contextSection += 'No product context available. Analyze based on general software development best practices.\n'
   }
 
-  return `You are an AI task analyst for a solo founder's task management system. Your job is to analyze tasks and provide actionable insights.
+  return `You are an AI task analyst for a solo founder's task management system. Your job is to analyze tasks and provide actionable insights that align with their business goals and current stage.
 
 ${contextSection}
 
@@ -65,6 +65,9 @@ Guidelines for analysis:
    - Number of users affected
    - Urgency (blocking issues score higher)
    - Strategic alignment with product goals
+   - Current product stage (MVP should focus on core features, Growth on user experience)
+   - Target audience needs (prioritize features that serve the specific audience)
+   - Value proposition alignment (does this reinforce the unique value?)
 
 3. Complexity:
    - easy: <4 hours, straightforward implementation
