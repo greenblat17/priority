@@ -1,0 +1,125 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useSupabase } from '@/components/providers/supabase-provider'
+import { AuthButton } from '@/components/auth/auth-button'
+import { Button } from '@/components/ui/button'
+import { Menu, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+export function Navigation() {
+  const pathname = usePathname()
+  const { user } = useSupabase()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/tasks', label: 'Tasks' },
+    { href: '/settings/gtm', label: 'Settings' },
+  ]
+
+  return (
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo with smooth hover */}
+          <Link 
+            href={user ? "/dashboard" : "/"}
+            className="flex items-center space-x-2 group"
+          >
+            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center
+                            group-hover:scale-110 transition-transform duration-200">
+              <span className="text-white font-bold text-sm">T</span>
+            </div>
+            <span className="font-semibold text-black text-lg">
+              TaskPriority
+            </span>
+          </Link>
+          
+          {/* Navigation and Auth */}
+          <div className="flex items-center gap-4">
+            {/* Minimal nav items - only show when authenticated */}
+            {user && (
+              <nav className="hidden md:flex items-center space-x-8">
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href || 
+                    (item.href === '/dashboard' && pathname === '/') ||
+                    (item.href === '/settings/gtm' && pathname.startsWith('/settings'))
+                  
+                  return (
+                    <Link 
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "relative group transition-colors duration-200",
+                        isActive 
+                          ? "text-black font-medium" 
+                          : "text-gray-600 hover:text-black"
+                      )}
+                    >
+                      {item.label}
+                      <span className={cn(
+                        "absolute -bottom-0.5 left-0 h-0.5 bg-black transition-all duration-200",
+                        isActive ? "w-full" : "w-0 group-hover:w-full"
+                      )} />
+                    </Link>
+                  )
+                })}
+              </nav>
+            )}
+            
+            {/* Auth Button / User Menu */}
+            <AuthButton />
+            
+            {/* Mobile menu button - only show when authenticated */}
+            {user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden h-9 w-9 p-0"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Mobile Navigation Menu */}
+        {user && isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-100 bg-white">
+            <nav className="container mx-auto px-4 py-4 space-y-1">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href || 
+                  (item.href === '/dashboard' && pathname === '/') ||
+                  (item.href === '/settings/gtm' && pathname.startsWith('/settings'))
+                
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={cn(
+                      "block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200",
+                      isActive
+                        ? "bg-gray-100 text-black"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </nav>
+          </div>
+        )}
+      </div>
+    </header>
+  )
+}

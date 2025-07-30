@@ -4,9 +4,8 @@ import "./globals.css";
 import SupabaseProvider from "@/components/providers/supabase-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { WebVitalsProvider } from "@/components/providers/web-vitals-provider";
-import { AuthButton } from "@/components/auth/auth-button";
+import { Navigation } from "@/components/layout/navigation";
 import { Toaster } from "sonner";
-import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,17 +36,8 @@ export default function RootLayout({
           <QueryProvider>
             <WebVitalsProvider>
               <div className="min-h-screen flex flex-col">
-                {/* Navigation */}
-                <header className="border-b">
-                  <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <Link href="/" className="font-bold text-xl">
-                      TaskPriority AI
-                    </Link>
-                    <nav className="flex items-center gap-4">
-                      <AuthButton />
-                    </nav>
-                  </div>
-                </header>
+                {/* Modern Navigation */}
+                <Navigation />
                 
                 {/* Main content */}
                 <main className="flex-1">

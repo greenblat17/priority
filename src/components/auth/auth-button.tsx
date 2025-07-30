@@ -18,7 +18,11 @@ export function AuthButton() {
   }
 
   return (
-    <Button asChild variant="default" size="sm">
+    <Button 
+      asChild 
+      size="sm"
+      className="bg-black hover:bg-gray-800 text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+    >
       <Link href="/auth/login">Sign In</Link>
     </Button>
   )

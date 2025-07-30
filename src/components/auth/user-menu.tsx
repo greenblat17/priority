@@ -47,7 +47,11 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="relative overflow-hidden group h-9 w-9 rounded-full p-0 hover:bg-gray-100"
+        >
           {userAvatar ? (
             <img
               src={userAvatar}
@@ -55,8 +59,10 @@ export function UserMenu() {
               className="h-8 w-8 rounded-full object-cover"
             />
           ) : (
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
-              {userName.charAt(0).toUpperCase()}
+            <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors duration-200">
+              <span className="text-gray-700 text-sm font-medium">
+                {userName.charAt(0).toUpperCase()}
+              </span>
             </div>
           )}
         </Button>
@@ -72,15 +78,8 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => router.push('/dashboard')}
-          className="cursor-pointer"
-        >
-          <User className="mr-2 h-4 w-4" />
-          <span>Dashboard</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => router.push('/settings')}
-          className="cursor-pointer"
+          onClick={() => router.push('/settings/gtm')}
+          className="cursor-pointer hover:bg-gray-50"
         >
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
@@ -89,7 +88,7 @@ export function UserMenu() {
         <DropdownMenuItem
           onClick={handleSignOut}
           disabled={isLoading}
-          className="cursor-pointer text-destructive focus:text-destructive"
+          className="cursor-pointer text-red-600 hover:bg-red-50 focus:text-red-600"
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
