@@ -261,7 +261,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg bg-white rounded-2xl">
-        <DialogHeader className="space-y-3">
+        <DialogHeader className="space-y-2">
           <DialogTitle className="text-xl font-semibold text-black">Add New Task</DialogTitle>
           <DialogDescription className="text-gray-600">
             Describe your task and our AI will analyze it for you
@@ -269,7 +269,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="description"
@@ -293,7 +293,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               <summary className="cursor-pointer text-sm text-gray-600 hover:text-black transition-colors">
                 Advanced options
               </summary>
-              <div className="mt-3 space-y-3">
+              <div className="mt-4 space-y-4">
                 <FormField
                   control={form.control}
                   name="source"
@@ -339,7 +339,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               </div>
             </details>
             
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-4">
               <Button
                 type="button"
                 variant="ghost"

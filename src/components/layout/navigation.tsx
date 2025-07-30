@@ -22,12 +22,12 @@ export function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo with smooth hover */}
           <Link 
             href={user ? "/dashboard" : "/"}
-            className="flex items-center space-x-2 group"
+            className="flex items-center gap-2 group"
           >
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center
                             group-hover:scale-110 transition-transform duration-200">
@@ -42,7 +42,7 @@ export function Navigation() {
           <div className="flex items-center gap-4">
             {/* Minimal nav items - only show when authenticated */}
             {user && (
-              <nav className="hidden md:flex items-center space-x-8">
+              <nav className="hidden md:flex items-center gap-6">
                 {navItems.map((item) => {
                   const isActive = pathname === item.href || 
                     (item.href === '/dashboard' && pathname === '/') ||
@@ -94,7 +94,7 @@ export function Navigation() {
         {/* Mobile Navigation Menu */}
         {user && isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white">
-            <nav className="container mx-auto px-4 py-4 space-y-1">
+            <nav className="container mx-auto px-6 py-4 space-y-2">
               {navItems.map((item) => {
                 const isActive = pathname === item.href || 
                   (item.href === '/dashboard' && pathname === '/') ||

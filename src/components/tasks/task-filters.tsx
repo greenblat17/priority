@@ -32,8 +32,8 @@ export function TaskFilters({
   setSortOrder,
 }: TaskFiltersProps) {
   return (
-    <div className="flex flex-wrap gap-4 mb-6">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap gap-4">
+      <div className="flex items-center gap-4">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-semibold">Filters:</span>
       </div>
@@ -65,7 +65,7 @@ export function TaskFilters({
         </SelectContent>
       </Select>
 
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="flex items-center gap-4 ">
         <span className="text-sm font-semibold">Sort by:</span>
         <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
           <SelectTrigger className="w-[130px]">
