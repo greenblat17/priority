@@ -6,27 +6,27 @@ import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
   // Modern base styles - smooth and beautiful
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-200 transform disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20 active:scale-[0.98]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-200 transform disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 active:scale-[0.97]",
   {
     variants: {
       variant: {
-        // Primary - Black as main color
+        // Primary - Black as main color with beautiful hover
         default:
-          "bg-primary text-primary-foreground hover:scale-[1.02] hover:bg-primary/90",
+          "bg-primary text-primary-foreground hover:scale-[1.03] hover:shadow-lg hover:shadow-black/10 hover:bg-primary/90",
         // Destructive - Still available but styled better
         destructive:
-          "bg-destructive text-destructive-foreground hover:scale-[1.02]",
+          "bg-destructive text-destructive-foreground hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/10",
         // Ghost - Subtle and smooth
         ghost:
-          "text-muted-foreground hover:text-foreground",
+          "text-muted-foreground hover:text-foreground hover:bg-accent",
         // Keep outline for compatibility but modernize
         outline:
-          "border border-input bg-background hover:text-accent-foreground",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:scale-[1.01]",
         // Keep secondary for compatibility
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:scale-[1.01]",
         // Keep link for compatibility
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline hover:text-primary/80",
       },
       size: {
         default: "h-10 px-5 py-2",

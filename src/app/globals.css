@@ -216,6 +216,30 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
+  
+  /* Beautiful shimmer animation for skeleton loading */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  /* Subtle pulse for high priority items */
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+  
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }
 
 /* Modern component-specific styles */

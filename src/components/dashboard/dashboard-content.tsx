@@ -200,7 +200,7 @@ export function DashboardContent({
                               <span className="text-sm text-gray-500">
                                 {task.analysis?.[0]?.category || 'Uncategorized'}
                               </span>
-                              <span className="text-sm font-semibold text-blue-500">
+                              <span className={`text-sm font-semibold text-blue-500 ${task.analysis?.[0]?.priority >= 9 ? 'animate-pulse-subtle' : ''}`}>
                                 Priority: {task.analysis?.[0]?.priority || '-'}/10
                               </span>
                               <span className="text-sm text-gray-500">
