@@ -24,6 +24,7 @@ import { TaskDetailDialog } from './task-detail-dialog'
 import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
+import { getSourceLabel } from '@/lib/task-source-utils'
 
 interface TaskTableProps {
   tasks: TaskWithAnalysis[]
@@ -115,7 +116,7 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
                   <p className="truncate">{task.description}</p>
                   {task.source && (
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {task.source.replace('_', ' ')}
+                      {getSourceLabel(task.source)}
                     </p>
                   )}
                 </div>

@@ -9,6 +9,16 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useCreateTask } from '@/hooks/use-tasks'
 import { useEscapeKey } from '@/hooks/use-keyboard-shortcuts'
+import { 
+  Building, 
+  Send, 
+  MessageSquare, 
+  Mail, 
+  Youtube, 
+  Twitter, 
+  Smartphone,
+  Play
+} from 'lucide-react'
 
 import {
   Dialog,
@@ -311,11 +321,54 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={TaskSource.CUSTOMER_EMAIL}>Customer Email</SelectItem>
-                          <SelectItem value={TaskSource.SUPPORT_TICKET}>Support Ticket</SelectItem>
-                          <SelectItem value={TaskSource.SOCIAL_MEDIA}>Social Media</SelectItem>
-                          <SelectItem value={TaskSource.INTERNAL}>Internal</SelectItem>
-                          <SelectItem value={TaskSource.OTHER}>Other</SelectItem>
+                          <SelectItem value={TaskSource.INTERNAL}>
+                            <div className="flex items-center gap-2">
+                              <Building className="h-4 w-4" />
+                              <span>Internal</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value={TaskSource.TELEGRAM}>
+                            <div className="flex items-center gap-2">
+                              <Send className="h-4 w-4" />
+                              <span>Telegram</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value={TaskSource.REDDIT}>
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4" />
+                              <span>Reddit</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value={TaskSource.MAIL}>
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              <span>Mail</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value={TaskSource.YOUTUBE}>
+                            <div className="flex items-center gap-2">
+                              <Youtube className="h-4 w-4" />
+                              <span>YouTube</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value={TaskSource.TWITTER}>
+                            <div className="flex items-center gap-2">
+                              <Twitter className="h-4 w-4" />
+                              <span>Twitter</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value={TaskSource.APP_STORE}>
+                            <div className="flex items-center gap-2">
+                              <Smartphone className="h-4 w-4" />
+                              <span>App Store</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value={TaskSource.GOOGLE_PLAY}>
+                            <div className="flex items-center gap-2">
+                              <Play className="h-4 w-4" />
+                              <span>Google Play</span>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

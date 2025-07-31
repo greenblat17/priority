@@ -2,11 +2,14 @@ import { z } from 'zod'
 
 // Task source enum
 export const TaskSource = {
-  CUSTOMER_EMAIL: 'customer_email',
-  SUPPORT_TICKET: 'support_ticket',
-  SOCIAL_MEDIA: 'social_media',
   INTERNAL: 'internal',
-  OTHER: 'other'
+  TELEGRAM: 'telegram',
+  REDDIT: 'reddit',
+  MAIL: 'mail',
+  YOUTUBE: 'youtube',
+  TWITTER: 'twitter',
+  APP_STORE: 'app_store',
+  GOOGLE_PLAY: 'google_play'
 } as const
 
 export type TaskSourceType = typeof TaskSource[keyof typeof TaskSource]
@@ -27,11 +30,14 @@ export const taskInputSchema = z.object({
     .min(10, 'Description must be at least 10 characters')
     .max(5000, 'Description must be less than 5000 characters'),
   source: z.enum([
-    TaskSource.CUSTOMER_EMAIL,
-    TaskSource.SUPPORT_TICKET,
-    TaskSource.SOCIAL_MEDIA,
     TaskSource.INTERNAL,
-    TaskSource.OTHER
+    TaskSource.TELEGRAM,
+    TaskSource.REDDIT,
+    TaskSource.MAIL,
+    TaskSource.YOUTUBE,
+    TaskSource.TWITTER,
+    TaskSource.APP_STORE,
+    TaskSource.GOOGLE_PLAY
   ]).default(TaskSource.INTERNAL),
   customerInfo: z.string().optional()
 })

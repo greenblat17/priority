@@ -29,6 +29,7 @@ import { TaskGroup as TaskGroupType } from '@/types/task-group'
 import { highlightSearchTerm } from '@/lib/search-utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
+import { getSourceLabel } from '@/lib/task-source-utils'
 
 interface TaskWithGroup extends TaskWithAnalysis {
   group: TaskGroupType | null
@@ -157,7 +158,7 @@ export function TaskTableGrouped({
           <div className="truncate">{searchQuery ? highlightSearchTerm(task.description, searchQuery) : task.description}</div>
           {task.source && (
             <div className="text-sm text-muted-foreground mt-1">
-              Source: {searchQuery ? highlightSearchTerm(task.source.replace('_', ' '), searchQuery) : task.source.replace('_', ' ')}
+              Source: {searchQuery ? highlightSearchTerm(getSourceLabel(task.source), searchQuery) : getSourceLabel(task.source)}
             </div>
           )}
         </div>
