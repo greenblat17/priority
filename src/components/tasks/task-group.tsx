@@ -1,11 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-import { TaskWithAnalysis } from '@/types/task'
+import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
 interface TaskGroupProps {
@@ -14,6 +23,8 @@ interface TaskGroupProps {
   renderTask: (task: TaskWithAnalysis) => React.ReactNode
   defaultExpanded?: boolean
   hasCheckboxes?: boolean
+  onBulkUpdateStatus?: (taskIds: string[], status: TaskStatusType) => void
+  onBulkDelete?: (taskIds: string[]) => void
 }
 
 export function TaskGroup({ 
@@ -21,7 +32,9 @@ export function TaskGroup({
   tasks, 
   renderTask,
   defaultExpanded = true,
-  hasCheckboxes = false 
+  hasCheckboxes = false,
+  onBulkUpdateStatus,
+  onBulkDelete
 }: TaskGroupProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
@@ -66,9 +79,56 @@ export function TaskGroup({
               </div>
             </div>
             
-            {/* Task Count */}
-            <div className="text-sm text-gray-500">
-              {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+            {/* Task Count and Actions */}
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-gray-500">
+                {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+              </div>
+              {(onBulkUpdateStatus || onBulkDelete) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <MoreHorizontal className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Group Actions</DropdownMenuLabel>
+                    {onBulkUpdateStatus && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-xs">Update All Status</DropdownMenuLabel>
+                        {(['pending', 'in_progress', 'completed', 'blocked'] as const).map((status) => (
+                          <DropdownMenuItem
+                            key={status}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const taskIds = tasks.map(t => t.id)
+                              onBulkUpdateStatus(taskIds, status)
+                            }}
+                          >
+                            Mark all as {status.replace('_', ' ')}
+                          </DropdownMenuItem>
+                        ))}
+                      </>
+                    )}
+                    {onBulkDelete && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const taskIds = tasks.map(t => t.id)
+                            onBulkDelete(taskIds)
+                          }}
+                        >
+                          Delete all tasks
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </TableCell>

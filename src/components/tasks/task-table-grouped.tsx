@@ -30,6 +30,7 @@ import { highlightSearchTerm } from '@/lib/search-utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { getSourceLabel } from '@/lib/task-source-utils'
+import { useBulkUpdateTaskStatus, useBulkDeleteTasks } from '@/hooks/use-tasks'
 
 interface TaskWithGroup extends TaskWithAnalysis {
   group: TaskGroupType | null
@@ -59,6 +60,8 @@ export function TaskTableGrouped({
   isPartiallySelected = false
 }: TaskTableGroupedProps) {
   const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
+  const bulkUpdateStatus = useBulkUpdateTaskStatus()
+  const bulkDelete = useBulkDeleteTasks()
 
   const copySpec = (spec: string) => {
     navigator.clipboard.writeText(spec)
@@ -289,6 +292,12 @@ export function TaskTableGrouped({
                 tasks={tasks}
                 renderTask={renderTaskRow}
                 hasCheckboxes={!!onToggleSelection}
+                onBulkUpdateStatus={(taskIds, status) => {
+                  bulkUpdateStatus.mutate({ taskIds, status })
+                }}
+                onBulkDelete={(taskIds) => {
+                  bulkDelete.mutate(taskIds)
+                }}
               />
             ))}
         </TableBody>
