@@ -282,3 +282,93 @@ export function useDeleteTask() {
     },
   })
 }
+
+// Bulk update task status
+export function useBulkUpdateTaskStatus() {
+  const queryClient = useQueryClient()
+  const supabase = createClient()
+
+  return useMutation({
+    mutationFn: async ({ taskIds, status }: { taskIds: string[]; status: string }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ status, updated_at: new Date().toISOString() })
+        .in('id', taskIds)
+        .select()
+
+      if (error) throw error
+      return data
+    },
+    onMutate: async ({ taskIds, status }) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() })
+
+      const previousTasks = queryClient.getQueryData(taskKeys.lists())
+
+      // Update the tasks in all queries
+      queryClient.setQueriesData(
+        { queryKey: taskKeys.lists() },
+        (old: any) => {
+          if (!old) return old
+          return old.map((task: any) =>
+            taskIds.includes(task.id) ? { ...task, status } : task
+          )
+        }
+      )
+
+      return { previousTasks }
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(taskKeys.lists(), context?.previousTasks)
+      toast.error('Failed to update task status')
+    },
+    onSuccess: (data, { status, taskIds }) => {
+      toast.success(`${taskIds.length} tasks marked as ${status}`)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+    },
+  })
+}
+
+// Bulk delete tasks
+export function useBulkDeleteTasks() {
+  const queryClient = useQueryClient()
+  const supabase = createClient()
+
+  return useMutation({
+    mutationFn: async (taskIds: string[]) => {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .in('id', taskIds)
+
+      if (error) throw error
+    },
+    onMutate: async (taskIds) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() })
+
+      const previousTasks = queryClient.getQueryData(taskKeys.lists())
+
+      // Optimistically remove the tasks
+      queryClient.setQueriesData(
+        { queryKey: taskKeys.lists() },
+        (old: any) => {
+          if (!old) return old
+          return old.filter((task: any) => !taskIds.includes(task.id))
+        }
+      )
+
+      return { previousTasks }
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(taskKeys.lists(), context?.previousTasks)
+      toast.error('Failed to delete tasks')
+    },
+    onSuccess: (data, taskIds) => {
+      toast.success(`${taskIds.length} tasks deleted`)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+    },
+  })
+}

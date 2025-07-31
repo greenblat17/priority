@@ -85,7 +85,7 @@ Based on analysis of the codebase, design workflow, and PRD, this document outli
   - Collapse/expand groups
   - Group statistics
 
-### 5. **Bug Fixes & Polish** (Low Priority)
+### 5. **Bug Fixes & Polish** (Low Priority) [DONE]
 
 **Why**: Overall quality improvement
 

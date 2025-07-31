@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { TaskTableGrouped } from './task-table-grouped'
@@ -13,54 +13,86 @@ import { TaskGroup as TaskGroupType } from '@/types/task-group'
 import { useTasks, useUpdateTaskStatus, useDeleteTask } from '@/hooks/use-tasks'
 import { SkeletonTaskTable } from '@/components/ui/skeleton-task-table'
 import { Pagination } from '@/components/ui/pagination'
-import { NoTasksEmptyState, NoFilterResultsEmptyState } from '@/components/ui/empty-state'
+import { NoTasksEmptyState, NoFilterResultsEmptyState, NoSearchResultsEmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { QuickAddModal } from '@/components/tasks/quick-add-modal'
+import { SearchInput } from '@/components/ui/search-input'
+import { searchTasks } from '@/lib/search-utils'
+import { useBulkSelection } from '@/hooks/use-bulk-selection'
+import { BulkActionsBar } from '@/components/tasks/bulk-actions-bar'
+import { useBulkUpdateTaskStatus, useBulkDeleteTasks } from '@/hooks/use-tasks'
+import { ExportDialog } from '@/components/tasks/export-dialog'
+import { Button } from '@/components/ui/button'
+import { Download, Users } from 'lucide-react'
+import { useFilterPersistence } from '@/hooks/use-filter-persistence'
+import { GroupManagementDialog } from '@/components/tasks/group-management-dialog'
+import { useCreateTaskGroup, useUpdateTaskGroup, useDeleteTaskGroup } from '@/hooks/use-task-groups'
 
 export function TaskList() {
   const supabase = createClient()
   const queryClient = useQueryClient()
   
-  // Filter states
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<'priority' | 'date' | 'status'>('priority')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  // Filter states with persistence
+  const { filters, updateFilter, resetFilters, isInitialized } = useFilterPersistence()
   const [currentPage, setCurrentPage] = useState(1)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showGroupDialog, setShowGroupDialog] = useState(false)
   const itemsPerPage = 20
 
   // Use optimized task hooks
   const { data: tasks, isLoading, error } = useTasks({
-    status: statusFilter !== 'all' ? statusFilter : undefined,
-    category: categoryFilter !== 'all' ? categoryFilter : undefined,
-    sortBy: sortBy === 'date' ? 'date' : 'priority',
+    status: filters.status !== 'all' ? filters.status : undefined,
+    category: filters.category !== 'all' ? filters.category : undefined,
+    sortBy: filters.sortBy === 'date' ? 'date' : 'priority',
     page: currentPage,
     limit: itemsPerPage,
   })
 
   const updateStatusMutation = useUpdateTaskStatus()
+  const bulkUpdateStatusMutation = useBulkUpdateTaskStatus()
+  const bulkDeleteMutation = useBulkDeleteTasks()
+  
+  // Group management mutations
+  const createGroupMutation = useCreateTaskGroup()
+  const updateGroupMutation = useUpdateTaskGroup()
+  const deleteGroupMutation = useDeleteTaskGroup()
 
   // Use the enhanced delete mutation from use-tasks
   const deleteTaskMutation = useDeleteTask()
 
   // Reset page when filters change
-  const handleFilterChange = (filterSetter: (value: string) => void) => (value: string) => {
+  const handleFilterChange = <K extends keyof typeof filters>(key: K) => (value: typeof filters[K]) => {
     setCurrentPage(1)
-    filterSetter(value)
+    updateFilter(key, value)
   }
 
-  // Filter and sort tasks (client-side for now, will move to server)
-  const filteredAndSortedTasks = tasks
+  // Filter, search and sort tasks
+  const processedTasks = tasks ? searchTasks(tasks, searchQuery) : []
+  
+  // Bulk selection hook
+  const {
+    selectedIds,
+    selectedItems,
+    toggleSelection,
+    toggleAll,
+    clearSelection,
+    isAllSelected,
+    isPartiallySelected,
+    selectedCount
+  } = useBulkSelection(processedTasks)
+  
+  const filteredAndSortedTasks = processedTasks
     ?.filter(task => {
-      if (statusFilter !== 'all' && task.status !== statusFilter) return false
-      if (categoryFilter !== 'all' && task.analysis?.category !== categoryFilter) return false
+      if (filters.status !== 'all' && task.status !== filters.status) return false
+      if (filters.category !== 'all' && task.analysis?.[0]?.category !== filters.category) return false
       return true
     })
     .sort((a, b) => {
       let comparison = 0
       
-      switch (sortBy) {
+      switch (filters.sortBy) {
         case 'priority':
           comparison = (a.analysis?.priority || 0) - (b.analysis?.priority || 0)
           break
@@ -73,13 +105,37 @@ export function TaskList() {
           break
       }
       
-      return sortOrder === 'asc' ? comparison : -comparison
+      return filters.sortOrder === 'asc' ? comparison : -comparison
     })
   
   // Calculate total pages (will be improved with server-side count)
   const totalPages = Math.ceil((filteredAndSortedTasks?.length || 0) / itemsPerPage)
+  
+  // Extract unique groups from tasks
+  const taskGroups = tasks ? 
+    Array.from(new Set(tasks.filter(t => t.group).map(t => t.group)))
+      .filter((group): group is NonNullable<typeof group> => group !== null)
+    : []
+  
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + A to select all
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a' && filteredAndSortedTasks.length > 0) {
+        e.preventDefault()
+        toggleAll()
+      }
+      // Escape to clear selection
+      if (e.key === 'Escape' && selectedCount > 0) {
+        clearSelection()
+      }
+    }
 
-  if (isLoading) {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [toggleAll, clearSelection, selectedCount, filteredAndSortedTasks])
+
+  if (isLoading || !isInitialized) {
     return (
       <div className="container mx-auto p-6">
         <Card>
@@ -127,8 +183,28 @@ export function TaskList() {
                 AI-prioritized tasks based on business impact
               </CardDescription>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredAndSortedTasks?.length || 0} tasks
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowGroupDialog(true)}
+                disabled={!tasks || tasks.length === 0}
+              >
+                <Users className="h-4 w-4 mr-1" />
+                Groups
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowExportDialog(true)}
+                disabled={!filteredAndSortedTasks || filteredAndSortedTasks.length === 0}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                {filteredAndSortedTasks?.length || 0} tasks
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -141,15 +217,30 @@ export function TaskList() {
             />
           ) : (
             <>
+              {/* Search bar */}
+              <div className="mb-4">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Search tasks by description, category, priority, or status..."
+                  className="max-w-md"
+                />
+                {searchQuery && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Found {filteredAndSortedTasks?.length || 0} results for "{searchQuery}"
+                  </p>
+                )}
+              </div>
+              
               <TaskFilters
-                statusFilter={statusFilter}
-                setStatusFilter={handleFilterChange(setStatusFilter)}
-                categoryFilter={categoryFilter}
-                setCategoryFilter={handleFilterChange(setCategoryFilter)}
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
+                statusFilter={filters.status}
+                setStatusFilter={handleFilterChange('status')}
+                categoryFilter={filters.category}
+                setCategoryFilter={handleFilterChange('category')}
+                sortBy={filters.sortBy}
+                setSortBy={(value) => updateFilter('sortBy', value)}
+                sortOrder={filters.sortOrder}
+                setSortOrder={(value) => updateFilter('sortOrder', value)}
               />
               
               {/* Show empty state based on context */}
@@ -157,11 +248,13 @@ export function TaskList() {
                 <>
                   {tasks?.length === 0 ? (
                     <NoTasksEmptyState onCreateTask={() => setShowQuickAdd(true)} />
+                  ) : searchQuery ? (
+                    <NoSearchResultsEmptyState />
                   ) : (
                     <NoFilterResultsEmptyState 
                       onClearFilters={() => {
-                        setStatusFilter('all')
-                        setCategoryFilter('all')
+                        resetFilters()
+                        setSearchQuery('')
                       }} 
                     />
                   )}
@@ -176,6 +269,12 @@ export function TaskList() {
                     updateStatusMutation.mutate({ taskId, status })
                   }
                   onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
+                  searchQuery={searchQuery}
+                  selectedIds={selectedIds}
+                  onToggleSelection={toggleSelection}
+                  onToggleAll={toggleAll}
+                  isAllSelected={isAllSelected}
+                  isPartiallySelected={isPartiallySelected}
                 />
               )}
               
@@ -196,6 +295,51 @@ export function TaskList() {
       <QuickAddModal 
         open={showQuickAdd} 
         onOpenChange={setShowQuickAdd} 
+      />
+      
+      {/* Export Dialog */}
+      <ExportDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        tasks={filteredAndSortedTasks || []}
+        selectedTasks={selectedItems}
+      />
+      
+      {/* Group Management Dialog */}
+      <GroupManagementDialog
+        open={showGroupDialog}
+        onOpenChange={setShowGroupDialog}
+        groups={taskGroups}
+        tasks={tasks || []}
+        onCreateGroup={(name, taskIds) => {
+          createGroupMutation.mutate({ name, taskIds })
+        }}
+        onUpdateGroup={(groupId, name) => {
+          updateGroupMutation.mutate({ groupId, name })
+        }}
+        onDeleteGroup={(groupId) => {
+          deleteGroupMutation.mutate(groupId)
+        }}
+      />
+      
+      {/* Bulk Actions Bar */}
+      <BulkActionsBar
+        selectedCount={selectedCount}
+        onClearSelection={clearSelection}
+        onUpdateStatus={(status) => {
+          bulkUpdateStatusMutation.mutate({ 
+            taskIds: Array.from(selectedIds), 
+            status 
+          })
+          clearSelection()
+        }}
+        onDelete={() => {
+          if (confirm(`Are you sure you want to delete ${selectedCount} tasks?`)) {
+            bulkDeleteMutation.mutate(Array.from(selectedIds))
+            clearSelection()
+          }
+        }}
+        onExport={() => setShowExportDialog(true)}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { FilterPresets } from './filter-presets'
 import {
   Select,
   SelectContent,
@@ -31,6 +32,20 @@ export function TaskFilters({
   sortOrder,
   setSortOrder,
 }: TaskFiltersProps) {
+  const currentFilters = {
+    status: statusFilter,
+    category: categoryFilter,
+    sortBy,
+    sortOrder
+  }
+
+  const handleApplyPreset = (filters: typeof currentFilters) => {
+    setStatusFilter(filters.status)
+    setCategoryFilter(filters.category)
+    setSortBy(filters.sortBy)
+    setSortOrder(filters.sortOrder)
+  }
+
   return (
     <div className="flex flex-wrap gap-4">
       <div className="flex items-center gap-4">
@@ -101,6 +116,11 @@ export function TaskFilters({
           Clear filters
         </Button>
       )}
+      
+      <FilterPresets
+        currentFilters={currentFilters}
+        onApplyPreset={handleApplyPreset}
+      />
     </div>
   )
 }

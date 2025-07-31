@@ -26,6 +26,9 @@ import { MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
+import { highlightSearchTerm } from '@/lib/search-utils'
+import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
 
 interface TaskWithGroup extends TaskWithAnalysis {
   group: TaskGroupType | null
@@ -35,9 +38,25 @@ interface TaskTableGroupedProps {
   tasks: TaskWithGroup[]
   onUpdateStatus: (taskId: string, status: TaskStatusType) => void
   onDeleteTask: (taskId: string) => void
+  searchQuery?: string
+  selectedIds?: Set<string>
+  onToggleSelection?: (taskId: string) => void
+  onToggleAll?: () => void
+  isAllSelected?: boolean
+  isPartiallySelected?: boolean
 }
 
-export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTableGroupedProps) {
+export function TaskTableGrouped({ 
+  tasks, 
+  onUpdateStatus, 
+  onDeleteTask, 
+  searchQuery = '',
+  selectedIds,
+  onToggleSelection,
+  onToggleAll,
+  isAllSelected = false,
+  isPartiallySelected = false
+}: TaskTableGroupedProps) {
   const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
 
   const copySpec = (spec: string) => {
@@ -108,25 +127,44 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
   }, {} as Record<string, { group: TaskGroupType | null; tasks: TaskWithGroup[] }>)
 
   // Render a single task row
-  const renderTaskRow = (task: TaskWithAnalysis) => (
+  const renderTaskRow = (task: TaskWithAnalysis) => {
+    const isSelected = selectedIds?.has(task.id) || false
+    
+    return (
     <TableRow 
       key={task.id}
-      className="cursor-pointer "
-      onClick={() => setSelectedTask(task)}
+      className={cn(
+        "cursor-pointer",
+        isSelected && "bg-muted/50"
+      )}
+      onClick={(e) => {
+        // Don't open detail dialog if clicking checkbox
+        if ((e.target as HTMLElement).closest('[data-checkbox]')) return
+        setSelectedTask(task)
+      }}
     >
+      {onToggleSelection && (
+        <TableCell className="w-[40px]" data-checkbox>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelection(task.id)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </TableCell>
+      )}
       <TableCell className="font-semibold">
         <div className="max-w-md">
-          <p className="truncate">{task.description}</p>
+          <div className="truncate">{searchQuery ? highlightSearchTerm(task.description, searchQuery) : task.description}</div>
           {task.source && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Source: {task.source.replace('_', ' ')}
-            </p>
+            <div className="text-sm text-muted-foreground mt-1">
+              Source: {searchQuery ? highlightSearchTerm(task.source.replace('_', ' '), searchQuery) : task.source.replace('_', ' ')}
+            </div>
           )}
         </div>
       </TableCell>
       <TableCell>
         <Badge variant={getCategoryVariant(task.analysis?.category)}>
-          {task.analysis?.category || 'pending'}
+          <span>{searchQuery && task.analysis?.category ? highlightSearchTerm(task.analysis.category, searchQuery) : (task.analysis?.category || 'pending')}</span>
         </Badge>
       </TableCell>
       <TableCell>
@@ -146,7 +184,7 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
       </TableCell>
       <TableCell>
         <Badge variant={getStatusVariant(task.status)}>
-          {task.status.replace('_', ' ')}
+          <span>{searchQuery ? highlightSearchTerm(task.status.replace('_', ' '), searchQuery) : task.status.replace('_', ' ')}</span>
         </Badge>
       </TableCell>
       <TableCell className="text-right">
@@ -200,7 +238,8 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
         </DropdownMenu>
       </TableCell>
     </TableRow>
-  )
+    )
+  }
 
   if (tasks.length === 0) {
     return (
@@ -218,6 +257,15 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
         </TableCaption>
         <TableHeader>
           <TableRow>
+            {onToggleAll && (
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={isAllSelected}
+                  onCheckedChange={onToggleAll}
+                  data-state={isPartiallySelected && !isAllSelected ? "indeterminate" : undefined}
+                />
+              </TableHead>
+            )}
             <TableHead className="w-[40%]">Task</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Priority</TableHead>
@@ -239,6 +287,7 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
                 group={group!}
                 tasks={tasks}
                 renderTask={renderTaskRow}
+                hasCheckboxes={!!onToggleSelection}
               />
             ))}
         </TableBody>
