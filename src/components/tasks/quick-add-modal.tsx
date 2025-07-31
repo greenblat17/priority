@@ -59,7 +59,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   const [pendingTaskData, setPendingTaskData] = useState<TaskInput | null>(null)
   
   const form = useForm<TaskInput>({
-    resolver: zodResolver(taskInputSchema),
+    resolver: zodResolver(taskInputSchema) as any,
     defaultValues: {
       source: TaskSource.INTERNAL,
       description: '',
