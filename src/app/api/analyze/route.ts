@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     console.log('[AI Analysis] Calling OpenAI API')
     const completion = await withRetry(async () => {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4-1106-preview', // Use the latest GPT-4 Turbo model
+        model: 'gpt-4o-mini', // Use GPT-4o-mini for faster response times
         messages: [{ 
           role: 'system', 
           content: prompt 

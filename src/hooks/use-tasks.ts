@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useEffect } from 'react'
 import type { Task, TaskWithAnalysis } from '@/types/task'
 import type { TaskGroup } from '@/types/task-group'
 
@@ -24,6 +25,56 @@ export function useTasks(filters?: {
   limit?: number
 }) {
   const supabase = createClient()
+  const queryClient = useQueryClient()
+  
+  // Set up real-time subscriptions for task updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('task-updates')
+      // Listen for task analysis updates
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'task_analyses'
+        },
+        (payload) => {
+          console.log('[Real-time] Task analysis update:', payload)
+          
+          // Invalidate queries to refetch tasks with new analysis
+          queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+          
+          // Show toast when analysis completes
+          if (payload.eventType === 'INSERT') {
+            toast.success('Task analysis completed!', {
+              description: 'AI has finished analyzing your task'
+            })
+          }
+        }
+      )
+      // Listen for task updates (including group changes)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tasks',
+          filter: 'group_id=neq.null'
+        },
+        (payload) => {
+          console.log('[Real-time] Task grouped:', payload)
+          
+          // Invalidate queries to refetch tasks with new group
+          queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, queryClient])
   
   return useQuery({
     queryKey: taskKeys.list(filters),

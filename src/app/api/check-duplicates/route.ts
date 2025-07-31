@@ -32,16 +32,18 @@ export async function POST(request: Request) {
       )
     }
 
-    // Fetch user's existing tasks (last 90 days for performance)
-    const ninetyDaysAgo = new Date()
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+    // Fetch user's existing tasks (last 30 days, max 100 tasks for performance)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
     const { data: existingTasks, error: tasksError } = await supabase
       .from('tasks')
       .select('*')
       .eq('user_id', user.id)
-      .gte('created_at', ninetyDaysAgo.toISOString())
+      .in('status', ['pending', 'in_progress']) // Only fetch active tasks
+      .gte('created_at', thirtyDaysAgo.toISOString())
       .order('created_at', { ascending: false })
+      .limit(100) // Limit to 100 most recent tasks
 
     if (tasksError) {
       console.error('[Duplicate Check] Failed to fetch tasks:', tasksError)
@@ -63,7 +65,7 @@ export async function POST(request: Request) {
     const potentialDuplicates = await detectDuplicates(
       description,
       tasksToCheck,
-      0.85 // 85% similarity threshold
+      0.80 // 80% similarity threshold (lowered for better performance)
     )
 
     // Generate embedding for the new task (for potential storage)

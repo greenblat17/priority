@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { TaskDetailDialog } from './task-detail-dialog'
-import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw } from 'lucide-react'
+import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { getSourceLabel } from '@/lib/task-source-utils'
@@ -122,29 +122,49 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
                 </div>
               </TableCell>
               <TableCell>
-                <Badge 
-                  variant={getCategoryVariant(task.analysis?.category)}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  {task.analysis?.category || 'pending'}
-                </Badge>
+                {task.analysis ? (
+                  <Badge 
+                    variant={getCategoryVariant(task.analysis?.category)}
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    {task.analysis.category}
+                  </Badge>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>analyzing</span>
+                  </div>
+                )}
               </TableCell>
               <TableCell>
-                <span className={`${getPriorityColor(task.analysis?.priority)} font-mono`}>
-                  {task.analysis?.priority || '-'}/10
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <span className={getComplexityColor(task.analysis?.complexity)}>
-                    {task.analysis?.complexity || 'analyzing'}
+                {task.analysis ? (
+                  <span className={`${getPriorityColor(task.analysis.priority)} font-mono`}>
+                    {task.analysis.priority}/10
                   </span>
-                  {task.analysis?.estimated_hours && (
-                    <span className="text-xs text-gray-500">
-                      ({task.analysis.estimated_hours}h)
+                ) : (
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  </div>
+                )}
+              </TableCell>
+              <TableCell>
+                {task.analysis ? (
+                  <div className="flex items-center gap-1">
+                    <span className={getComplexityColor(task.analysis.complexity)}>
+                      {task.analysis.complexity}
                     </span>
-                  )}
-                </div>
+                    {task.analysis.estimated_hours && (
+                      <span className="text-xs text-gray-500">
+                        ({task.analysis.estimated_hours}h)
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>analyzing</span>
+                  </div>
+                )}
               </TableCell>
               <TableCell>
                 <Badge 

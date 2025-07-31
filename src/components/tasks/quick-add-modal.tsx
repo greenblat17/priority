@@ -50,7 +50,7 @@ import { Input } from '@/components/ui/input'
 import { TaskInput, taskInputSchema, TaskSource } from '@/types/task'
 import { DuplicateReviewDialog } from './duplicate-review-dialog'
 import type { TaskSimilarity, DuplicateCheckResponse } from '@/types/duplicate'
-import type { ExtendedDuplicateReviewAction } from '@/types/task-group'
+import type { ExtendedDuplicateReviewAction, TaskGroup } from '@/types/task-group'
 import { createTaskGroupClient } from '@/lib/task-grouping-client'
 
 interface QuickAddModalProps {
@@ -87,9 +87,10 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     mutationFn: async (params: { 
       data: TaskInput, 
       groupWithTaskIds?: string[],
-      similarities?: Array<{ taskId: string, similarity: number }>
+      similarities?: Array<{ taskId: string, similarity: number }>,
+      existingGroup?: TaskGroup | null
     }) => {
-      const { data, groupWithTaskIds, similarities } = params
+      const { data, groupWithTaskIds, similarities, existingGroup } = params
       // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
@@ -109,6 +110,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
 
       if (error) throw error
 
+      let taskGroup = existingGroup
+      
       // Handle grouping if requested
       if (groupWithTaskIds && groupWithTaskIds.length > 0) {
         try {
@@ -129,6 +132,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
           
           if (group) {
             console.log('Task group created:', group)
+            taskGroup = group
           }
         } catch (error) {
           console.error('Failed to create task group:', error)
@@ -136,37 +140,72 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         }
       }
 
-      // Trigger AI analysis
-      try {
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskId: task.id }),
-          credentials: 'include' // Important: Include cookies for authentication
-        })
-
+      // Invalidate queries immediately to show the new task
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      
+      // Trigger AI analysis asynchronously (fire and forget)
+      fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: task.id }),
+        credentials: 'include'
+      }).then(response => {
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-          console.error('AI Analysis failed:', response.status, errorData)
-          
-          // Show user-friendly error message
-          if (response.status === 401) {
-            toast.error('Authentication error. Please login again.')
-          } else if (response.status === 503) {
-            toast.warning('AI service not configured. Analysis skipped.')
-          } else {
-            toast.warning(`AI analysis failed: ${errorData.error || 'Unknown error'}`)
-          }
+          console.error('[AI Analysis] Background analysis failed:', response.status)
         } else {
-          const result = await response.json()
-          console.log('AI Analysis triggered successfully:', result)
+          console.log('[AI Analysis] Background analysis started for task:', task.id)
         }
-      } catch (error) {
-        console.error('Failed to trigger analysis:', error)
-        toast.error('Failed to analyze task. You can retry later.')
-      }
+      }).catch(error => {
+        console.error('[AI Analysis] Background analysis error:', error)
+        // Silent failure - don't interrupt user flow
+      })
 
-      return task
+      // Return task with group information for optimistic updates
+      return { ...task, group: taskGroup }
+    },
+    onMutate: async (params) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData(['tasks'])
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['tasks'], (old: any) => {
+        if (!old) return old
+        
+        // Create optimistic task with temporary ID
+        const optimisticTask = {
+          id: 'temp-' + Date.now(),
+          description: params.data.description,
+          source: params.data.source,
+          customer_info: params.data.customerInfo || null,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          analysis: null,
+          group: params.existingGroup || (params.groupWithTaskIds ? {
+            id: 'temp-group-' + Date.now(),
+            name: 'New Group',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          } : null)
+        }
+        
+        return [optimisticTask, ...old]
+      })
+
+      // Return a context with the previous tasks for rollback
+      return { previousTasks }
+    },
+    onError: (error: Error, variables, context) => {
+      // If the mutation fails, use the context-value from onMutate
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks)
+      }
+      toast.error('Failed to add task', {
+        description: error.message || 'Please try again',
+      })
     },
     onSuccess: () => {
       toast.success('Task added successfully', {
@@ -174,13 +213,10 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       })
       form.reset()
       onClose()
-      // Invalidate tasks query to refetch
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
-    onError: (error: Error) => {
-      toast.error('Failed to add task', {
-        description: error.message || 'Please try again',
-      })
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
     }
   })
 
@@ -248,10 +284,17 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             .filter(dup => action.selectedTaskIds.includes(dup.taskId))
             .map(dup => ({ taskId: dup.taskId, similarity: dup.similarity }))
           
+          // Get the group from one of the selected tasks (if they're already grouped)
+          const selectedTasks = potentialDuplicates.filter(dup => 
+            action.selectedTaskIds.includes(dup.taskId)
+          )
+          const existingGroup = selectedTasks[0]?.task.group
+          
           createTaskMutation.mutate({ 
             data: pendingTaskData,
             groupWithTaskIds: action.selectedTaskIds,
-            similarities
+            similarities,
+            existingGroup
           })
         }
         break
