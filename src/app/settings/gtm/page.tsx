@@ -72,9 +72,9 @@ export default function GTMSettingsPage() {
     <div className="container max-w-3xl mx-auto px-4 py-8">
       <div className="mb-6">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/dashboard">
+          <Link href="/overview">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
+            Back to Overview
           </Link>
         </Button>
       </div>

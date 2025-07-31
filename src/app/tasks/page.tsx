@@ -15,9 +15,9 @@ export default function TasksPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <Button asChild variant="ghost" size="sm">
-            <PrefetchLink href="/dashboard">
+            <PrefetchLink href="/overview">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
+              Back to Overview
             </PrefetchLink>
           </Button>
           

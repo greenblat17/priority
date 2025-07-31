@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
+  const next = requestUrl.searchParams.get('next') ?? '/tasks'
 
   if (code) {
     const supabase = await createClient()
@@ -23,12 +23,12 @@ export async function GET(request: Request) {
           .single()
         
         // If new user and no specific next URL, redirect to onboarding
-        if (!manifest && next === '/dashboard') {
+        if (!manifest && next === '/tasks') {
           return NextResponse.redirect(new URL('/onboarding', requestUrl.origin))
         }
       }
       
-      // Otherwise redirect to the 'next' URL or dashboard
+      // Otherwise redirect to the 'next' URL or tasks
       return NextResponse.redirect(new URL(next, requestUrl.origin))
     }
   }

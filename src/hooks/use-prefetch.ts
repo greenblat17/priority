@@ -69,11 +69,11 @@ export function usePrefetch() {
     [prefetch, supabase]
   )
 
-  // Prefetch dashboard data
-  const prefetchDashboard = useCallback(
+  // Prefetch overview data
+  const prefetchOverview = useCallback(
     (options?: PrefetchOptions) => {
       return prefetch(
-        ['dashboard'],
+        ['overview'],
         async () => {
           const { data: { user } } = await supabase.auth.getUser()
           if (!user) return null
@@ -118,7 +118,8 @@ export function usePrefetch() {
   return {
     prefetch,
     prefetchTasks,
-    prefetchDashboard,
+    prefetchOverview,
+    prefetchDashboard: prefetchOverview, // Keep for backward compatibility
     cancelPrefetch,
   }
 }

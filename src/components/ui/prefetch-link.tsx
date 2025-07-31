@@ -18,7 +18,7 @@ export function PrefetchLink({
   ...props 
 }: PrefetchLinkProps) {
   const router = useRouter()
-  const { prefetchTasks, prefetchDashboard, cancelPrefetch } = usePrefetch()
+  const { prefetchTasks, prefetchOverview, cancelPrefetch } = usePrefetch()
   const isPrefetchingRef = useRef(false)
 
   const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -36,13 +36,13 @@ export function PrefetchLink({
     
     if (path === '/tasks') {
       prefetchTasks({ delay: prefetchDelay })
-    } else if (path === '/dashboard') {
-      prefetchDashboard({ delay: prefetchDelay })
+    } else if (path === '/overview') {
+      prefetchOverview({ delay: prefetchDelay })
     }
     
     // Also use Next.js built-in prefetch
     router.prefetch(path)
-  }, [href, router, prefetchTasks, prefetchDashboard, prefetchDelay, onMouseEnter])
+  }, [href, router, prefetchTasks, prefetchOverview, prefetchDelay, onMouseEnter])
 
   const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
     onMouseLeave?.(e)

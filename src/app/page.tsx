@@ -9,9 +9,9 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to tasks
   if (user) {
-    redirect('/dashboard');
+    redirect('/tasks');
   }
   return (
     <div className="flex flex-col">

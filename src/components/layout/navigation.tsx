@@ -20,8 +20,8 @@ export function Navigation() {
   }
 
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard' },
     { href: '/tasks', label: 'Tasks' },
+    { href: '/overview', label: 'Overview' },
     { href: '/settings/gtm', label: 'Settings' },
   ]
 
@@ -31,7 +31,7 @@ export function Navigation() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo with smooth hover */}
           <PrefetchLink 
-            href={user ? "/dashboard" : "/"}
+            href={user ? "/tasks" : "/"}
             className="flex items-center gap-2 group"
           >
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center
@@ -50,7 +50,7 @@ export function Navigation() {
               <nav className="hidden md:flex items-center gap-6">
                 {navItems.map((item) => {
                   const isActive = pathname === item.href || 
-                    (item.href === '/dashboard' && pathname === '/') ||
+                    (item.href === '/tasks' && pathname === '/') ||
                     (item.href === '/settings/gtm' && pathname.startsWith('/settings'))
                   
                   return (
@@ -102,7 +102,7 @@ export function Navigation() {
             <nav className="container mx-auto px-6 py-4 space-y-2">
               {navItems.map((item) => {
                 const isActive = pathname === item.href || 
-                  (item.href === '/dashboard' && pathname === '/') ||
+                  (item.href === '/tasks' && pathname === '/') ||
                   (item.href === '/settings/gtm' && pathname.startsWith('/settings'))
                 
                 return (

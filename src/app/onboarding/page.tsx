@@ -36,7 +36,7 @@ export default function OnboardingPage() {
       if (manifest) {
         setHasExistingManifest(true)
         // If they already have a manifest, redirect to dashboard
-        router.push('/dashboard')
+        router.push('/tasks')
       }
     } catch (error) {
       console.error('Error checking manifest:', error)
