@@ -206,13 +206,13 @@ export function DashboardContent({
                             <p className="font-semibold text-black line-clamp-1">{task.description}</p>
                             <div className="flex items-center gap-4 ">
                               <span className="text-sm text-gray-500">
-                                {task.analysis?.[0]?.category || 'Uncategorized'}
+                                {task.analysis?.category || 'Uncategorized'}
                               </span>
-                              <span className={`text-sm font-semibold text-blue-500 ${task.analysis?.[0]?.priority >= 9 ? 'animate-pulse-subtle' : ''}`}>
-                                Priority: {task.analysis?.[0]?.priority || '-'}/10
+                              <span className={`text-sm font-semibold text-blue-500 ${task.analysis?.priority >= 9 ? 'animate-pulse-subtle' : ''}`}>
+                                Priority: {task.analysis?.priority || '-'}/10
                               </span>
                               <span className="text-sm text-gray-500">
-                                {task.analysis?.[0]?.estimated_hours ? `${task.analysis[0].estimated_hours}h` : ''}
+                                {task.analysis?.estimated_hours ? `${task.analysis.estimated_hours}h` : ''}
                               </span>
                             </div>
                           </div>
@@ -231,15 +231,15 @@ export function DashboardContent({
                             <p className="font-semibold text-black line-clamp-1">{task.description}</p>
                             <div className="flex items-center gap-4 ">
                               <span className="text-sm text-gray-500">
-                                {task.analysis?.[0]?.category || 'Uncategorized'}
+                                {task.analysis?.category || 'Uncategorized'}
                               </span>
                               <span className={`text-sm font-semibold ${
-                                task.analysis?.[0]?.priority >= 6 ? 'text-black' : 'text-gray-600'
+                                task.analysis?.priority >= 6 ? 'text-black' : 'text-gray-600'
                               }`}>
-                                Priority: {task.analysis?.[0]?.priority || '-'}/10
+                                Priority: {task.analysis?.priority || '-'}/10
                               </span>
                               <span className="text-sm text-gray-500">
-                                {task.analysis?.[0]?.estimated_hours ? `${task.analysis[0].estimated_hours}h` : ''}
+                                {task.analysis?.estimated_hours ? `${task.analysis.estimated_hours}h` : ''}
                               </span>
                             </div>
                           </div>
@@ -277,14 +277,14 @@ export function DashboardContent({
                             <p className="font-semibold text-black line-clamp-1">{task.description}</p>
                             <div className="flex items-center gap-4 ">
                               <span className="text-sm text-gray-500">
-                                {task.analysis?.[0]?.category || 'Uncategorized'}
+                                {task.analysis?.category || 'Uncategorized'}
                               </span>
                               <span className={`text-sm font-semibold ${
-                                task.analysis?.[0]?.priority >= 8 ? 'text-blue-500' : 
-                                task.analysis?.[0]?.priority >= 6 ? 'text-black' : 
+                                task.analysis?.priority >= 8 ? 'text-blue-500' : 
+                                task.analysis?.priority >= 6 ? 'text-black' : 
                                 'text-gray-600'
                               }`}>
-                                Priority: {task.analysis?.[0]?.priority || '-'}
+                                Priority: {task.analysis?.priority || '-'}
                               </span>
                               <span className="text-sm text-gray-500">
                                 {new Date(task.created_at).toLocaleDateString()}

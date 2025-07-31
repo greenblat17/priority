@@ -86,7 +86,7 @@ export function TaskList() {
   const filteredAndSortedTasks = processedTasks
     ?.filter(task => {
       if (filters.status !== 'all' && task.status !== filters.status) return false
-      if (filters.category !== 'all' && task.analysis?.[0]?.category !== filters.category) return false
+      if (filters.category !== 'all' && task.analysis?.category !== filters.category) return false
       
       // Confidence filter
       if (filters.confidence !== 'all' && task.analysis) {

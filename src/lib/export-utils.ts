@@ -34,7 +34,7 @@ function exportToJSON(tasks: TaskWithAnalysis[], fields: string[]) {
     
     fields.forEach(field => {
       if (field === 'category' || field === 'priority' || field === 'complexity' || field === 'estimated_hours' || field === 'implementation_spec') {
-        taskData[field] = task.analysis?.[0]?.[field as keyof typeof task.analysis[0]] || ''
+        taskData[field] = task.analysis?.[field as keyof NonNullable<typeof task.analysis>] || ''
       } else {
         taskData[field] = task[field as keyof typeof task] || ''
       }
@@ -57,7 +57,7 @@ function exportToCSV(tasks: TaskWithAnalysis[], fields: string[]) {
       let value = ''
       
       if (field === 'category' || field === 'priority' || field === 'complexity' || field === 'estimated_hours' || field === 'implementation_spec') {
-        value = task.analysis?.[0]?.[field as keyof typeof task.analysis[0]]?.toString() || ''
+        value = task.analysis?.[field as keyof NonNullable<typeof task.analysis>]?.toString() || ''
       } else {
         value = task[field as keyof typeof task]?.toString() || ''
       }

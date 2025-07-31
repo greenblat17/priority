@@ -23,20 +23,20 @@ export function searchTasks(tasks: TaskWithAnalysis[], searchQuery: string): Tas
     }
 
     // Search in category (from analysis)
-    if (task.analysis?.[0]?.category?.toLowerCase().includes(query)) {
+    if (task.analysis?.category?.toLowerCase().includes(query)) {
       return true
     }
 
     // Search in priority (convert to string for number search)
-    if (task.analysis?.[0]?.priority !== undefined) {
-      const priorityStr = task.analysis[0].priority.toString()
+    if (task.analysis?.priority !== undefined && task.analysis?.priority !== null) {
+      const priorityStr = task.analysis.priority.toString()
       if (priorityStr.includes(query)) {
         return true
       }
     }
 
     // Search in implementation spec
-    if (task.analysis?.[0]?.implementation_spec?.toLowerCase().includes(query)) {
+    if (task.analysis?.implementation_spec?.toLowerCase().includes(query)) {
       return true
     }
 
