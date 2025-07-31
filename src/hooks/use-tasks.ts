@@ -29,6 +29,14 @@ export function useTasks(filters?: {
   
   // Set up real-time subscriptions for task updates
   useEffect(() => {
+    // Feature flag to disable realtime if needed
+    const ENABLE_REALTIME = true
+    
+    if (!ENABLE_REALTIME) {
+      console.log('[Real-time] Realtime subscriptions disabled')
+      return
+    }
+    
     console.log('[Real-time] Setting up task subscriptions...')
     
     // Get the current session for authentication
@@ -99,15 +107,14 @@ export function useTasks(filters?: {
           })
         }
         )
-        .subscribe((status) => {
-          console.log('[Real-time] Subscription status:', status)
+        .subscribe((status, error) => {
+          console.log('[Real-time] Subscription status:', status, error)
           if (status === 'SUBSCRIBED') {
             console.log('[Real-time] Successfully subscribed to task updates')
           } else if (status === 'CHANNEL_ERROR') {
-            console.error('[Real-time] Failed to subscribe to task updates')
-            toast.error('Real-time updates unavailable', {
-              description: 'Please refresh the page if tasks don\'t update automatically'
-            })
+            console.error('[Real-time] Failed to subscribe to task updates:', error)
+            // Don't show error toast since polling is working as fallback
+            console.log('[Real-time] Falling back to polling mechanism')
           } else if (status === 'TIMED_OUT') {
             console.error('[Real-time] Subscription timed out')
           } else if (status === 'CLOSED') {

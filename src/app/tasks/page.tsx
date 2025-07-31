@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { TaskList } from '@/components/tasks/task-list'
 import { QuickAddModal } from '@/components/tasks/quick-add-modal'
-import Link from 'next/link'
+import { PrefetchLink } from '@/components/ui/prefetch-link'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { useState } from 'react'
 
@@ -15,10 +15,10 @@ export default function TasksPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <Button asChild variant="ghost" size="sm">
-            <Link href="/dashboard">
+            <PrefetchLink href="/dashboard">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
-            </Link>
+            </PrefetchLink>
           </Button>
           
           <Button onClick={() => setIsQuickAddOpen(true)}>
