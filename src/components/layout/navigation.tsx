@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { PrefetchLink } from '@/components/ui/prefetch-link'
 import { usePathname } from 'next/navigation'
 import { useSupabase } from '@/components/providers/supabase-provider'
 import { AuthButton } from '@/components/auth/auth-button'
@@ -30,7 +30,7 @@ export function Navigation() {
       <div className="container mx-auto px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo with smooth hover */}
-          <Link 
+          <PrefetchLink 
             href={user ? "/dashboard" : "/"}
             className="flex items-center gap-2 group"
           >
@@ -41,7 +41,7 @@ export function Navigation() {
             <span className="font-semibold text-black text-lg">
               TaskPriority
             </span>
-          </Link>
+          </PrefetchLink>
           
           {/* Navigation and Auth */}
           <div className="flex items-center gap-4">
@@ -54,7 +54,7 @@ export function Navigation() {
                     (item.href === '/settings/gtm' && pathname.startsWith('/settings'))
                   
                   return (
-                    <Link 
+                    <PrefetchLink 
                       key={item.href}
                       href={item.href}
                       className={cn(
@@ -69,7 +69,7 @@ export function Navigation() {
                         "absolute -bottom-0.5 left-0 h-0.5 bg-black transition-all duration-200",
                         isActive ? "w-full" : "w-0 group-hover:w-full"
                       )} />
-                    </Link>
+                    </PrefetchLink>
                   )
                 })}
               </nav>
@@ -106,7 +106,7 @@ export function Navigation() {
                   (item.href === '/settings/gtm' && pathname.startsWith('/settings'))
                 
                 return (
-                  <Link
+                  <PrefetchLink
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -118,7 +118,7 @@ export function Navigation() {
                     )}
                   >
                     {item.label}
-                  </Link>
+                  </PrefetchLink>
                 )
               })}
             </nav>

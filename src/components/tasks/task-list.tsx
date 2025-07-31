@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { TaskTableGrouped } from './task-table-grouped'
 import { TaskFilters } from './task-filters'
@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { TaskWithAnalysis } from '@/types/task'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
-import { useTasks, useUpdateTaskStatus } from '@/hooks/use-tasks'
+import { useTasks, useUpdateTaskStatus, useDeleteTask } from '@/hooks/use-tasks'
 import { SkeletonTaskTable } from '@/components/ui/skeleton-task-table'
 import { Pagination } from '@/components/ui/pagination'
 
@@ -37,25 +37,8 @@ export function TaskList() {
 
   const updateStatusMutation = useUpdateTaskStatus()
 
-  // Delete task mutation
-  const deleteTaskMutation = useMutation({
-    mutationFn: async (taskId: string) => {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId)
-
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Task deleted')
-    },
-    onError: (error) => {
-      toast.error('Failed to delete task')
-      console.error('Delete error:', error)
-    }
-  })
+  // Use the enhanced delete mutation from use-tasks
+  const deleteTaskMutation = useDeleteTask()
 
   // Reset page when filters change
   const handleFilterChange = (filterSetter: (value: string) => void) => (value: string) => {
@@ -162,11 +145,7 @@ export function TaskList() {
             onUpdateStatus={(taskId, status) => 
               updateStatusMutation.mutate({ taskId, status })
             }
-            onDeleteTask={(taskId) => {
-              if (confirm('Are you sure you want to delete this task?')) {
-                deleteTaskMutation.mutate(taskId)
-              }
-            }}
+            onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
           />
           
           {/* Pagination */}

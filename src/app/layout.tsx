@@ -5,6 +5,8 @@ import SupabaseProvider from "@/components/providers/supabase-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { WebVitalsProvider } from "@/components/providers/web-vitals-provider";
 import { Navigation } from "@/components/layout/navigation";
+import { SmoothPageTransition } from "@/components/layout/page-transition";
+import { ScrollRestorationProvider } from "@/components/providers/scroll-restoration-provider";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -35,16 +37,20 @@ export default function RootLayout({
         <SupabaseProvider>
           <QueryProvider>
             <WebVitalsProvider>
-              <div className="min-h-screen flex flex-col">
-                {/* Modern Navigation */}
-                <Navigation />
-                
-                {/* Main content */}
-                <main className="flex-1">
-                  {children}
-                </main>
-              </div>
-              <Toaster position="bottom-right" />
+              <ScrollRestorationProvider>
+                <div className="min-h-screen flex flex-col">
+                  {/* Modern Navigation */}
+                  <Navigation />
+                  
+                  {/* Main content with page transitions */}
+                  <main className="flex-1">
+                    <SmoothPageTransition>
+                      {children}
+                    </SmoothPageTransition>
+                  </main>
+                </div>
+                <Toaster position="bottom-right" />
+              </ScrollRestorationProvider>
             </WebVitalsProvider>
           </QueryProvider>
         </SupabaseProvider>

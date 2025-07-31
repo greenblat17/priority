@@ -209,3 +209,76 @@ export function usePrefetchTasks() {
     })
   }
 }
+
+// Delete task with optimistic update and undo
+export function useDeleteTask() {
+  const queryClient = useQueryClient()
+  const supabase = createClient()
+
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      // Create a promise that can be cancelled for undo
+      return new Promise<void>((resolve, reject) => {
+        let isUndone = false
+        const undoTimeout = setTimeout(async () => {
+          if (!isUndone) {
+            try {
+              const { error } = await supabase
+                .from('tasks')
+                .delete()
+                .eq('id', taskId)
+
+              if (error) throw error
+              resolve()
+            } catch (error) {
+              reject(error)
+            }
+          }
+        }, 4000) // 4 second delay for undo
+
+        // Show undo toast
+        toast.success('Task deleted', {
+          duration: 4000,
+          action: {
+            label: 'Undo',
+            onClick: () => {
+              isUndone = true
+              clearTimeout(undoTimeout)
+              reject(new Error('Undo'))
+            },
+          },
+        })
+      })
+    },
+    onMutate: async (taskId) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() })
+
+      const previousTasks = queryClient.getQueryData(taskKeys.lists())
+
+      // Optimistically remove the task
+      queryClient.setQueriesData(
+        { queryKey: taskKeys.lists() },
+        (old: any) => {
+          if (!old) return old
+          return old.filter((task: any) => task.id !== taskId)
+        }
+      )
+
+      return { previousTasks }
+    },
+    onError: (err, variables, context) => {
+      // Rollback to previous state
+      queryClient.setQueryData(taskKeys.lists(), context?.previousTasks)
+      
+      if (err.message !== 'Undo') {
+        toast.error('Failed to delete task')
+      }
+    },
+    onSettled: (data, error) => {
+      // Only invalidate if not undone
+      if (error?.message !== 'Undo') {
+        queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+      }
+    },
+  })
+}
