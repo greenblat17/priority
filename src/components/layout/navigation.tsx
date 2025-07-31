@@ -8,6 +8,8 @@ import { AuthButton } from '@/components/auth/auth-button'
 import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
+import { springs } from '@/lib/animations'
 
 export function Navigation() {
   const pathname = usePathname()
@@ -34,10 +36,14 @@ export function Navigation() {
             href={user ? "/tasks" : "/"}
             className="flex items-center gap-2 group"
           >
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center
-                            group-hover:scale-110 transition-transform duration-200">
+            <motion.div 
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.95 }}
+              transition={springs.snappy}
+              className="w-8 h-8 bg-black rounded-lg flex items-center justify-center"
+            >
               <span className="text-white font-semibold text-sm">T</span>
-            </div>
+            </motion.div>
             <span className="font-semibold text-black text-lg">
               TaskPriority
             </span>
@@ -65,10 +71,13 @@ export function Navigation() {
                       )}
                     >
                       {item.label}
-                      <span className={cn(
-                        "absolute -bottom-0.5 left-0 h-0.5 bg-black transition-all duration-200",
-                        isActive ? "w-full" : "w-0 group-hover:w-full"
-                      )} />
+                      <motion.span 
+                        className="absolute -bottom-0.5 left-0 h-0.5 bg-black"
+                        initial={{ width: 0 }}
+                        animate={{ width: isActive ? '100%' : 0 }}
+                        whileHover={{ width: '100%' }}
+                        transition={springs.snappy}
+                      />
                     </PrefetchLink>
                   )
                 })}
@@ -80,50 +89,81 @@ export function Navigation() {
             
             {/* Mobile menu button - only show when authenticated */}
             {user && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="md:hidden h-9 w-9 p-0"
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                className="md:hidden h-9 w-9 p-0 inline-flex items-center justify-center rounded-md hover:bg-gray-100"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                {isMobileMenuOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
-              </Button>
+                <AnimatePresence mode="wait">
+                  {isMobileMenuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={springs.snappy}
+                    >
+                      <X className="h-5 w-5" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={springs.snappy}
+                    >
+                      <Menu className="h-5 w-5" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
             )}
           </div>
         </div>
         
         {/* Mobile Navigation Menu */}
-        {user && isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white">
-            <nav className="container mx-auto px-6 py-4 space-y-2">
-              {navItems.map((item) => {
+        <AnimatePresence>
+          {user && isMobileMenuOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={springs.smooth}
+              className="md:hidden border-t border-gray-100 bg-white overflow-hidden"
+            >
+              <nav className="container mx-auto px-6 py-4 space-y-2">
+                {navItems.map((item, index) => {
                 const isActive = pathname === item.href || 
                   (item.href === '/tasks' && pathname === '/') ||
                   (item.href === '/settings/gtm' && pathname.startsWith('/settings'))
                 
-                return (
-                  <PrefetchLink
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={cn(
-                      "block px-3 py-2 rounded-md text-base font-semibold transition-colors duration-200",
-                      isActive
-                        ? "bg-gray-100 text-black"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-black"
-                    )}
-                  >
-                    {item.label}
-                  </PrefetchLink>
-                )
-              })}
-            </nav>
-          </div>
-        )}
+                  return (
+                    <motion.div
+                      key={item.href}
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ ...springs.snappy, delay: index * 0.1 }}
+                    >
+                      <PrefetchLink
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={cn(
+                          "block px-3 py-2 rounded-md text-base font-semibold transition-colors duration-200",
+                          isActive
+                            ? "bg-gray-100 text-black"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                        )}
+                      >
+                        {item.label}
+                      </PrefetchLink>
+                    </motion.div>
+                  )
+                })}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </header>
   )

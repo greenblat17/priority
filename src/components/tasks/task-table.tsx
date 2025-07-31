@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { containerVariants, listItemVariants, springs } from '@/lib/animations'
 import {
   Table,
   TableBody,
@@ -105,13 +107,23 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task) => (
-            <TableRow 
-              key={task.id}
-              className="cursor-pointer hover:bg-gray-50 transition-colors duration-200"
-              onClick={() => setSelectedTask(task)}
-            >
-              <TableCell className="font-medium text-black">
+          <AnimatePresence mode="popLayout">
+            {tasks.map((task, index) => (
+              <motion.tr
+                key={task.id}
+                layout
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{
+                  ...springs.snappy,
+                  delay: index * 0.05,
+                }}
+                whileHover={{ backgroundColor: "rgb(249 250 251)" }}
+                className="cursor-pointer"
+                onClick={() => setSelectedTask(task)}
+              >
+                <TableCell className="font-medium text-black">
                 <div className="max-w-md">
                   <p className="truncate">{task.description}</p>
                   {task.source && (
@@ -123,17 +135,27 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
               </TableCell>
               <TableCell>
                 {task.analysis ? (
-                  <Badge 
-                    variant={getCategoryVariant(task.analysis?.category)}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    transition={springs.snappy}
                   >
-                    {task.analysis.category}
-                  </Badge>
+                    <Badge 
+                      variant={getCategoryVariant(task.analysis?.category)}
+                      className="border-gray-300 text-gray-700"
+                    >
+                      {task.analysis.category}
+                    </Badge>
+                  </motion.div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                  <motion.div 
+                    className="flex items-center gap-1.5 text-sm text-gray-500"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     <Loader2 className="h-3 w-3 animate-spin" />
                     <span>analyzing</span>
-                  </div>
+                  </motion.div>
                 )}
               </TableCell>
               <TableCell>
@@ -160,29 +182,41 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                  <motion.div 
+                    className="flex items-center gap-1.5 text-sm text-gray-500"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     <Loader2 className="h-3 w-3 animate-spin" />
                     <span>analyzing</span>
-                  </div>
+                  </motion.div>
                 )}
               </TableCell>
               <TableCell>
-                <Badge 
-                  variant={getStatusVariant(task.status)}
-                  className="font-medium"
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  transition={springs.snappy}
                 >
-                  {task.status.replace('_', ' ')}
-                </Badge>
+                  <Badge 
+                    variant={getStatusVariant(task.status)}
+                    className="font-medium"
+                  >
+                    {task.status.replace('_', ' ')}
+                  </Badge>
+                </motion.div>
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      variant="ghost" 
-                      className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors"
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.1 }}
+                      transition={springs.snappy}
+                      className="h-8 w-8 p-0 rounded-md hover:bg-gray-100 inline-flex items-center justify-center"
                     >
                       <MoreHorizontal className="h-4 w-4 text-gray-600" />
-                    </Button>
+                    </motion.button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -231,8 +265,9 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
-            </TableRow>
-          ))}
+              </motion.tr>
+            ))}
+          </AnimatePresence>
         </TableBody>
       </Table>
 

@@ -26,7 +26,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@/components/ui/animated-dialog'
+import { motion } from 'framer-motion'
+import { springs } from '@/lib/animations'
 import {
   Form,
   FormControl,
@@ -467,28 +469,39 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               <summary className="cursor-pointer text-sm text-gray-600 hover:text-black transition-colors">
                 Advanced options
               </summary>
-              <div className="mt-4 space-y-4">
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={springs.smooth}
+                className="mt-4 space-y-4 overflow-hidden"
+              >
                 <p className="text-xs text-gray-500">Coming soon: Priority override, category, estimated hours, due date, tags, and notes.</p>
-              </div>
+              </motion.div>
             </details>
             
             <div className="flex justify-end gap-4">
-              <Button
+              <motion.button
                 type="button"
-                variant="ghost"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={springs.snappy}
                 onClick={onClose}
                 disabled={createTaskMutation.isPending}
-                className=""
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancel
-              </Button>
-              <Button 
-                type="submit" 
+              </motion.button>
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={springs.snappy}
                 disabled={createTaskMutation.isPending || isCheckingDuplicates}
-                className="bg-black hover:bg-gray-800 text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50"
               >
                 {createTaskMutation.isPending ? 'Adding...' : isCheckingDuplicates ? 'Checking...' : 'Add Task'}
-              </Button>
+              </motion.button>
             </div>
             </form>
           </Form>

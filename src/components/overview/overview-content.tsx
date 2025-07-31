@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ArrowRight, CheckCircle, Target, TrendingUp, Lightbulb } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { springs, containerVariants, listItemVariants } from '@/lib/animations'
 
 interface OverviewContentProps {
   userName: string
@@ -56,49 +58,62 @@ export function OverviewContent({
         </div>
 
         {/* Compact Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-4 border-gray-200">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
+          <motion.div variants={listItemVariants} whileHover={{ y: -4, scale: 1.02 }} transition={springs.snappy}>
+            <Card className="p-4 border-gray-200 h-full cursor-pointer">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Tasks</p>
                 <p className="text-2xl font-semibold text-black">{totalTasks}</p>
               </div>
               <Target className="h-8 w-8 text-gray-400" />
-            </div>
-          </Card>
+              </div>
+            </Card>
+          </motion.div>
 
-          <Card className="p-4 border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-2xl font-semibold text-black">{pendingTasks}</p>
+          <motion.div variants={listItemVariants} whileHover={{ y: -4, scale: 1.02 }} transition={springs.snappy}>
+            <Card className="p-4 border-gray-200 h-full cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Pending</p>
+                  <p className="text-2xl font-semibold text-black">{pendingTasks}</p>
+                </div>
+                <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <div className="h-3 w-3 rounded-full bg-yellow-500" />
+                </div>
               </div>
-              <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                <div className="h-3 w-3 rounded-full bg-yellow-500" />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </motion.div>
 
-          <Card className="p-4 border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">This Week</p>
-                <p className="text-2xl font-semibold text-green-600">{completedThisWeek}</p>
+          <motion.div variants={listItemVariants} whileHover={{ y: -4, scale: 1.02 }} transition={springs.snappy}>
+            <Card className="p-4 border-gray-200 h-full cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">This Week</p>
+                  <p className="text-2xl font-semibold text-green-600">{completedThisWeek}</p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
-            </div>
-          </Card>
+            </Card>
+          </motion.div>
 
-          <Card className="p-4 border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Productivity</p>
-                <p className="text-2xl font-semibold text-blue-600">{productivityScore}%</p>
+          <motion.div variants={listItemVariants} whileHover={{ y: -4, scale: 1.02 }} transition={springs.snappy}>
+            <Card className="p-4 border-gray-200 h-full cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Productivity</p>
+                  <p className="text-2xl font-semibold text-blue-600">{productivityScore}%</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-blue-500" />
               </div>
-              <TrendingUp className="h-8 w-8 text-blue-500" />
-            </div>
-          </Card>
-        </div>
+            </Card>
+          </motion.div>
+        </motion.div>
 
         {/* Quick Insights */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
