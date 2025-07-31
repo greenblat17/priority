@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useEffect } from 'react'
 import type { Task, TaskWithAnalysis } from '@/types/task'
 import type { TaskGroup } from '@/types/task-group'
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 // Query keys factory for consistency
 export const taskKeys = {
@@ -40,7 +41,8 @@ export function useTasks(filters?: {
     console.log('[Real-time] Setting up task subscriptions...')
     
     // Get the current session for authentication
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data }: { data: { session: any } }) => {
+      const { session } = data;
       if (!session) {
         console.error('[Real-time] No session found for real-time subscription')
         return
@@ -64,7 +66,7 @@ export function useTasks(filters?: {
             table: 'task_analyses',
             filter: undefined // Listen to all changes
           },
-          (payload) => {
+          (payload: RealtimePostgresChangesPayload<any>) => {
             console.log('[Real-time] Task analysis update received:', {
               eventType: payload.eventType,
               table: payload.table,
@@ -97,7 +99,7 @@ export function useTasks(filters?: {
           table: 'tasks',
           filter: 'group_id=neq.null'
         },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<any>) => {
           console.log('[Real-time] Task grouped:', payload)
           
           // Force refetch all task list queries to update tasks with new group
@@ -107,7 +109,7 @@ export function useTasks(filters?: {
           })
         }
         )
-        .subscribe((status, error) => {
+        .subscribe((status: 'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED', error?: any) => {
           console.log('[Real-time] Subscription status:', status, error)
           if (status === 'SUBSCRIBED') {
             console.log('[Real-time] Successfully subscribed to task updates')

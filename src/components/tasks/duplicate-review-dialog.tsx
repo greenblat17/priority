@@ -169,7 +169,7 @@ export function DuplicateReviewDialog({
                           <div className="space-y-2">
                             {tasks.slice(0, 3).map((task) => (
                               <div key={task.taskId} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Badge variant="ghost" className="text-xs">
+                                <Badge variant="secondary" className="text-xs">
                                   {getSimilarityPercentage(task.similarity)} match
                                 </Badge>
                                 <span className="truncate flex-1">{task.task.description}</span>

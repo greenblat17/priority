@@ -46,6 +46,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 
 import { TaskInput, taskInputSchema, TaskSource } from '@/types/task'
 import { DuplicateReviewDialog } from './duplicate-review-dialog'
@@ -79,6 +80,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   })
 
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [skipDuplicateCheck, setSkipDuplicateCheck] = useState(true)
 
   // Close on escape key
   useEscapeKey(onClose, isOpen)
@@ -240,6 +242,12 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   })
 
   const handleSubmit = async (data: TaskInput) => {
+    // If skip duplicate check is enabled, create task directly
+    if (skipDuplicateCheck) {
+      createTaskMutation.mutate({ data })
+      return
+    }
+    
     // Store the task data for later use
     setPendingTaskData(data)
     
@@ -321,16 +329,17 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-white rounded-2xl">
-        <DialogHeader className="space-y-2">
+      <DialogContent className="max-w-lg max-h-[90vh] bg-white rounded-2xl flex flex-col overflow-hidden">
+        <DialogHeader className="space-y-2 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold text-black">Add New Task</DialogTitle>
           <DialogDescription className="text-gray-600">
             Describe your task and our AI will analyze it for you
           </DialogDescription>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <div className="flex-1 overflow-y-auto px-1 -mx-1">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 pb-2">
             <FormField
               control={form.control}
               name="description"
@@ -349,97 +358,117 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               )}
             />
             
+            {/* Source and Customer Info fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="source"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Source</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="border-gray-200">
+                          <SelectValue placeholder="Where did this task come from?" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={TaskSource.INTERNAL}>
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4" />
+                            <span>Internal</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={TaskSource.TELEGRAM}>
+                          <div className="flex items-center gap-2">
+                            <Send className="h-4 w-4" />
+                            <span>Telegram</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={TaskSource.REDDIT}>
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4" />
+                            <span>Reddit</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={TaskSource.MAIL}>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            <span>Mail</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={TaskSource.YOUTUBE}>
+                          <div className="flex items-center gap-2">
+                            <Youtube className="h-4 w-4" />
+                            <span>YouTube</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={TaskSource.TWITTER}>
+                          <div className="flex items-center gap-2">
+                            <Twitter className="h-4 w-4" />
+                            <span>Twitter</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={TaskSource.APP_STORE}>
+                          <div className="flex items-center gap-2">
+                            <Smartphone className="h-4 w-4" />
+                            <span>App Store</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={TaskSource.GOOGLE_PLAY}>
+                          <div className="flex items-center gap-2">
+                            <Play className="h-4 w-4" />
+                            <span>Google Play</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="customerInfo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Customer Info</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Customer name or email" 
+                        className="border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            {/* Skip duplicate check */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="skipDuplicateCheck" 
+                checked={skipDuplicateCheck}
+                onCheckedChange={(checked) => setSkipDuplicateCheck(checked as boolean)}
+              />
+              <label 
+                htmlFor="skipDuplicateCheck" 
+                className="text-sm text-gray-600 cursor-pointer"
+              >
+                Skip duplicate check
+              </label>
+            </div>
+            
             {/* Collapsible advanced options */}
             <details className="group">
               <summary className="cursor-pointer text-sm text-gray-600 hover:text-black transition-colors">
                 Advanced options
               </summary>
               <div className="mt-4 space-y-4">
-                <FormField
-                  control={form.control}
-                  name="source"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm">Source</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="border-gray-200">
-                            <SelectValue placeholder="Where did this task come from?" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={TaskSource.INTERNAL}>
-                            <div className="flex items-center gap-2">
-                              <Building className="h-4 w-4" />
-                              <span>Internal</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value={TaskSource.TELEGRAM}>
-                            <div className="flex items-center gap-2">
-                              <Send className="h-4 w-4" />
-                              <span>Telegram</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value={TaskSource.REDDIT}>
-                            <div className="flex items-center gap-2">
-                              <MessageSquare className="h-4 w-4" />
-                              <span>Reddit</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value={TaskSource.MAIL}>
-                            <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4" />
-                              <span>Mail</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value={TaskSource.YOUTUBE}>
-                            <div className="flex items-center gap-2">
-                              <Youtube className="h-4 w-4" />
-                              <span>YouTube</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value={TaskSource.TWITTER}>
-                            <div className="flex items-center gap-2">
-                              <Twitter className="h-4 w-4" />
-                              <span>Twitter</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value={TaskSource.APP_STORE}>
-                            <div className="flex items-center gap-2">
-                              <Smartphone className="h-4 w-4" />
-                              <span>App Store</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value={TaskSource.GOOGLE_PLAY}>
-                            <div className="flex items-center gap-2">
-                              <Play className="h-4 w-4" />
-                              <span>Google Play</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="customerInfo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm">Customer Info</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Customer name or email" 
-                          className="border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <p className="text-xs text-gray-500">Coming soon: Priority override, category, estimated hours, due date, tags, and notes.</p>
               </div>
             </details>
             
@@ -461,8 +490,9 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                 {createTaskMutation.isPending ? 'Adding...' : isCheckingDuplicates ? 'Checking...' : 'Add Task'}
               </Button>
             </div>
-          </form>
-        </Form>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
 
