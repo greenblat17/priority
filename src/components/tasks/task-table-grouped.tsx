@@ -108,7 +108,7 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
   }, {} as Record<string, { group: TaskGroupType | null; tasks: TaskWithGroup[] }>)
 
   // Render a single task row
-  const renderTaskRow = (task: TaskWithGroup) => (
+  const renderTaskRow = (task: TaskWithAnalysis) => (
     <TableRow 
       key={task.id}
       className="cursor-pointer "
@@ -167,7 +167,7 @@ export function TaskTableGrouped({ tasks, onUpdateStatus, onDeleteTask }: TaskTa
             {task.analysis?.implementation_spec && (
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation()
-                copySpec(task.analysis.implementation_spec!)
+                copySpec(task.analysis?.implementation_spec || '')
               }}>
                 Copy Spec
               </DropdownMenuItem>

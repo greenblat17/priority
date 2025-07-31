@@ -210,7 +210,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     } catch (error) {
       // If duplicate check fails, proceed with task creation
       console.error('Duplicate check failed:', error)
-      createTaskMutation.mutate(data)
+      createTaskMutation.mutate({ data })
     } finally {
       setIsCheckingDuplicates(false)
     }

@@ -54,7 +54,7 @@ export function useTasks(filters?: {
       if (error) throw error
       
       // Map to TaskWithAnalysis type with group info
-      return data?.map(task => ({
+      return data?.map((task: any) => ({
         ...task,
         analysis: task.task_analyses || null,
         group: task.task_groups || null

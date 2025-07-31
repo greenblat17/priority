@@ -82,7 +82,7 @@ export function TaskList() {
           break
         case 'status':
           const statusOrder = { pending: 0, in_progress: 1, completed: 2, blocked: 3 }
-          comparison = statusOrder[a.status] - statusOrder[b.status]
+          comparison = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
           break
       }
       

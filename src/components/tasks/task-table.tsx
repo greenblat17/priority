@@ -39,7 +39,7 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
     toast.success('Implementation spec copied to clipboard')
   }
 
-  const getCategoryVariant = (category?: string | null) => {
+  const getCategoryVariant = (category?: string | null): "default" | "secondary" | "destructive" | "outline" => {
     // All categories use outline style for clean, minimal look
     return 'outline'
   }
@@ -175,7 +175,7 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
                     {task.analysis?.implementation_spec && (
                       <DropdownMenuItem onClick={(e) => {
                         e.stopPropagation()
-                        copySpec(task.analysis.implementation_spec!)
+                        copySpec(task.analysis?.implementation_spec || '')
                       }}>
                         <Copy className="mr-2 h-4 w-4" />
                         Copy Spec
