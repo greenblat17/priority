@@ -29,30 +29,57 @@ export function useTasks(filters?: {
   
   // Set up real-time subscriptions for task updates
   useEffect(() => {
-    const channel = supabase
-      .channel('task-updates')
-      // Listen for task analysis updates
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'task_analyses'
-        },
-        (payload) => {
-          console.log('[Real-time] Task analysis update:', payload)
-          
-          // Invalidate queries to refetch tasks with new analysis
-          queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
-          
-          // Show toast when analysis completes
-          if (payload.eventType === 'INSERT') {
-            toast.success('Task analysis completed!', {
-              description: 'AI has finished analyzing your task'
-            })
+    console.log('[Real-time] Setting up task subscriptions...')
+    
+    // Get the current session for authentication
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        console.error('[Real-time] No session found for real-time subscription')
+        return
+      }
+      
+      console.log('[Real-time] Session found, setting up channel...')
+      
+      const channel = supabase
+        .channel('task-updates', {
+          config: {
+            broadcast: { self: true },
+            presence: { key: session.user.id }
           }
-        }
-      )
+        })
+        // Listen for task analysis updates
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'task_analyses',
+            filter: undefined // Listen to all changes
+          },
+          (payload) => {
+            console.log('[Real-time] Task analysis update received:', {
+              eventType: payload.eventType,
+              table: payload.table,
+              schema: payload.schema,
+              new: payload.new,
+              old: payload.old,
+              errors: payload.errors
+            })
+            
+            // Force refetch all task list queries to update tasks with new analysis
+            queryClient.refetchQueries({ 
+              queryKey: taskKeys.all,
+              type: 'active'
+            })
+            
+            // Show toast when analysis completes
+            if (payload.eventType === 'INSERT') {
+              toast.success('Task analysis completed!', {
+                description: 'AI has finished analyzing your task'
+              })
+            }
+          }
+        )
       // Listen for task updates (including group changes)
       .on(
         'postgres_changes',
@@ -65,15 +92,35 @@ export function useTasks(filters?: {
         (payload) => {
           console.log('[Real-time] Task grouped:', payload)
           
-          // Invalidate queries to refetch tasks with new group
-          queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
+          // Force refetch all task list queries to update tasks with new group
+          queryClient.refetchQueries({ 
+            queryKey: taskKeys.all,
+            type: 'active'
+          })
         }
-      )
-      .subscribe()
+        )
+        .subscribe((status) => {
+          console.log('[Real-time] Subscription status:', status)
+          if (status === 'SUBSCRIBED') {
+            console.log('[Real-time] Successfully subscribed to task updates')
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('[Real-time] Failed to subscribe to task updates')
+            toast.error('Real-time updates unavailable', {
+              description: 'Please refresh the page if tasks don\'t update automatically'
+            })
+          } else if (status === 'TIMED_OUT') {
+            console.error('[Real-time] Subscription timed out')
+          } else if (status === 'CLOSED') {
+            console.log('[Real-time] Subscription closed')
+          }
+        })
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
+      // Store channel reference for cleanup
+      return () => {
+        console.log('[Real-time] Cleaning up task subscriptions...')
+        supabase.removeChannel(channel)
+      }
+    })
   }, [supabase, queryClient])
   
   return useQuery({

@@ -27,6 +27,7 @@ import { Download, Users } from 'lucide-react'
 import { useFilterPersistence } from '@/hooks/use-filter-persistence'
 import { GroupManagementDialog } from '@/components/tasks/group-management-dialog'
 import { useCreateTaskGroup, useUpdateTaskGroup, useDeleteTaskGroup } from '@/hooks/use-task-groups'
+import { useTaskPolling } from '@/hooks/use-task-polling'
 
 export function TaskList() {
   const supabase = createClient()
@@ -61,6 +62,9 @@ export function TaskList() {
 
   // Use the enhanced delete mutation from use-tasks
   const deleteTaskMutation = useDeleteTask()
+  
+  // Use polling as a fallback for real-time updates
+  useTaskPolling(tasks)
 
   // Reset page when filters change
   const handleFilterChange = <K extends keyof typeof filters>(key: K) => (value: typeof filters[K]) => {

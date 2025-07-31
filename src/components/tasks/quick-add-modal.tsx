@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { useCreateTask } from '@/hooks/use-tasks'
+import { useCreateTask, taskKeys } from '@/hooks/use-tasks'
 import { useEscapeKey } from '@/hooks/use-keyboard-shortcuts'
 import { 
   Building, 
@@ -141,7 +141,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       }
 
       // Invalidate queries immediately to show the new task
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
       
       // Trigger AI analysis asynchronously (fire and forget)
       fetch('/api/analyze', {
@@ -165,13 +165,13 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     },
     onMutate: async (params) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() })
 
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(['tasks'])
+      const previousTasks = queryClient.getQueryData(taskKeys.lists())
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['tasks'], (old: any) => {
+      queryClient.setQueryData(taskKeys.lists(), (old: any) => {
         if (!old) return old
         
         // Create optimistic task with temporary ID
@@ -201,7 +201,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     onError: (error: Error, variables, context) => {
       // If the mutation fails, use the context-value from onMutate
       if (context?.previousTasks) {
-        queryClient.setQueryData(['tasks'], context.previousTasks)
+        queryClient.setQueryData(taskKeys.lists(), context.previousTasks)
       }
       toast.error('Failed to add task', {
         description: error.message || 'Please try again',
@@ -216,7 +216,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     },
     onSettled: () => {
       // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
     }
   })
 
