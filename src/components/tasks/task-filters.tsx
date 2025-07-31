@@ -16,6 +16,8 @@ interface TaskFiltersProps {
   setStatusFilter: (value: string) => void
   categoryFilter: string
   setCategoryFilter: (value: string) => void
+  confidenceFilter: string
+  setConfidenceFilter: (value: string) => void
   sortBy: 'priority' | 'date' | 'status'
   setSortBy: (value: 'priority' | 'date' | 'status') => void
   sortOrder: 'asc' | 'desc'
@@ -27,6 +29,8 @@ export function TaskFilters({
   setStatusFilter,
   categoryFilter,
   setCategoryFilter,
+  confidenceFilter,
+  setConfidenceFilter,
   sortBy,
   setSortBy,
   sortOrder,
@@ -35,6 +39,7 @@ export function TaskFilters({
   const currentFilters = {
     status: statusFilter,
     category: categoryFilter,
+    confidence: confidenceFilter,
     sortBy,
     sortOrder
   }
@@ -80,6 +85,18 @@ export function TaskFilters({
         </SelectContent>
       </Select>
 
+      <Select value={confidenceFilter} onValueChange={setConfidenceFilter}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Confidence" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Confidence</SelectItem>
+          <SelectItem value="high">High (80%+)</SelectItem>
+          <SelectItem value="medium">Medium (50-79%)</SelectItem>
+          <SelectItem value="low">Low (&lt;50%) - Review</SelectItem>
+        </SelectContent>
+      </Select>
+
       <div className="flex items-center gap-4 ">
         <span className="text-sm font-semibold">Sort by:</span>
         <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
@@ -104,13 +121,14 @@ export function TaskFilters({
         </Button>
       </div>
 
-      {(statusFilter !== 'all' || categoryFilter !== 'all') && (
+      {(statusFilter !== 'all' || categoryFilter !== 'all' || confidenceFilter !== 'all') && (
         <Button
           variant="ghost"
           size="sm"
           onClick={() => {
             setStatusFilter('all')
             setCategoryFilter('all')
+            setConfidenceFilter('all')
           }}
         >
           Clear filters

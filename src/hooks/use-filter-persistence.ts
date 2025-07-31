@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 interface FilterState {
   status: string
   category: string
+  confidence: string
   sortBy: 'priority' | 'date' | 'status'
   sortOrder: 'asc' | 'desc'
 }
@@ -14,6 +15,7 @@ const STORAGE_KEY = 'taskpriority-filters'
 const defaultFilters: FilterState = {
   status: 'all',
   category: 'all',
+  confidence: 'all',
   sortBy: 'priority',
   sortOrder: 'desc'
 }

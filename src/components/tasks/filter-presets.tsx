@@ -29,6 +29,7 @@ interface FilterPreset {
   filters: {
     status: string
     category: string
+    confidence: string
     sortBy: 'priority' | 'date' | 'status'
     sortOrder: 'asc' | 'desc'
   }

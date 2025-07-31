@@ -45,7 +45,7 @@ export function TaskGroup({
         className="cursor-pointer bg-blue-50/30 hover:bg-blue-50/50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <TableCell colSpan={hasCheckboxes ? 7 : 6} className="py-3">
+        <TableCell colSpan={hasCheckboxes ? 8 : 7} className="py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Chevron Icon */}

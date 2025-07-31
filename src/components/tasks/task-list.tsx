@@ -87,6 +87,23 @@ export function TaskList() {
     ?.filter(task => {
       if (filters.status !== 'all' && task.status !== filters.status) return false
       if (filters.category !== 'all' && task.analysis?.[0]?.category !== filters.category) return false
+      
+      // Confidence filter
+      if (filters.confidence !== 'all' && task.analysis) {
+        const confidence = task.analysis.confidence_score || 0
+        switch (filters.confidence) {
+          case 'high':
+            if (confidence < 80) return false
+            break
+          case 'medium':
+            if (confidence < 50 || confidence >= 80) return false
+            break
+          case 'low':
+            if (confidence >= 50) return false
+            break
+        }
+      }
+      
       return true
     })
     .sort((a, b) => {
@@ -111,10 +128,17 @@ export function TaskList() {
   // Calculate total pages (will be improved with server-side count)
   const totalPages = Math.ceil((filteredAndSortedTasks?.length || 0) / itemsPerPage)
   
-  // Extract unique groups from tasks
+  // Extract unique groups from tasks based on group ID
   const taskGroups = tasks ? 
-    Array.from(new Set(tasks.filter(t => t.group).map(t => t.group)))
-      .filter((group): group is NonNullable<typeof group> => group !== null)
+    Array.from(
+      tasks
+        .filter(t => t.group)
+        .reduce((groupMap, task) => {
+          groupMap.set(task.group!.id, task.group!);
+          return groupMap;
+        }, new Map<string, TaskGroupType>())
+        .values()
+    )
     : []
   
   // Keyboard shortcuts
@@ -237,6 +261,8 @@ export function TaskList() {
                 setStatusFilter={handleFilterChange('status')}
                 categoryFilter={filters.category}
                 setCategoryFilter={handleFilterChange('category')}
+                confidenceFilter={filters.confidence || 'all'}
+                setConfidenceFilter={handleFilterChange('confidence')}
                 sortBy={filters.sortBy}
                 setSortBy={(value) => updateFilter('sortBy', value)}
                 sortOrder={filters.sortOrder}

@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { TaskDetailDialog } from './task-detail-dialog'
 import { TaskGroup } from './task-group'
+import { ConfidenceBadge } from './confidence-badge'
 import { MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
@@ -139,6 +140,7 @@ export function TaskTableGrouped({
       key={task.id}
       className={cn(
         "cursor-pointer",
+        task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "bg-red-50/20",
         isSelected && "bg-muted/50"
       )}
       onClick={(e) => {
@@ -184,6 +186,16 @@ export function TaskTableGrouped({
           <span className="text-sm text-muted-foreground ml-1">
             ({task.analysis.estimated_hours}h)
           </span>
+        )}
+      </TableCell>
+      <TableCell>
+        {task.analysis?.confidence_score !== undefined ? (
+          <ConfidenceBadge 
+            score={task.analysis.confidence_score} 
+            showWarning={true}
+          />
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
         )}
       </TableCell>
       <TableCell>
@@ -274,6 +286,7 @@ export function TaskTableGrouped({
             <TableHead>Category</TableHead>
             <TableHead>Priority</TableHead>
             <TableHead>Complexity</TableHead>
+            <TableHead>Confidence</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
