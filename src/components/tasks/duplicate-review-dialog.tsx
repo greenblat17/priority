@@ -80,7 +80,7 @@ export function DuplicateReviewDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
@@ -93,7 +93,8 @@ export function DuplicateReviewDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 my-4">
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-4 py-4">
           {/* New Task Preview */}
           <div>
             <h4 className="text-sm font-medium mb-2">Your New Task:</h4>
@@ -189,46 +190,51 @@ export function DuplicateReviewDialog({
               ))}
             </div>
           </div>
+          </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <div className="flex flex-col sm:flex-row gap-2 w-full">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              className="w-full sm:w-auto"
-            >
-              <X className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={handleViewExisting}
-              disabled={!selectedTaskId}
-              className="w-full sm:w-auto"
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              View Selected Task
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={handleCreateAndGroup}
-              className="w-full sm:w-auto"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              Create and Group Together
-            </Button>
-            
-            <Button
-              onClick={handleCreateNew}
-              className="w-full sm:w-auto"
-              variant={hasHighConfidenceDuplicate ? 'outline' : 'default'}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Task Anyway
-            </Button>
+        <DialogFooter className="border-t pt-4">
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col sm:flex-row gap-2 justify-between">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                className="w-full sm:w-auto"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleViewExisting}
+                  disabled={!selectedTaskId}
+                  className="w-full sm:w-auto"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Selected Task
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleCreateAndGroup}
+                  className="w-full sm:w-auto"
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  Create and Group Together
+                </Button>
+                
+                <Button
+                  onClick={handleCreateNew}
+                  className="w-full sm:w-auto"
+                  variant={hasHighConfidenceDuplicate ? 'outline' : 'default'}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Task Anyway
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogFooter>
 
