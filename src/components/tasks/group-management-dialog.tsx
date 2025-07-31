@@ -222,9 +222,9 @@ export function GroupManagementDialog({
                           <span className="text-sm flex-1 truncate">
                             {task.description}
                           </span>
-                          {task.analysis?.[0]?.category && (
+                          {task.analysis?.category && (
                             <Badge variant="outline" className="text-xs">
-                              {task.analysis[0].category}
+                              {task.analysis.category}
                             </Badge>
                           )}
                         </label>
