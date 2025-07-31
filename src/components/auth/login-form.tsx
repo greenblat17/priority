@@ -55,7 +55,7 @@ export function LoginForm({ mode = 'signin' }: LoginFormProps) {
           email: data.email,
           password: data.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/tasks`,
           },
         })
         
@@ -72,7 +72,7 @@ export function LoginForm({ mode = 'signin' }: LoginFormProps) {
         
         toast.success('Welcome back!')
         // Use window.location for a full page reload to ensure auth state propagates
-        window.location.href = '/dashboard'
+        window.location.href = '/tasks'
       }
     } catch (error: any) {
       toast.error(error.message || 'An error occurred')
@@ -89,7 +89,7 @@ export function LoginForm({ mode = 'signin' }: LoginFormProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/tasks`,
         },
       })
 

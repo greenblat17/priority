@@ -92,7 +92,7 @@ export function useGlobalKeyboardShortcuts() {
 
         switch (event.key) {
           case 'd':
-            router.push('/dashboard')
+            router.push('/overview')
             break
           case 't':
             router.push('/tasks')

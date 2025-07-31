@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Protected routes
-  const protectedPaths = ['/dashboard', '/settings', '/tasks']
+  const protectedPaths = ['/overview', '/settings', '/tasks']
   const isProtectedPath = protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   )
@@ -78,7 +78,7 @@ export async function updateSession(request: NextRequest) {
 
   // If trying to access auth routes while logged in
   if (isAuthPath && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/tasks', request.url))
   }
 
   return response

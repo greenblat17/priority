@@ -168,7 +168,7 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
       )
 
       if (mode === 'onboarding') {
-        router.push('/dashboard')
+        router.push('/tasks')
       }
     } catch (error) {
       console.error('Error saving GTM manifest:', error)
@@ -454,7 +454,7 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/tasks')}
             >
               Skip for Now
             </Button>

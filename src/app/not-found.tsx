@@ -10,9 +10,9 @@ export default function NotFound() {
         <p className="text-gray-600 max-w-md">
           The page you're looking for doesn't exist or has been moved.
         </p>
-        <Link href="/dashboard">
+        <Link href="/tasks">
           <Button className="bg-black hover:bg-gray-800 text-white">
-            Go to Dashboard
+            Go to Tasks
           </Button>
         </Link>
       </div>

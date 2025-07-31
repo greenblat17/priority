@@ -20,8 +20,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams
   
   if (user) {
-    // Redirect to dashboard or the 'next' URL if provided
-    redirect(params.next || '/dashboard')
+    // Redirect to tasks or the 'next' URL if provided
+    redirect(params.next || '/tasks')
   }
 
   const mode = params.mode || 'signin'

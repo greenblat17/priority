@@ -47,7 +47,7 @@ export default function OnboardingPage() {
 
   const handleSkip = () => {
     toast.info('You can set up your GTM context later in Settings')
-    router.push('/dashboard')
+    router.push('/tasks')
   }
 
   const handleStart = () => {
