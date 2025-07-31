@@ -18,8 +18,8 @@ export function useSessionTimeout({
 }: UseSessionTimeoutOptions = {}) {
   const router = useRouter()
   const { supabase, user } = useSupabase()
-  const timeoutRef = useRef<NodeJS.Timeout>()
-  const warningRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const warningRef = useRef<NodeJS.Timeout | null>(null)
   const lastActivityRef = useRef<number>(Date.now())
 
   // Reset activity timer
@@ -101,7 +101,7 @@ export function useSessionTimeout({
 
   // Also check for auth state changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
         resetTimer()
       }

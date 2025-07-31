@@ -189,7 +189,7 @@ export function TaskTableGrouped({
         )}
       </TableCell>
       <TableCell>
-        {task.analysis?.confidence_score !== undefined ? (
+        {task.analysis?.confidence_score !== undefined && task.analysis.confidence_score !== null ? (
           <ConfidenceBadge 
             score={task.analysis.confidence_score} 
             showWarning={true}

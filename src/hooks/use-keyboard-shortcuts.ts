@@ -110,8 +110,8 @@ export function useGlobalKeyboardShortcuts() {
       if (event.key === '?' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault()
         // This will be implemented with the shortcut discovery UI
-        const event = new CustomEvent('show-keyboard-shortcuts')
-        window.dispatchEvent(event)
+        const customEvent = new CustomEvent('show-keyboard-shortcuts')
+        window.dispatchEvent(customEvent)
       }
     }
 

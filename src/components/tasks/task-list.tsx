@@ -236,7 +236,7 @@ export function TaskList() {
           {error ? (
             <ErrorState
               title="Failed to load tasks"
-              message={error.message}
+              message={error ? String(error) : 'An error occurred'}
               onRetry={() => window.location.reload()}
             />
           ) : (
@@ -319,8 +319,8 @@ export function TaskList() {
       
       {/* Quick Add Modal */}
       <QuickAddModal 
-        open={showQuickAdd} 
-        onOpenChange={setShowQuickAdd} 
+        isOpen={showQuickAdd} 
+        onClose={() => setShowQuickAdd(false)} 
       />
       
       {/* Export Dialog */}

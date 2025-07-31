@@ -11,7 +11,7 @@ interface PrefetchOptions {
 export function usePrefetch() {
   const queryClient = useQueryClient()
   const supabase = createClient()
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Generic prefetch function
   const prefetch = useCallback(
@@ -39,7 +39,7 @@ export function usePrefetch() {
   const prefetchTasks = useCallback(
     (options?: PrefetchOptions) => {
       return prefetch(
-        taskKeys.list(),
+        [...taskKeys.list()],
         async () => {
           const { data: { user } } = await supabase.auth.getUser()
           if (!user) return []
@@ -91,15 +91,15 @@ export function usePrefetch() {
                 (await supabase
                   .from('tasks')
                   .select('id')
-                  .eq('user_id', user.id)).data?.map(t => t.id) || []
+                  .eq('user_id', user.id)).data?.map((t: any) => t.id) || []
               )
           ])
 
           return {
             totalTasks: tasksResult.data?.length || 0,
-            pendingTasks: tasksResult.data?.filter(t => t.status === 'pending').length || 0,
-            completedTasks: tasksResult.data?.filter(t => t.status === 'completed').length || 0,
-            highPriorityCount: analysesResult.data?.filter(a => a.priority >= 8).length || 0,
+            pendingTasks: tasksResult.data?.filter((t: any) => t.status === 'pending').length || 0,
+            completedTasks: tasksResult.data?.filter((t: any) => t.status === 'completed').length || 0,
+            highPriorityCount: analysesResult.data?.filter((a: any) => a.priority >= 8).length || 0,
           }
         },
         options

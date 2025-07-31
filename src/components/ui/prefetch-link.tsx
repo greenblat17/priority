@@ -30,7 +30,9 @@ export function PrefetchLink({
     isPrefetchingRef.current = true
     
     // Prefetch based on the href
-    const path = typeof href === 'string' ? href : href.pathname
+    const path = typeof href === 'string' ? href : href?.pathname
+    
+    if (!path) return
     
     if (path === '/tasks') {
       prefetchTasks({ delay: prefetchDelay })

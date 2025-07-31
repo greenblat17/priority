@@ -4,7 +4,7 @@ import React from 'react'
 /**
  * Search tasks by matching against multiple fields
  */
-export function searchTasks(tasks: TaskWithAnalysis[], searchQuery: string): TaskWithAnalysis[] {
+export function searchTasks<T extends TaskWithAnalysis>(tasks: T[], searchQuery: string): T[] {
   if (!searchQuery.trim()) {
     return tasks
   }

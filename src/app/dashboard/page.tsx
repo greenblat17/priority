@@ -71,8 +71,8 @@ export default async function DashboardPage() {
 
   // Filter for high priority tasks client-side
   const highPriorityTasks = (tasksWithAnalyses || [])
-    .filter(task => task.analysis?.priority >= 8)
-    .sort((a, b) => (b.analysis?.priority || 0) - (a.analysis?.priority || 0))
+    .filter(task => task.analysis?.[0]?.priority >= 8)
+    .sort((a, b) => (b.analysis?.[0]?.priority || 0) - (a.analysis?.[0]?.priority || 0))
     .slice(0, 5)
 
   // Fetch recent tasks
@@ -142,8 +142,8 @@ export default async function DashboardPage() {
     // Sort by priority and take top 5
     topPendingTasks = topPendingTasks
       .sort((a, b) => {
-        const aPriority = a.analysis?.priority || 0
-        const bPriority = b.analysis?.priority || 0
+        const aPriority = a.analysis?.[0]?.priority || 0
+        const bPriority = b.analysis?.[0]?.priority || 0
         return bPriority - aPriority
       })
       .slice(0, 5)

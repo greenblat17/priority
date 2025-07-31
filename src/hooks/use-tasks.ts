@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import type { Task, TaskWithAnalysis } from '@/types/task'
+import type { TaskGroup } from '@/types/task-group'
 
 // Query keys factory for consistency
 export const taskKeys = {
@@ -58,7 +59,7 @@ export function useTasks(filters?: {
         ...task,
         analysis: task.task_analyses || null,
         group: task.task_groups || null
-      })) as any[]
+      })) as Array<TaskWithAnalysis & { group: TaskGroup | null }>
     },
     // Keep previous data while fetching new data
     placeholderData: (previousData) => previousData,
