@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { PlusCircle, ArrowRight } from 'lucide-react'
 import { useQuickAddShortcut } from '@/hooks/use-keyboard-shortcuts'
+import { NewUserDashboardEmptyState } from '@/components/ui/empty-state'
 
 // Lazy load the QuickAddModal component
 const QuickAddModal = dynamic(
@@ -59,23 +60,30 @@ export function DashboardContent({
   return (
     <>
       <div className="min-h-screen bg-white">
-        {/* Hero Section */}
-        <div className="border-b border-gray-100">
-          <div className="container mx-auto p-6 space-y-8">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <h1 className="text-2xl font-semibold text-black">
-                  {getGreeting()}, {userName}
-                </h1>
-                <p className="text-gray-600 leading-relaxed">
-                  Here's what needs your attention today
-                </p>
-              </div>
-              <Button 
-                onClick={() => setIsModalOpen(true)}
-                className="bg-black hover:bg-gray-800 text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <PlusCircle className="w-4 h-4" />
+        {/* Show empty state for new users */}
+        {totalTasks === 0 ? (
+          <div className="container mx-auto p-6">
+            <NewUserDashboardEmptyState onGetStarted={() => setIsModalOpen(true)} />
+          </div>
+        ) : (
+          <>
+            {/* Hero Section */}
+            <div className="border-b border-gray-100">
+              <div className="container mx-auto p-6 space-y-8">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <h1 className="text-2xl font-semibold text-black">
+                      {getGreeting()}, {userName}
+                    </h1>
+                    <p className="text-gray-600 leading-relaxed">
+                      Here's what needs your attention today
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-black hover:bg-gray-800 text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <PlusCircle className="w-4 h-4" />
                 Add Task
               </Button>
             </div>
@@ -319,6 +327,8 @@ export function DashboardContent({
             </Card>
           )}
         </div>
+          </>
+        )}
       </div>
 
       {/* Quick Add Modal */}

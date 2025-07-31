@@ -7,6 +7,11 @@ import { WebVitalsProvider } from "@/components/providers/web-vitals-provider";
 import { Navigation } from "@/components/layout/navigation";
 import { SmoothPageTransition } from "@/components/layout/page-transition";
 import { ScrollRestorationProvider } from "@/components/providers/scroll-restoration-provider";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { OfflineIndicator } from "@/components/ui/offline-indicator";
+import { SessionTimeoutProvider } from "@/components/providers/session-timeout-provider";
+import { KeyboardShortcutsProvider } from "@/components/providers/keyboard-shortcuts-provider";
+import { KeyboardShortcutsDialog } from "@/components/ui/keyboard-shortcuts-dialog";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -35,24 +40,32 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SupabaseProvider>
-          <QueryProvider>
-            <WebVitalsProvider>
-              <ScrollRestorationProvider>
-                <div className="min-h-screen flex flex-col">
-                  {/* Modern Navigation */}
-                  <Navigation />
-                  
-                  {/* Main content with page transitions */}
-                  <main className="flex-1">
-                    <SmoothPageTransition>
-                      {children}
-                    </SmoothPageTransition>
-                  </main>
-                </div>
-                <Toaster position="bottom-right" />
-              </ScrollRestorationProvider>
-            </WebVitalsProvider>
-          </QueryProvider>
+          <SessionTimeoutProvider>
+            <KeyboardShortcutsProvider>
+              <QueryProvider>
+                <WebVitalsProvider>
+                  <ScrollRestorationProvider>
+                    <ErrorBoundary>
+                  <div className="min-h-screen flex flex-col">
+                    {/* Modern Navigation */}
+                    <Navigation />
+                    
+                    {/* Main content with page transitions */}
+                    <main className="flex-1">
+                      <SmoothPageTransition>
+                        {children}
+                      </SmoothPageTransition>
+                    </main>
+                  </div>
+                  <Toaster position="bottom-right" />
+                  <OfflineIndicator />
+                  <KeyboardShortcutsDialog />
+                </ErrorBoundary>
+                  </ScrollRestorationProvider>
+                </WebVitalsProvider>
+              </QueryProvider>
+            </KeyboardShortcutsProvider>
+          </SessionTimeoutProvider>
         </SupabaseProvider>
       </body>
     </html>

@@ -13,6 +13,9 @@ import { TaskGroup as TaskGroupType } from '@/types/task-group'
 import { useTasks, useUpdateTaskStatus, useDeleteTask } from '@/hooks/use-tasks'
 import { SkeletonTaskTable } from '@/components/ui/skeleton-task-table'
 import { Pagination } from '@/components/ui/pagination'
+import { NoTasksEmptyState, NoFilterResultsEmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
+import { QuickAddModal } from '@/components/tasks/quick-add-modal'
 
 export function TaskList() {
   const supabase = createClient()
@@ -24,6 +27,7 @@ export function TaskList() {
   const [sortBy, setSortBy] = useState<'priority' | 'date' | 'status'>('priority')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
   const itemsPerPage = 20
 
   // Use optimized task hooks
@@ -129,35 +133,70 @@ export function TaskList() {
           </div>
         </CardHeader>
         <CardContent>
-          <TaskFilters
-            statusFilter={statusFilter}
-            setStatusFilter={handleFilterChange(setStatusFilter)}
-            categoryFilter={categoryFilter}
-            setCategoryFilter={handleFilterChange(setCategoryFilter)}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-          />
-          
-          <TaskTableGrouped
-            tasks={filteredAndSortedTasks || []}
-            onUpdateStatus={(taskId, status) => 
-              updateStatusMutation.mutate({ taskId, status })
-            }
-            onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
-          />
-          
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
+          {error ? (
+            <ErrorState
+              title="Failed to load tasks"
+              message={error.message}
+              onRetry={() => window.location.reload()}
             />
+          ) : (
+            <>
+              <TaskFilters
+                statusFilter={statusFilter}
+                setStatusFilter={handleFilterChange(setStatusFilter)}
+                categoryFilter={categoryFilter}
+                setCategoryFilter={handleFilterChange(setCategoryFilter)}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+              />
+              
+              {/* Show empty state based on context */}
+              {!isLoading && filteredAndSortedTasks?.length === 0 && (
+                <>
+                  {tasks?.length === 0 ? (
+                    <NoTasksEmptyState onCreateTask={() => setShowQuickAdd(true)} />
+                  ) : (
+                    <NoFilterResultsEmptyState 
+                      onClearFilters={() => {
+                        setStatusFilter('all')
+                        setCategoryFilter('all')
+                      }} 
+                    />
+                  )}
+                </>
+              )}
+              
+              {/* Show tasks table when there are tasks */}
+              {filteredAndSortedTasks && filteredAndSortedTasks.length > 0 && (
+                <TaskTableGrouped
+                  tasks={filteredAndSortedTasks}
+                  onUpdateStatus={(taskId, status) => 
+                    updateStatusMutation.mutate({ taskId, status })
+                  }
+                  onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
+                />
+              )}
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              )}
+            </>
           )}
         </CardContent>
       </Card>
+      
+      {/* Quick Add Modal */}
+      <QuickAddModal 
+        open={showQuickAdd} 
+        onOpenChange={setShowQuickAdd} 
+      />
     </div>
   )
 }

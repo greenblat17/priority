@@ -48,7 +48,17 @@ export async function createTaskGroup(
     
     if (updateError) {
       console.error('Failed to update tasks with group:', updateError)
-      // TODO: Rollback group creation
+      
+      // Rollback: Delete the group we just created
+      const { error: rollbackError } = await supabase
+        .from('task_groups')
+        .delete()
+        .eq('id', group.id)
+      
+      if (rollbackError) {
+        console.error('Failed to rollback group creation:', rollbackError)
+      }
+      
       return null
     }
     

@@ -9,6 +9,7 @@ type SupabaseContext = {
   user: User | null
   session: Session | null
   isLoading: boolean
+  supabase: ReturnType<typeof createClient>
 }
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
@@ -58,7 +59,7 @@ export default function SupabaseProvider({
   }, [router, supabase])
 
   return (
-    <Context.Provider value={{ user, session, isLoading }}>
+    <Context.Provider value={{ user, session, isLoading, supabase }}>
       {children}
     </Context.Provider>
   )

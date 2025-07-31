@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useCreateTask } from '@/hooks/use-tasks'
+import { useEscapeKey } from '@/hooks/use-keyboard-shortcuts'
 
 import {
   Dialog,
@@ -68,6 +69,9 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   })
 
   const [showAdvanced, setShowAdvanced] = useState(false)
+
+  // Close on escape key
+  useEscapeKey(onClose, isOpen)
 
   const createTaskMutation = useMutation({
     mutationFn: async (params: { 
