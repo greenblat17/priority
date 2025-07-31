@@ -288,7 +288,11 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
           const selectedTasks = potentialDuplicates.filter(dup => 
             action.selectedTaskIds.includes(dup.taskId)
           )
-          const existingGroup = selectedTasks[0]?.task.group
+          // Check if all selected tasks belong to the same group
+          const existingGroup = selectedTasks.length > 0 && 
+            selectedTasks.every(t => t.task.group?.id === selectedTasks[0].task.group?.id) 
+            ? selectedTasks[0].task.group 
+            : null
           
           createTaskMutation.mutate({ 
             data: pendingTaskData,

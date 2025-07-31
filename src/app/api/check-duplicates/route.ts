@@ -38,7 +38,10 @@ export async function POST(request: Request) {
 
     const { data: existingTasks, error: tasksError } = await supabase
       .from('tasks')
-      .select('*')
+      .select(`
+        *,
+        group:task_groups!group_id (*)
+      `)
       .eq('user_id', user.id)
       .in('status', ['pending', 'in_progress']) // Only fetch active tasks
       .gte('created_at', thirtyDaysAgo.toISOString())

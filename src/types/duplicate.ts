@@ -1,8 +1,13 @@
 import { Task } from './task'
+import { TaskGroup } from './task-group'
+
+export interface TaskWithGroup extends Task {
+  group?: TaskGroup | null
+}
 
 export interface TaskSimilarity {
   taskId: string
-  task: Task
+  task: TaskWithGroup
   similarity: number
   embedding?: number[]
 }

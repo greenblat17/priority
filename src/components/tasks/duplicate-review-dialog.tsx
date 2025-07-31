@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { AlertTriangle, CheckCircle, Eye, Plus, X, Users } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Plus, X, Users } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -35,33 +35,45 @@ export function DuplicateReviewDialog({
   potentialDuplicates,
   onAction
 }: DuplicateReviewDialogProps) {
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set())
+  
+  // Group duplicates by their existing groups
+  const groupedDuplicates = potentialDuplicates.reduce((acc, dup) => {
+    const groupId = dup.task.group?.id || 'ungrouped'
+    if (!acc[groupId]) {
+      acc[groupId] = {
+        group: dup.task.group,
+        tasks: []
+      }
+    }
+    acc[groupId].tasks.push(dup)
+    return acc
+  }, {} as Record<string, { group: any; tasks: TaskSimilarity[] }>)
 
   const handleCreateNew = () => {
     onAction({ action: 'create_new' })
-  }
-
-  const handleViewExisting = () => {
-    if (selectedTaskId) {
-      onAction({ action: 'view_existing', selectedTaskId })
-    }
   }
 
   const handleCancel = () => {
     onAction({ action: 'cancel' })
   }
 
-  const handleCreateAndGroup = () => {
-    // Use all duplicates by default, or selected ones if any
-    const taskIdsToGroup = selectedTaskIds.size > 0 
-      ? Array.from(selectedTaskIds)
-      : potentialDuplicates.map(d => d.taskId)
-    
-    onAction({ 
-      action: 'create_and_group',
-      selectedTaskIds: taskIdsToGroup
-    })
+  const handleAddToGroup = () => {
+    if (selectedGroupId && selectedGroupId !== 'ungrouped') {
+      // Add to existing group - get all task IDs from that group
+      const groupTasks = groupedDuplicates[selectedGroupId].tasks
+      onAction({ 
+        action: 'create_and_group', 
+        selectedTaskIds: groupTasks.map(t => t.taskId)
+      })
+    } else if (selectedTaskIds.size > 0) {
+      // Create new group with selected ungrouped tasks
+      onAction({ 
+        action: 'create_and_group', 
+        selectedTaskIds: Array.from(selectedTaskIds) 
+      })
+    }
   }
 
   const toggleTaskSelection = (taskId: string) => {
@@ -73,10 +85,9 @@ export function DuplicateReviewDialog({
     }
     setSelectedTaskIds(newSelection)
   }
-
-  // Get the most similar task
-  const mostSimilar = potentialDuplicates[0]
-  const hasHighConfidenceDuplicate = mostSimilar && mostSimilar.similarity >= 0.95
+  
+  const hasGroupSelection = selectedGroupId && selectedGroupId !== 'ungrouped'
+  const hasTaskSelection = selectedTaskIds.size > 0
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -88,163 +99,189 @@ export function DuplicateReviewDialog({
           </DialogTitle>
           <DialogDescription>
             We found {potentialDuplicates.length} existing task{potentialDuplicates.length > 1 ? 's' : ''} 
-            that {potentialDuplicates.length > 1 ? 'are' : 'is'} similar to your new task. 
-            Would you like to review {potentialDuplicates.length > 1 ? 'them' : 'it'} before creating a duplicate?
+            similar to your new task.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-4 py-4">
-          {/* New Task Preview */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Your New Task:</h4>
-            <Card>
-              <CardContent className="pt-4">
-                <p className="text-sm">{newTaskDescription}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Separator />
-
-          {/* Similar Tasks */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-medium">Similar Existing Tasks:</h4>
-              {potentialDuplicates.length > 1 && (
-                <p className="text-xs text-muted-foreground">
-                  Select tasks to group together
-                </p>
-              )}
+            {/* New Task Preview */}
+            <div>
+              <h4 className="text-sm font-medium mb-2">Your New Task:</h4>
+              <Card>
+                <CardContent className="pt-4">
+                  <p className="text-sm">{newTaskDescription}</p>
+                </CardContent>
+              </Card>
             </div>
-            <div className="space-y-3">
-              {potentialDuplicates.map((duplicate) => (
-                <Card 
-                  key={duplicate.taskId}
-                  className={`cursor-pointer transition-colors ${
-                    selectedTaskId === duplicate.taskId 
-                      ? 'border-primary ring-2 ring-primary/20' 
-                      : 'hover:border-gray-400'
-                  }`}
-                  onClick={() => setSelectedTaskId(duplicate.taskId)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start gap-3">
-                      {potentialDuplicates.length > 1 && (
-                        <Checkbox
-                          checked={selectedTaskIds.has(duplicate.taskId)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              selectedTaskIds.add(duplicate.taskId)
-                            } else {
-                              selectedTaskIds.delete(duplicate.taskId)
-                            }
-                            setSelectedTaskIds(new Set(selectedTaskIds))
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-1"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <Badge 
-                            variant={duplicate.similarity >= 0.95 ? 'destructive' : 'secondary'}
-                            className="text-xs"
+
+            <Separator />
+
+            {/* Similar Tasks */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Similar Existing Tasks:</h4>
+              <div className="space-y-3">
+                {/* Show grouped tasks first */}
+                {Object.entries(groupedDuplicates)
+                  .filter(([groupId]) => groupId !== 'ungrouped')
+                  .map(([groupId, { group, tasks }]) => {
+                    const avgSimilarity = tasks.reduce((sum, t) => sum + t.similarity, 0) / tasks.length
+                    const isSelected = selectedGroupId === groupId
+                    
+                    return (
+                      <Card 
+                        key={groupId}
+                        className={`cursor-pointer transition-colors ${
+                          isSelected 
+                            ? 'border-primary ring-2 ring-primary/20' 
+                            : 'hover:border-gray-400'
+                        }`}
+                        onClick={() => {
+                          setSelectedGroupId(groupId)
+                          setSelectedTaskIds(new Set()) // Clear individual selections
+                        }}
+                      >
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <CardTitle className="text-sm flex items-center gap-2">
+                                <Badge variant="outline">
+                                  <Users className="h-3 w-3 mr-1" />
+                                  {group?.name || `Group of ${tasks.length} tasks`}
+                                </Badge>
+                                <Badge 
+                                  variant={avgSimilarity >= 0.90 ? 'destructive' : 'secondary'}
+                                  className="text-xs"
+                                >
+                                  ~{Math.round(avgSimilarity * 100)}% match
+                                </Badge>
+                              </CardTitle>
+                              <CardDescription className="text-xs mt-1">
+                                {tasks.length} similar task{tasks.length > 1 ? 's' : ''} in this group
+                              </CardDescription>
+                            </div>
+                            {isSelected && (
+                              <CheckCircle className="h-5 w-5 text-primary" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {tasks.slice(0, 3).map((task) => (
+                              <div key={task.taskId} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Badge variant="ghost" className="text-xs">
+                                  {getSimilarityPercentage(task.similarity)} match
+                                </Badge>
+                                <span className="truncate flex-1">{task.task.description}</span>
+                              </div>
+                            ))}
+                            {tasks.length > 3 && (
+                              <p className="text-xs text-muted-foreground">
+                                ...and {tasks.length - 3} more
+                              </p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+
+                {/* Show ungrouped tasks */}
+                {groupedDuplicates.ungrouped && (
+                  <>
+                    {groupedDuplicates.ungrouped.tasks.length > 0 && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Individual tasks (select to create a new group):
+                        </p>
+                        {groupedDuplicates.ungrouped.tasks.map((duplicate) => (
+                          <Card 
+                            key={duplicate.taskId}
+                            className={`cursor-pointer transition-colors mb-2 ${
+                              selectedTaskIds.has(duplicate.taskId)
+                                ? 'border-primary ring-2 ring-primary/20' 
+                                : 'hover:border-gray-400'
+                            }`}
+                            onClick={() => {
+                              toggleTaskSelection(duplicate.taskId)
+                              setSelectedGroupId(null) // Clear group selection
+                            }}
                           >
-                            {getSimilarityPercentage(duplicate.similarity)} match
-                          </Badge>
-                          {duplicate.task.status && (
-                            <Badge variant="outline" className="text-xs">
-                              {duplicate.task.status}
-                            </Badge>
-                          )}
-                        </CardTitle>
-                        <CardDescription className="text-xs mt-1">
-                          Created {format(new Date(duplicate.task.created_at), 'MMM d, yyyy')}
-                        </CardDescription>
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start gap-3">
+                                <Checkbox
+                                  checked={selectedTaskIds.has(duplicate.taskId)}
+                                  onCheckedChange={() => toggleTaskSelection(duplicate.taskId)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1">
+                                  <CardTitle className="text-sm flex items-center gap-2">
+                                    <Badge 
+                                      variant={duplicate.similarity >= 0.95 ? 'destructive' : 'secondary'}
+                                      className="text-xs"
+                                    >
+                                      {getSimilarityPercentage(duplicate.similarity)} match
+                                    </Badge>
+                                    {duplicate.task.status && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {duplicate.task.status}
+                                      </Badge>
+                                    )}
+                                  </CardTitle>
+                                  <CardDescription className="text-xs mt-1">
+                                    Created {format(new Date(duplicate.task.created_at), 'MMM d, yyyy')}
+                                  </CardDescription>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <p className="text-sm text-muted-foreground">
+                                {duplicate.task.description}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-2">
-                        {duplicate.task.group_id && (
-                          <Badge variant="outline" className="text-xs">
-                            <Users className="h-3 w-3 mr-1" />
-                            Grouped
-                          </Badge>
-                        )}
-                        {selectedTaskId === duplicate.taskId && (
-                          <CheckCircle className="h-4 w-4 text-primary" />
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground">
-                      {duplicate.task.description}
-                    </p>
-                    {duplicate.task.source && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Source: {duplicate.task.source}
-                      </p>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
+                  </>
+                )}
+              </div>
             </div>
-          </div>
           </div>
         </div>
 
         <DialogFooter className="border-t pt-4">
-          <div className="flex flex-col gap-2 w-full">
-            <div className="flex flex-col sm:flex-row gap-2 justify-between">
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                className="w-full sm:w-auto"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancel
-              </Button>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex gap-2 justify-between w-full">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+            >
+              <X className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            
+            <div className="flex gap-2">
+              {(hasGroupSelection || hasTaskSelection) && (
                 <Button
                   variant="outline"
-                  onClick={handleViewExisting}
-                  disabled={!selectedTaskId}
-                  className="w-full sm:w-auto"
-                >
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Selected Task
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  onClick={handleCreateAndGroup}
-                  className="w-full sm:w-auto"
+                  onClick={handleAddToGroup}
                 >
                   <Users className="mr-2 h-4 w-4" />
-                  Create and Group Together
+                  {hasGroupSelection ? 'Add to Group' : 'Create Group'}
                 </Button>
-                
-                <Button
-                  onClick={handleCreateNew}
-                  className="w-full sm:w-auto"
-                  variant={hasHighConfidenceDuplicate ? 'outline' : 'default'}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create New Task Anyway
-                </Button>
-              </div>
+              )}
+              
+              <Button
+                onClick={handleCreateNew}
+                className="bg-black hover:bg-gray-800 text-white"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Task Anyway
+              </Button>
             </div>
           </div>
         </DialogFooter>
-
-        {hasHighConfidenceDuplicate && (
-          <div className="mt-2 text-xs text-muted-foreground text-center">
-            <AlertTriangle className="inline h-3 w-3 mr-1" />
-            The top match has {getSimilarityPercentage(mostSimilar.similarity)} similarity. 
-            Consider reviewing it before creating a duplicate.
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   )
