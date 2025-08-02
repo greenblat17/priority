@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/route'
 
 // Manual trigger endpoint to analyze tasks that don't have analysis yet
@@ -47,7 +47,7 @@ export async function POST() {
         // For internal API calls, we need to directly call the analyze function
         // instead of making an HTTP request to avoid authentication issues
         const analyzeModule = await import('../../analyze/route')
-        const mockRequest = new Request('http://localhost:3000/api/analyze', {
+        const mockRequest = new NextRequest('http://localhost:3000/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ taskId: task.id })

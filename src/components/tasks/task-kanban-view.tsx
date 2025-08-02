@@ -174,7 +174,7 @@ export function TaskKanbanView({
                 <span>{task.analysis.estimated_hours}h</span>
               )}
 
-              {task.analysis?.confidence_score !== undefined && task.analysis.confidence_score < 50 && (
+              {task.analysis?.confidence_score !== undefined && task.analysis?.confidence_score !== null && task.analysis.confidence_score < 50 && (
                 <AlertCircle className="h-3 w-3 text-destructive" />
               )}
             </div>

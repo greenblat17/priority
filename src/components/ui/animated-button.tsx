@@ -4,11 +4,14 @@ import { motion, HTMLMotionProps } from 'framer-motion'
 import { buttonTap, springs } from '@/lib/animations'
 import { cn } from '@/lib/utils'
 import { forwardRef } from 'react'
-import { Button, ButtonProps } from './button'
+import { Button } from './button'
+import { VariantProps } from 'class-variance-authority'
+import { buttonVariants } from './button'
 
-interface AnimatedButtonProps extends ButtonProps {
+interface AnimatedButtonProps extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
   motionProps?: HTMLMotionProps<"button">
   disableAnimations?: boolean
+  asChild?: boolean
 }
 
 export const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
@@ -20,6 +23,9 @@ export const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>
         </Button>
       )
     }
+
+    // Extract HTML props that might conflict with motion props
+    const { onDrag, onDragStart, onDragEnd, ...safeProps } = props as any
 
     return (
       <motion.button
@@ -36,7 +42,7 @@ export const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>
           className
         )}
         {...motionProps}
-        {...props}
+        {...safeProps}
       >
         {children}
       </motion.button>
@@ -49,6 +55,9 @@ AnimatedButton.displayName = 'AnimatedButton'
 // Floating Action Button with more dramatic animations
 export const FloatingActionButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
   ({ className, children, ...props }, ref) => {
+    // Extract HTML props that might conflict with motion props
+    const { onDrag, onDragStart, onDragEnd, ...safeProps } = props as any
+    
     return (
       <motion.button
         ref={ref}
@@ -69,7 +78,7 @@ export const FloatingActionButton = forwardRef<HTMLButtonElement, AnimatedButton
           "focus-visible:ring-ring focus-visible:ring-offset-2",
           className
         )}
-        {...props}
+        {...safeProps}
       >
         {children}
       </motion.button>

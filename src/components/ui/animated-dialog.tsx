@@ -29,7 +29,6 @@ const AnimatedDialogOverlay = React.forwardRef<
         "fixed inset-0 z-50 bg-black/20 backdrop-blur-sm",
         className
       )}
-      {...props}
     />
   </DialogPrimitive.Overlay>
 ))
@@ -43,7 +42,11 @@ interface AnimatedDialogContentProps
 const AnimatedDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   AnimatedDialogContentProps
->(({ className, children, showCloseButton = true, ...props }, ref) => (
+>(({ className, children, showCloseButton = true, ...props }, ref) => {
+  // Extract HTML props that might conflict with motion props
+  const { onDrag, onDragStart, onDragEnd, ...safeProps } = props as any
+  
+  return (
   <AnimatePresence>
     <DialogPortal>
       <AnimatedDialogOverlay />
@@ -62,7 +65,7 @@ const AnimatedDialogContent = React.forwardRef<
             translateX: "-50%",
             translateY: "-50%",
           }}
-          {...props}
+          {...safeProps}
         >
           {children}
           {showCloseButton && (
@@ -87,7 +90,8 @@ const AnimatedDialogContent = React.forwardRef<
       </DialogPrimitive.Content>
     </DialogPortal>
   </AnimatePresence>
-))
+  )
+})
 AnimatedDialogContent.displayName = "AnimatedDialogContent"
 
 const DialogHeader = ({

@@ -21,9 +21,9 @@ export function AnimatedList({
   const modifiedContainerVariants = {
     ...containerVariants,
     visible: {
-      ...containerVariants.visible,
+      ...(typeof containerVariants.visible === 'object' && 'opacity' in containerVariants.visible ? containerVariants.visible : {}),
       transition: {
-        ...containerVariants.visible.transition,
+        ...(typeof containerVariants.visible === 'object' && 'transition' in containerVariants.visible ? (containerVariants.visible as any).transition : {}),
         staggerChildren: staggerDelay,
       },
     },
@@ -49,7 +49,7 @@ export function AnimatedList({
                 key={child.key || index}
                 layout
                 variants={listItemVariants}
-                className={cn("will-change-transform", child.props.className)}
+                className={cn("will-change-transform", (child as any).props?.className)}
               >
                 {child}
               </motion.div>
