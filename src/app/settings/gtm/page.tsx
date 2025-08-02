@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { GTMManifestForm } from '@/components/gtm/gtm-manifest-form'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { GTMManifest } from '@/types/gtm'
@@ -49,45 +48,19 @@ export default function GTMSettingsPage() {
 
   if (loading) {
     return (
-      <div className="container max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Skeleton className="h-8 w-20" />
-        </div>
+      <Card className="p-6">
         <div className="space-y-4">
-          <Skeleton className="h-10 w-full max-w-md" />
-          <Card className="p-6">
-            <div className="space-y-4">
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          </Card>
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
         </div>
-      </div>
+      </Card>
     )
   }
 
   return (
-    <div className="container max-w-3xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/overview">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Overview
-          </Link>
-        </Button>
-      </div>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          GTM Context Settings
-        </h1>
-        <p className="text-muted-foreground">
-          Update your business context to improve AI task prioritization
-        </p>
-      </div>
-
+    <>
       <Card>
         <GTMManifestForm 
           mode="settings" 
@@ -107,6 +80,6 @@ export default function GTMSettingsPage() {
           </Button>
         </div>
       )}
-    </div>
+    </>
   )
 }

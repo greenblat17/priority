@@ -139,8 +139,7 @@ export function useTasks(filters?: {
         .from('tasks')
         .select(`
           *,
-          task_analyses!task_id (*),
-          task_groups!group_id (*)
+          task_analyses!task_id (*)
         `)
         .order('created_at', { ascending: false })
 
@@ -165,7 +164,7 @@ export function useTasks(filters?: {
       return data?.map((task: any) => ({
         ...task,
         analysis: task.task_analyses || null,
-        group: task.task_groups || null
+        group: null // We'll handle groups separately for now
       })) as Array<TaskWithAnalysis & { group: TaskGroup | null }>
     },
     // Keep previous data while fetching new data
@@ -305,7 +304,7 @@ export function usePrefetchTasks() {
           .from('tasks')
           .select(`
             *,
-            analysis:task_analyses(*)
+            task_analyses!task_id (*)
           `)
           .order('created_at', { ascending: false })
           .limit(50)

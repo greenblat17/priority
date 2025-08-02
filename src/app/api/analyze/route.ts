@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/route'
+import { verifyApiKeyAuth } from '@/lib/api-auth-middleware'
 import openai from '@/lib/openai/client'
 import { buildAnalysisPrompt, validateAnalysisResponse } from '@/lib/openai/prompts'
 import { withRetry } from '@/utils/retry'
@@ -7,7 +8,7 @@ import type { TaskAnalysisRequest, TaskAnalysisRecord } from '@/types/analysis'
 import type { Task } from '@/types/task'
 import type { GTMManifest } from '@/types/gtm'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   console.log('[AI Analysis] Starting analysis request')
   
   try {
@@ -27,15 +28,24 @@ export async function POST(request: Request) {
 
     // Initialize Supabase client
     const supabase = await createClient()
+    let userId: string | null = null
 
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      console.error('[AI Analysis] Authentication error:', authError)
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    // Try API key authentication first
+    const { authorized: apiKeyAuth, context: apiContext } = await verifyApiKeyAuth(request)
+    
+    if (apiKeyAuth && apiContext) {
+      userId = apiContext.userId
+    } else {
+      // Fall back to session authentication
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        console.error('[AI Analysis] Authentication error:', authError)
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        )
+      }
+      userId = user.id
     }
 
     // Fetch task data
@@ -43,7 +53,7 @@ export async function POST(request: Request) {
       .from('tasks')
       .select('*')
       .eq('id', taskId)
-      .eq('user_id', user.id) // Ensure user owns the task
+      .eq('user_id', userId) // Ensure user owns the task
       .single()
 
     if (taskError || !task) {
@@ -74,7 +84,7 @@ export async function POST(request: Request) {
     const { data: manifest } = await supabase
       .from('gtm_manifests')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single()
 
     console.log('[AI Analysis] Building prompt with context')
