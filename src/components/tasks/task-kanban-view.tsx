@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { MoreHorizontal, GripVertical } from 'lucide-react'
+import { MoreHorizontal, AlertCircle } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,10 +34,30 @@ interface TaskKanbanViewProps {
 }
 
 const statusColumns = [
-  { id: TaskStatus.PENDING, label: 'Pending', color: 'bg-yellow-100 dark:bg-yellow-900/20' },
-  { id: TaskStatus.IN_PROGRESS, label: 'In Progress', color: 'bg-blue-100 dark:bg-blue-900/20' },
-  { id: TaskStatus.COMPLETED, label: 'Completed', color: 'bg-green-100 dark:bg-green-900/20' },
-  { id: TaskStatus.BLOCKED, label: 'Blocked', color: 'bg-red-100 dark:bg-red-900/20' },
+  { 
+    id: TaskStatus.PENDING, 
+    label: 'Pending', 
+    color: 'bg-amber-50/30 dark:bg-amber-950/10',
+    dotColor: 'bg-amber-500'
+  },
+  { 
+    id: TaskStatus.IN_PROGRESS, 
+    label: 'In Progress', 
+    color: 'bg-blue-50/30 dark:bg-blue-950/10',
+    dotColor: 'bg-blue-500'
+  },
+  { 
+    id: TaskStatus.COMPLETED, 
+    label: 'Completed', 
+    color: 'bg-emerald-50/30 dark:bg-emerald-950/10',
+    dotColor: 'bg-emerald-500'
+  },
+  { 
+    id: TaskStatus.BLOCKED, 
+    label: 'Blocked', 
+    color: 'bg-rose-50/30 dark:bg-rose-950/10',
+    dotColor: 'bg-rose-500'
+  },
 ] as const
 
 export function TaskKanbanView({ 
@@ -134,43 +154,36 @@ export function TaskKanbanView({
     <Card
       key={task.id}
       className={cn(
-        "mb-3 cursor-move hover:shadow-md transition-shadow",
-        task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "border-red-200",
+        "group mb-3 cursor-move hover:shadow-sm transition-all duration-200 bg-background border-border/60",
+        task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "border-destructive/30",
         draggedTask?.id === task.id && "opacity-50"
       )}
       draggable
       onDragStart={(e) => handleDragStart(e, task)}
       onClick={() => setSelectedTask(task)}
     >
-      <CardContent className="p-3">
+      <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-              <p className="text-sm font-medium truncate">{task.description}</p>
-            </div>
+            <p className="text-sm font-medium leading-relaxed mb-2">{task.description}</p>
             
-            {task.source && (
-              <p className="text-xs text-muted-foreground mb-2">
-                Source: {getSourceLabel(task.source)}
-              </p>
-            )}
-
-            <div className="flex flex-wrap gap-1 mb-2">
-              <Badge variant={getCategoryVariant(task.analysis?.category)} className="text-xs">
-                {task.analysis?.category || 'pending'}
-              </Badge>
-              
+            <div className="flex items-center gap-2 flex-wrap">
               {task.analysis?.priority && (
-                <span className={cn("text-xs", getPriorityColor(task.analysis.priority))}>
-                  P{task.analysis.priority}
-                </span>
+                <div className="flex items-center gap-1">
+                  <div className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    task.analysis.priority >= 8 ? "bg-red-500" : 
+                    task.analysis.priority >= 6 ? "bg-orange-500" : 
+                    task.analysis.priority >= 4 ? "bg-yellow-500" : "bg-gray-400"
+                  )} />
+                  <span className="text-xs text-muted-foreground">P{task.analysis.priority}</span>
+                </div>
               )}
               
-              {task.analysis?.complexity && (
-                <span className={cn("text-xs", getComplexityColor(task.analysis.complexity))}>
-                  {task.analysis.complexity}
-                </span>
+              {task.analysis?.category && (
+                <Badge variant="secondary" className="text-xs h-5 px-2">
+                  {task.analysis.category}
+                </Badge>
               )}
               
               {task.analysis?.estimated_hours && (
@@ -178,28 +191,16 @@ export function TaskKanbanView({
                   {task.analysis.estimated_hours}h
                 </span>
               )}
+
+              {task.analysis?.confidence_score !== undefined && task.analysis.confidence_score < 50 && (
+                <AlertCircle className="h-3 w-3 text-destructive" />
+              )}
             </div>
-
-            {task.analysis?.confidence_score !== undefined && task.analysis.confidence_score !== null && (
-              <div className="mb-1">
-                <ConfidenceBadge 
-                  score={task.analysis.confidence_score} 
-                  showWarning={true}
-                  size="sm"
-                />
-              </div>
-            )}
-
-            {task.group && (
-              <Badge variant="outline" className="text-xs">
-                {task.group.name}
-              </Badge>
-            )}
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
                 <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -269,20 +270,23 @@ export function TaskKanbanView({
             <div
               key={column.id}
               className={cn(
-                "rounded-lg p-4 min-h-[500px]",
+                "rounded-xl p-4 min-h-[600px] transition-all duration-200",
                 column.color,
-                isDropTarget && "ring-2 ring-primary ring-offset-2"
+                isDropTarget && "ring-2 ring-primary ring-offset-2 bg-accent/5"
               )}
               onDragOver={handleDragOver}
               onDragEnter={() => handleDragEnter(column.id)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, column.id)}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm">{column.label}</h3>
-                <Badge variant="secondary" className="text-xs">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-border/40">
+                <div className="flex items-center gap-2">
+                  <div className={cn("w-2 h-2 rounded-full", column.dotColor)} />
+                  <h3 className="font-medium text-sm text-foreground/80">{column.label}</h3>
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">
                   {columnTasks.length}
-                </Badge>
+                </span>
               </div>
               
               <ScrollArea className="h-[calc(100vh-300px)]">
@@ -290,8 +294,8 @@ export function TaskKanbanView({
                   {columnTasks.map(renderTask)}
                   
                   {columnTasks.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground text-sm">
-                      No tasks
+                    <div className="flex items-center justify-center h-32">
+                      <p className="text-xs text-muted-foreground">Drop tasks here</p>
                     </div>
                   )}
                 </div>

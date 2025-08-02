@@ -16,13 +16,21 @@ export function ViewToggle({ view, onViewChange }: ViewToggleProps) {
       type="single" 
       value={view} 
       onValueChange={(value) => value && onViewChange(value as ViewType)}
-      className="border rounded-md"
+      className="border border-border/50 rounded-lg bg-muted/30"
     >
-      <ToggleGroupItem value="table" aria-label="Table view" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-        <Table className="h-4 w-4" />
+      <ToggleGroupItem 
+        value="table" 
+        aria-label="Table view" 
+        className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+      >
+        <Table className="h-3.5 w-3.5" />
       </ToggleGroupItem>
-      <ToggleGroupItem value="kanban" aria-label="Kanban view" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-        <LayoutGrid className="h-4 w-4" />
+      <ToggleGroupItem 
+        value="kanban" 
+        aria-label="Kanban view" 
+        className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+      >
+        <LayoutGrid className="h-3.5 w-3.5" />
       </ToggleGroupItem>
     </ToggleGroup>
   )

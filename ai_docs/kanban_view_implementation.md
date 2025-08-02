@@ -78,11 +78,20 @@ Implemented a Kanban board view for the Tasks section, providing users with a vi
 
 ## Design Decisions
 
-### Visual Design
-- Used subtle background colors for status columns (10% opacity in dark mode)
-- Maintained consistent spacing and typography with existing design
-- Cards use same visual hierarchy as table rows
-- Minimalist approach with focus on content
+### Visual Design (Updated for Modern Minimalism)
+- **Subtle Color Differentiation**: Each column has a very subtle tinted background:
+  - Pending: `bg-amber-50/30` (warm, waiting)
+  - In Progress: `bg-blue-50/30` (active, working)
+  - Completed: `bg-emerald-50/30` (success, done)
+  - Blocked: `bg-rose-50/30` (attention needed)
+- **Refined Cards**: Glass-morphism effect with `bg-background/60 backdrop-blur-sm`, increased padding (p-4)
+- **Color Dots in Headers**: Small colored dots next to column names for elegant visual identification
+- **Priority Indicators**: Minimal colored dots (red/orange/yellow/gray) for visual hierarchy without clutter
+- **Hidden Actions**: Dropdown menu only appears on hover, reducing visual noise
+- **Simplified Badges**: Smaller, more subtle badges with secondary variants
+- **Clean Typography**: Removed unnecessary labels, using size and spacing to create hierarchy
+- **Smooth Transitions**: 200ms transitions on all interactive elements
+- **Refined Toggle**: Glass-morphism effect with subtle background and clean active states
 
 ### UX Decisions
 - Drag and drop as primary interaction for status changes
@@ -125,5 +134,33 @@ Implemented a Kanban board view for the Tasks section, providing users with a vi
 - Screen reader support through semantic HTML
 - Color is not the only indicator (text labels present)
 
+## Design Philosophy Applied
+
+The updated Kanban view now fully embodies our design motto: **modern, minimalistic, simple, and beautiful**.
+
+### Modern
+- Glass-morphism effects on the view toggle
+- Smooth animations and transitions
+- Hover-based interactions for progressive disclosure
+- Clean, contemporary card design
+
+### Minimalistic
+- Removed color-coding from columns - all use unified subtle background
+- Hidden actions until needed (hover to reveal)
+- Simplified priority indicators to small colored dots
+- Reduced visual hierarchy to essentials only
+
+### Simple
+- Clear, uncluttered interface
+- Intuitive drag and drop without visual complexity
+- Focused on content, not chrome
+- Consistent spacing and alignment
+
+### Beautiful
+- Harmonious color palette using existing design tokens
+- Elegant transitions and micro-interactions
+- Balanced typography and spacing
+- Cohesive visual language across all elements
+
 ## Summary
-The Kanban view implementation provides users with an alternative visual interface for managing tasks while maintaining full feature parity with the table view. The implementation follows the app's design principles of simplicity, functionality, and modern aesthetics.
+The Kanban view implementation provides users with an alternative visual interface for managing tasks while maintaining full feature parity with the table view. The refined design removes unnecessary visual elements while enhancing usability through thoughtful interactions and a clean, modern aesthetic that aligns perfectly with the app's design philosophy.
