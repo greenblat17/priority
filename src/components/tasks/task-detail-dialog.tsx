@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Copy } from 'lucide-react'
+import { Copy, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { format } from 'date-fns'
@@ -41,6 +41,32 @@ export function TaskDetailDialog({
       case 'in_progress':
         return 'secondary'
       case 'blocked':
+        return 'destructive'
+      default:
+        return 'outline'
+    }
+  }
+
+  const getCategoryVariant = (category?: string | null) => {
+    switch (category) {
+      case 'bug':
+        return 'destructive'
+      case 'feature':
+        return 'default'
+      case 'improvement':
+        return 'secondary'
+      default:
+        return 'outline'
+    }
+  }
+
+  const getComplexityVariant = (complexity?: string | null) => {
+    switch (complexity) {
+      case 'easy':
+        return 'secondary'
+      case 'medium':
+        return 'default'
+      case 'hard':
         return 'destructive'
       default:
         return 'outline'
@@ -125,18 +151,27 @@ export function TaskDetailDialog({
                 <div>
                   <span className="text-xs text-muted-foreground">Category</span>
                   <div className="mt-1">
-                    <Badge variant="secondary" className="text-xs">{task.analysis.category}</Badge>
+                    <Badge variant={getCategoryVariant(task.analysis.category)} className="text-xs">
+                      {task.analysis.category}
+                    </Badge>
                   </div>
                 </div>
                 
                 <div>
                   <span className="text-xs text-muted-foreground">Complexity</span>
-                  <div className="text-sm mt-1">{task.analysis.complexity}</div>
+                  <div className="mt-1">
+                    <Badge variant={getComplexityVariant(task.analysis.complexity)} className="text-xs">
+                      {task.analysis.complexity}
+                    </Badge>
+                  </div>
                 </div>
                 
                 <div>
                   <span className="text-xs text-muted-foreground">Time Estimate</span>
-                  <div className="text-sm mt-1">{task.analysis.estimated_hours}h</div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-sm">{task.analysis.estimated_hours}h</span>
+                  </div>
                 </div>
               </div>
 
