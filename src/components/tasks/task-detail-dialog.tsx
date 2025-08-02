@@ -3,17 +3,16 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { Copy, Calendar, User, Hash, Brain, Clock, Zap } from 'lucide-react'
+import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { format } from 'date-fns'
+import { PriorityDot } from './priority-dot'
+import { DialogTitle } from '@/components/ui/dialog'
 
 interface TaskDetailDialogProps {
   task: TaskWithAnalysis
@@ -31,174 +30,161 @@ export function TaskDetailDialog({
   const copySpec = () => {
     if (task.analysis?.implementation_spec) {
       navigator.clipboard.writeText(task.analysis.implementation_spec)
-      toast.success('Implementation spec copied to clipboard')
+      toast.success('Copied to clipboard')
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM d, yyyy h:mm a')
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'default'
+      case 'in_progress':
+        return 'secondary'
+      case 'blocked':
+        return 'destructive'
+      default:
+        return 'outline'
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
-          <DialogTitle>Task Details</DialogTitle>
-          <DialogDescription>
-            Complete information about this task and its AI analysis
-          </DialogDescription>
+          <DialogTitle className="text-base font-medium text-muted-foreground">Task Details</DialogTitle>
+          <div className="text-2xl font-semibold leading-relaxed mt-3">
+            {task.description}
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 mt-6">
           {/* Task Information */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Task Information</h3>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Description</p>
-                <p className="text-sm">{task.description}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div className="rounded-lg bg-muted/30 p-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
-                    <Hash className="h-3 w-3" /> Status
-                  </p>
-                  <Badge variant="outline">{task.status.replace('_', ' ')}</Badge>
+                  <div className="text-muted-foreground">Status</div>
+                  <div className="mt-1">{task.status.replace('_', ' ')}</div>
                 </div>
-                
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
-                    <User className="h-3 w-3" /> Source
-                  </p>
-                  <p className="text-sm">{task.source?.replace('_', ' ') || 'N/A'}</p>
+                  <div className="text-muted-foreground">Created</div>
+                  <div className="mt-1">{format(new Date(task.created_at), 'MMM d, yyyy')}</div>
                 </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" /> Created
-                  </p>
-                  <p className="text-sm">{formatDate(task.created_at)}</p>
-                </div>
-                
+                {task.source && (
+                  <div>
+                    <div className="text-muted-foreground">Source</div>
+                    <div className="mt-1">{task.source.replace('_', ' ')}</div>
+                  </div>
+                )}
                 {task.customer_info && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Customer</p>
-                    <p className="text-sm">{task.customer_info}</p>
+                    <div className="text-muted-foreground">Customer</div>
+                    <div className="mt-1">{task.customer_info}</div>
                   </div>
                 )}
               </div>
             </div>
+            
+            {/* Status Actions - Placed logically after status */}
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground font-medium">Update Status</p>
+              <div className="flex gap-2 flex-wrap">
+                {(['pending', 'in_progress', 'completed', 'blocked'] as const).map((status) => (
+                  <Button
+                    key={status}
+                    size="sm"
+                    variant={task.status === status ? 'secondary' : 'outline'}
+                    onClick={() => {
+                      onUpdateStatus(task.id, status)
+                      onOpenChange(false)
+                    }}
+                    disabled={task.status === status}
+                    className="text-xs"
+                  >
+                    {status.replace('_', ' ')}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
-
-          <Separator />
 
           {/* AI Analysis */}
           {task.analysis ? (
-            <div>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Brain className="h-5 w-5" /> AI Analysis
-              </h3>
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground">AI Analysis</h3>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-lg bg-muted/20">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Category</p>
-                  <Badge>{task.analysis.category}</Badge>
+                  <span className="text-xs text-muted-foreground">Priority</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <PriorityDot priority={task.analysis.priority} className="h-3 w-3" />
+                    <span className="text-sm font-medium">{task.analysis.priority}/10</span>
+                  </div>
                 </div>
                 
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Priority</p>
-                  <p className="text-lg font-bold">{task.analysis.priority}/10</p>
+                  <span className="text-xs text-muted-foreground">Category</span>
+                  <div className="mt-1">
+                    <Badge variant="secondary" className="text-xs">{task.analysis.category}</Badge>
+                  </div>
                 </div>
                 
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
-                    <Zap className="h-3 w-3" /> Complexity
-                  </p>
-                  <Badge variant="outline">{task.analysis.complexity}</Badge>
+                  <span className="text-xs text-muted-foreground">Complexity</span>
+                  <div className="text-sm mt-1">{task.analysis.complexity}</div>
                 </div>
                 
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Est. Hours
-                  </p>
-                  <p className="text-sm">{task.analysis.estimated_hours}h</p>
+                  <span className="text-xs text-muted-foreground">Time Estimate</span>
+                  <div className="text-sm mt-1">{task.analysis.estimated_hours}h</div>
                 </div>
               </div>
 
               {task.analysis.confidence_score && (
-                <div className="mb-4">
-                  <p className="text-sm text-muted-foreground mb-1">Confidence Score</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div 
-                        className="bg-primary rounded-full h-2 transition-all"
-                        style={{ width: `${task.analysis.confidence_score}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium">{task.analysis.confidence_score}%</span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Confidence Score</span>
+                    <span className={task.analysis.confidence_score < 50 ? 'text-destructive font-medium' : 'text-muted-foreground'}>
+                      {task.analysis.confidence_score}%
+                      {task.analysis.confidence_score < 50 && ' - Low confidence'}
+                    </span>
+                  </div>
+                  <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden">
+                    <div 
+                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/80 to-primary rounded-full transition-all duration-500"
+                      style={{ width: `${task.analysis.confidence_score}%` }}
+                    />
                   </div>
                 </div>
               )}
 
               {task.analysis.implementation_spec && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium">Implementation Specification</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Implementation Specification</span>
                     <Button 
                       size="sm" 
-                      variant="outline"
+                      variant="ghost"
                       onClick={copySpec}
+                      className="h-8 px-2 text-xs"
                     >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy Spec
+                      <Copy className="h-3.5 w-3.5 mr-1.5" />
+                      Copy
                     </Button>
                   </div>
-                  <div className="bg-muted p-4 rounded-lg">
-                    <pre className="text-sm whitespace-pre-wrap">{task.analysis.implementation_spec}</pre>
+                  <div className="bg-muted/30 p-4 rounded-lg border border-border/30">
+                    <pre className="text-sm whitespace-pre-wrap text-foreground/90 leading-relaxed font-mono">{task.analysis.implementation_spec}</pre>
                   </div>
                 </div>
               )}
 
-              <div className="mt-4">
-                <p className="text-xs text-muted-foreground">
-                  Analyzed at: {formatDate(task.analysis.analyzed_at)}
-                </p>
-              </div>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">No AI analysis available yet</p>
+            <div className="text-center py-8 rounded-lg bg-muted/20">
+              <p className="text-sm text-muted-foreground">AI analysis not available yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Analysis will appear here once processed</p>
             </div>
           )}
-
-          <Separator />
-
-          {/* Actions */}
-          <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <p className="text-sm text-muted-foreground">Update Status:</p>
-              {(['pending', 'in_progress', 'completed', 'blocked'] as const).map((status) => (
-                <Button
-                  key={status}
-                  size="sm"
-                  variant={task.status === status ? 'default' : 'outline'}
-                  onClick={() => {
-                    onUpdateStatus(task.id, status)
-                    onOpenChange(false)
-                  }}
-                  disabled={task.status === status}
-                >
-                  {status.replace('_', ' ')}
-                </Button>
-              ))}
-            </div>
-            
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Close
-            </Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
