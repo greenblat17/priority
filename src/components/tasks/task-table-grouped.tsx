@@ -23,6 +23,7 @@ import {
 import { TaskDetailDialog } from './task-detail-dialog'
 import { TaskGroup } from './task-group'
 import { ConfidenceBadge } from './confidence-badge'
+import { PriorityDot } from './priority-dot'
 import { MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
@@ -139,9 +140,9 @@ export function TaskTableGrouped({
     <TableRow 
       key={task.id}
       className={cn(
-        "cursor-pointer",
-        task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "bg-red-50/20",
-        isSelected && "bg-muted/50"
+        "group cursor-pointer hover:bg-accent/30 transition-colors duration-200",
+        task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "bg-destructive/5 hover:bg-destructive/10",
+        isSelected && "bg-muted/50 hover:bg-muted/60"
       )}
       onClick={(e) => {
         // Don't open detail dialog if clicking checkbox
@@ -158,7 +159,7 @@ export function TaskTableGrouped({
           />
         </TableCell>
       )}
-      <TableCell className="font-semibold">
+      <TableCell className="font-medium">
         <div className="max-w-md">
           <div className="truncate">{searchQuery ? highlightSearchTerm(task.description, searchQuery) : task.description}</div>
           {task.source && (
@@ -169,21 +170,24 @@ export function TaskTableGrouped({
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant={getCategoryVariant(task.analysis?.category)}>
+        <Badge variant={getCategoryVariant(task.analysis?.category)} className="text-xs">
           <span>{searchQuery && task.analysis?.category ? highlightSearchTerm(task.analysis.category, searchQuery) : (task.analysis?.category || 'pending')}</span>
         </Badge>
       </TableCell>
       <TableCell>
-        <span className={getPriorityColor(task.analysis?.priority)}>
-          {task.analysis?.priority || '-'}/10
-        </span>
+        <div className="flex items-center gap-1.5">
+          <PriorityDot priority={task.analysis?.priority} />
+          <span className="text-sm text-muted-foreground">
+            {task.analysis?.priority || '-'}
+          </span>
+        </div>
       </TableCell>
       <TableCell>
-        <span className={getComplexityColor(task.analysis?.complexity)}>
+        <span className={cn("text-sm", getComplexityColor(task.analysis?.complexity))}>
           {task.analysis?.complexity || 'analyzing'}
         </span>
         {task.analysis?.estimated_hours && (
-          <span className="text-sm text-muted-foreground ml-1">
+          <span className="text-xs text-muted-foreground ml-1">
             ({task.analysis.estimated_hours}h)
           </span>
         )}
@@ -193,6 +197,7 @@ export function TaskTableGrouped({
           <ConfidenceBadge 
             score={task.analysis.confidence_score} 
             showWarning={true}
+            size="sm"
           />
         ) : (
           <span className="text-sm text-muted-foreground">-</span>
@@ -206,7 +211,7 @@ export function TaskTableGrouped({
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0 opacity-60 hover:opacity-100 group-hover:opacity-100 transition-opacity duration-200">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
