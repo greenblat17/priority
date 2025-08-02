@@ -57,14 +57,13 @@ export function useTasks(filters?: {
             presence: { key: session.user.id }
           }
         })
-        // Listen for task analysis updates
+        // Listen for task analysis updates (filter will be handled by RLS)
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
-            table: 'task_analyses',
-            filter: undefined // Listen to all changes
+            table: 'task_analyses'
           },
           (payload: RealtimePostgresChangesPayload<any>) => {
             console.log('[Real-time] Task analysis update received:', {
@@ -90,14 +89,13 @@ export function useTasks(filters?: {
             }
           }
         )
-      // Listen for task updates (including group changes)
+      // Listen for task updates (including group changes, filter will be handled by RLS)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'tasks',
-          filter: 'group_id=neq.null'
+          table: 'tasks'
         },
         (payload: RealtimePostgresChangesPayload<any>) => {
           console.log('[Real-time] Task grouped:', payload)
@@ -110,17 +108,23 @@ export function useTasks(filters?: {
         }
         )
         .subscribe((status: 'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED', error?: any) => {
-          console.log('[Real-time] Subscription status:', status, error)
+          console.log('[Real-time] Subscription status:', status)
+          if (error) {
+            console.log('[Real-time] Error details:', error)
+          }
+          
           if (status === 'SUBSCRIBED') {
-            console.log('[Real-time] Successfully subscribed to task updates')
+            console.log('[Real-time] ✅ Successfully subscribed to task updates')
           } else if (status === 'CHANNEL_ERROR') {
-            console.error('[Real-time] Failed to subscribe to task updates:', error)
-            // Don't show error toast since polling is working as fallback
-            console.log('[Real-time] Falling back to polling mechanism')
+            console.warn('[Real-time] ⚠️ Failed to subscribe to task updates. This is normal if RLS policies are restrictive.')
+            console.log('[Real-time] 🔄 Falling back to polling mechanism - no impact on functionality')
+            if (error) {
+              console.log('[Real-time] Error cause:', error)
+            }
           } else if (status === 'TIMED_OUT') {
-            console.error('[Real-time] Subscription timed out')
+            console.warn('[Real-time] ⏱️ Subscription timed out - using polling fallback')
           } else if (status === 'CLOSED') {
-            console.log('[Real-time] Subscription closed')
+            console.log('[Real-time] 🔌 Subscription closed')
           }
         })
 

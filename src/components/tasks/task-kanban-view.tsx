@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MoreHorizontal, AlertCircle } from 'lucide-react'
+import { PriorityDot } from './priority-dot'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,26 +38,26 @@ const statusColumns = [
   { 
     id: TaskStatus.PENDING, 
     label: 'Pending', 
-    color: 'bg-amber-50/30 dark:bg-amber-950/10',
-    dotColor: 'bg-amber-500'
+    color: 'bg-muted/20',
+    dotColor: 'bg-muted-foreground/60'
   },
   { 
     id: TaskStatus.IN_PROGRESS, 
     label: 'In Progress', 
-    color: 'bg-blue-50/30 dark:bg-blue-950/10',
-    dotColor: 'bg-blue-500'
+    color: 'bg-primary/5',
+    dotColor: 'bg-primary'
   },
   { 
     id: TaskStatus.COMPLETED, 
     label: 'Completed', 
-    color: 'bg-emerald-50/30 dark:bg-emerald-950/10',
+    color: 'bg-muted/20',
     dotColor: 'bg-emerald-500'
   },
   { 
     id: TaskStatus.BLOCKED, 
     label: 'Blocked', 
-    color: 'bg-rose-50/30 dark:bg-rose-950/10',
-    dotColor: 'bg-rose-500'
+    color: 'bg-muted/20',
+    dotColor: 'bg-destructive'
   },
 ] as const
 
@@ -152,44 +153,25 @@ export function TaskKanbanView({
 
   const renderTask = (task: TaskWithGroup) => (
     <Card
-      key={task.id}
       className={cn(
-        "group mb-3 cursor-move hover:shadow-sm transition-all duration-200 bg-background border-border/60",
-        task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "border-destructive/30",
-        draggedTask?.id === task.id && "opacity-50"
+        "group cursor-move hover:shadow-sm hover:scale-[1.02] transition-all duration-200 bg-background/95 border-0 shadow-sm",
+        task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "ring-1 ring-destructive/20",
+        draggedTask?.id === task.id && "opacity-50 scale-95"
       )}
       draggable
       onDragStart={(e) => handleDragStart(e, task)}
       onClick={() => setSelectedTask(task)}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium leading-relaxed mb-2">{task.description}</p>
+            <p className="text-sm font-medium leading-5 mb-1">{task.description}</p>
             
-            <div className="flex items-center gap-2 flex-wrap">
-              {task.analysis?.priority && (
-                <div className="flex items-center gap-1">
-                  <div className={cn(
-                    "w-1.5 h-1.5 rounded-full",
-                    task.analysis.priority >= 8 ? "bg-red-500" : 
-                    task.analysis.priority >= 6 ? "bg-orange-500" : 
-                    task.analysis.priority >= 4 ? "bg-yellow-500" : "bg-gray-400"
-                  )} />
-                  <span className="text-xs text-muted-foreground">P{task.analysis.priority}</span>
-                </div>
-              )}
-              
-              {task.analysis?.category && (
-                <Badge variant="secondary" className="text-xs h-5 px-2">
-                  {task.analysis.category}
-                </Badge>
-              )}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <PriorityDot priority={task.analysis?.priority} />
               
               {task.analysis?.estimated_hours && (
-                <span className="text-xs text-muted-foreground">
-                  {task.analysis.estimated_hours}h
-                </span>
+                <span>{task.analysis.estimated_hours}h</span>
               )}
 
               {task.analysis?.confidence_score !== undefined && task.analysis.confidence_score < 50 && (
@@ -200,7 +182,7 @@ export function TaskKanbanView({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="sm" className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200">
                 <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -270,32 +252,45 @@ export function TaskKanbanView({
             <div
               key={column.id}
               className={cn(
-                "rounded-xl p-4 min-h-[600px] transition-all duration-200",
+                "rounded-2xl p-4 min-h-[600px] transition-all duration-300",
                 column.color,
-                isDropTarget && "ring-2 ring-primary ring-offset-2 bg-accent/5"
+                isDropTarget && "ring-1 ring-primary/50 scale-[1.01]"
               )}
               onDragOver={handleDragOver}
               onDragEnter={() => handleDragEnter(column.id)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, column.id)}
             >
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-border/40">
+              <div className="flex items-center justify-between mb-6 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className={cn("w-2 h-2 rounded-full", column.dotColor)} />
-                  <h3 className="font-medium text-sm text-foreground/80">{column.label}</h3>
+                  <div className={cn("w-2 h-2 rounded-full transition-colors duration-200", column.dotColor)} />
+                  <h3 className="font-medium text-sm text-foreground/90">{column.label}</h3>
                 </div>
-                <span className="text-xs text-muted-foreground font-medium">
+                <span className="text-xs text-muted-foreground/80 font-medium px-1.5 py-0.5 rounded-full bg-muted/50">
                   {columnTasks.length}
                 </span>
               </div>
               
               <ScrollArea className="h-[calc(100vh-300px)]">
-                <div className="pr-3">
-                  {columnTasks.map(renderTask)}
+                <div className="pr-3 space-y-2">
+                  {columnTasks.map((task, index) => (
+                    <div
+                      key={task.id}
+                      style={{
+                        animationDelay: `${index * 50}ms`
+                      }}
+                      className="animate-in slide-in-from-top-2 duration-300"
+                    >
+                      {renderTask(task)}
+                    </div>
+                  ))}
                   
                   {columnTasks.length === 0 && (
-                    <div className="flex items-center justify-center h-32">
-                      <p className="text-xs text-muted-foreground">Drop tasks here</p>
+                    <div className="flex items-center justify-center h-32 group-hover:h-40 transition-all duration-300">
+                      <div className="text-center">
+                        <div className={cn("w-3 h-3 rounded-full mx-auto mb-2 opacity-30", column.dotColor)} />
+                        <p className="text-xs text-muted-foreground/60">Drop tasks here</p>
+                      </div>
                     </div>
                   )}
                 </div>
