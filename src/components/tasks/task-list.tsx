@@ -24,6 +24,7 @@ import { useBulkUpdateTaskStatus, useBulkDeleteTasks } from '@/hooks/use-tasks'
 import { ExportDialog } from '@/components/tasks/export-dialog'
 import { Button } from '@/components/ui/button'
 import { Download, Users } from 'lucide-react'
+import { useQuickAddShortcut } from '@/hooks/use-keyboard-shortcuts'
 import { useFilterPersistence } from '@/hooks/use-filter-persistence'
 import { GroupManagementDialog } from '@/components/tasks/group-management-dialog'
 import { useCreateTaskGroup, useUpdateTaskGroup, useDeleteTaskGroup } from '@/hooks/use-task-groups'
@@ -43,6 +44,9 @@ export function TaskList() {
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [showGroupDialog, setShowGroupDialog] = useState(false)
   const itemsPerPage = 20
+
+  // Quick add keyboard shortcut
+  useQuickAddShortcut(() => setShowQuickAdd(true))
 
   // Use optimized task hooks
   const { data: tasks, isLoading, error } = useTasks({
@@ -150,6 +154,11 @@ export function TaskList() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger when typing in inputs
+      const target = e.target as HTMLElement
+      const isFormTag = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || 
+                       target.isContentEditable
+      
       // Cmd/Ctrl + A to select all
       if ((e.metaKey || e.ctrlKey) && e.key === 'a' && filteredAndSortedTasks.length > 0) {
         e.preventDefault()
@@ -159,11 +168,19 @@ export function TaskList() {
       if (e.key === 'Escape' && selectedCount > 0) {
         clearSelection()
       }
+      // V to toggle view (when not in input)
+      if (e.key === 'v' && !isFormTag && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault()
+        const currentView = filters.view || 'table'
+        const newView = currentView === 'table' ? 'kanban' : 'table'
+        updateFilter('view', newView)
+        toast.success(`Switched to ${newView} view`)
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [toggleAll, clearSelection, selectedCount, filteredAndSortedTasks])
+  }, [toggleAll, clearSelection, selectedCount, filteredAndSortedTasks, filters.view, updateFilter])
 
   if (isLoading || !isInitialized) {
     return (

@@ -11,7 +11,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { SessionTimeoutProvider } from "@/components/providers/session-timeout-provider";
 import { KeyboardShortcutsProvider } from "@/components/providers/keyboard-shortcuts-provider";
-import { KeyboardShortcutsDialog } from "@/components/ui/keyboard-shortcuts-dialog";
+import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({

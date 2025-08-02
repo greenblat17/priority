@@ -21,14 +21,18 @@ export function ViewToggle({ view, onViewChange }: ViewToggleProps) {
       <ToggleGroupItem 
         value="table" 
         aria-label="Table view" 
+        aria-keyshortcuts="v"
         className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+        title="Table view (V)"
       >
         <Table className="h-3.5 w-3.5" />
       </ToggleGroupItem>
       <ToggleGroupItem 
         value="kanban" 
         aria-label="Kanban view" 
+        aria-keyshortcuts="v"
         className="data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+        title="Kanban view (V)"
       >
         <LayoutGrid className="h-3.5 w-3.5" />
       </ToggleGroupItem>

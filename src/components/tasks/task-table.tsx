@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { containerVariants, listItemVariants, springs } from '@/lib/animations'
 import {
@@ -27,6 +27,8 @@ import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw, Loader2 } from 'lucide-re
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { getSourceLabel } from '@/lib/task-source-utils'
+import { useTaskListNavigation } from '@/hooks/use-keyboard-shortcuts'
+import { cn } from '@/lib/utils'
 
 interface TaskTableProps {
   tasks: TaskWithAnalysis[]
@@ -36,6 +38,46 @@ interface TaskTableProps {
 
 export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProps) {
   const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1)
+
+  // Keyboard navigation
+  useTaskListNavigation(
+    tasks,
+    selectedIndex,
+    setSelectedIndex,
+    (task) => setSelectedTask(task)
+  )
+
+  // Additional keyboard shortcuts for task actions
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger when typing in inputs
+      const target = e.target as HTMLElement
+      const isFormTag = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || 
+                       target.isContentEditable
+      
+      if (isFormTag) return
+
+      const selectedTask = tasks[selectedIndex]
+      
+      // Space - Toggle task status
+      if (e.key === ' ' && selectedTask) {
+        e.preventDefault()
+        const newStatus = selectedTask.status === 'completed' ? 'to_do' : 'completed'
+        onUpdateStatus(selectedTask.id, newStatus)
+        toast.success(`Task marked as ${newStatus.replace('_', ' ')}`)
+      }
+      
+      // E - Edit selected task (open detail dialog)
+      if (e.key === 'e' && selectedTask) {
+        e.preventDefault()
+        setSelectedTask(selectedTask)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedIndex, tasks, onUpdateStatus])
 
   const copySpec = (spec: string) => {
     navigator.clipboard.writeText(spec)
@@ -108,21 +150,28 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
         </TableHeader>
         <TableBody>
           <AnimatePresence mode="popLayout">
-            {tasks.map((task, index) => (
-              <motion.tr
-                key={task.id}
-                layout
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{
-                  ...springs.snappy,
-                  delay: index * 0.05,
-                }}
-                whileHover={{ backgroundColor: "rgb(249 250 251)" }}
-                className="cursor-pointer"
-                onClick={() => setSelectedTask(task)}
-              >
+            {tasks.map((task, index) => {
+              const isKeyboardSelected = index === selectedIndex
+              
+              return (
+                <motion.tr
+                  key={task.id}
+                  layout
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{
+                    ...springs.snappy,
+                    delay: index * 0.05,
+                  }}
+                  whileHover={{ backgroundColor: "rgb(249 250 251)" }}
+                  className={cn(
+                    "cursor-pointer",
+                    isKeyboardSelected && "ring-2 ring-primary ring-inset"
+                  )}
+                  onClick={() => setSelectedTask(task)}
+                  aria-selected={isKeyboardSelected}
+                >
                 <TableCell className="font-medium text-black">
                 <div className="max-w-md">
                   <p className="truncate">{task.description}</p>
@@ -266,7 +315,8 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
                 </DropdownMenu>
               </TableCell>
               </motion.tr>
-            ))}
+              )
+            })}
           </AnimatePresence>
         </TableBody>
       </Table>

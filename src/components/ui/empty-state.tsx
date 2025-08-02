@@ -8,6 +8,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getPlatformKey } from '@/hooks/use-hotkeys'
 
 interface EmptyStateProps {
   variant?: 'default' | 'search' | 'filter' | 'error'
@@ -75,15 +76,27 @@ export function EmptyState({
 // Specific empty state variants
 export function NoTasksEmptyState({ onCreateTask }: { onCreateTask: () => void }) {
   return (
-    <EmptyState
-      icon={<ListChecks className="w-8 h-8 text-gray-400" />}
-      title="No tasks yet"
-      description="Get started by creating your first task. TaskPriority AI will help you prioritize and manage your work."
-      action={{
-        label: "Create your first task",
-        onClick: onCreateTask
-      }}
-    />
+    <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
+      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+        <ListChecks className="w-8 h-8 text-gray-400" />
+      </div>
+      
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        No tasks yet
+      </h3>
+      
+      <p className="text-gray-600 max-w-sm mb-6">
+        Get started by creating your first task. TaskPriority AI will help you prioritize and manage your work.
+      </p>
+      
+      <Button onClick={onCreateTask} className="gap-2">
+        <Plus className="h-4 w-4" />
+        Create your first task
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 ml-1">
+          <span className="text-xs">{getPlatformKey('cmd+K')}</span>
+        </kbd>
+      </Button>
+    </div>
   )
 }
 

@@ -1,5 +1,4 @@
-import { useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useCallback, useState } from 'react'
 
 interface KeyboardShortcut {
   key: string
@@ -56,54 +55,13 @@ export function useQuickAddShortcut(onOpen: () => void) {
 
 // Global keyboard shortcuts
 export function useGlobalKeyboardShortcuts() {
-  const router = useRouter()
-
-  // Navigation shortcuts
-  useKeyboardShortcut({
-    key: 'g',
-    action: () => {} // This will be followed by another key
-  })
 
   useEffect(() => {
-    let gPressed = false
-    let gTimeout: NodeJS.Timeout
-
     const handleKeyDown = (event: KeyboardEvent) => {
       // Don't trigger shortcuts when typing in inputs
       const target = event.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return
-      }
-
-      // Handle 'g' followed by another key for navigation
-      if (event.key === 'g' && !event.ctrlKey && !event.metaKey) {
-        gPressed = true
-        // Reset after 1 second
-        gTimeout = setTimeout(() => {
-          gPressed = false
-        }, 1000)
-        return
-      }
-
-      if (gPressed) {
-        event.preventDefault()
-        gPressed = false
-        clearTimeout(gTimeout)
-
-        switch (event.key) {
-          case 'd':
-            router.push('/overview')
-            break
-          case 't':
-            router.push('/tasks')
-            break
-          case 's':
-            router.push('/settings/gtm')
-            break
-          case 'h':
-            router.push('/')
-            break
-        }
       }
 
       // Show help with '?'
@@ -119,9 +77,8 @@ export function useGlobalKeyboardShortcuts() {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
-      if (gTimeout) clearTimeout(gTimeout)
     }
-  }, [router])
+  }, [])
 }
 
 // Task list navigation shortcuts (j/k)
@@ -183,4 +140,35 @@ export function useEscapeKey(onEscape: () => void, isActive: boolean = true) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onEscape, isActive])
+}
+
+// Keyboard shortcuts dialog hook
+export function useKeyboardShortcutsDialog() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    const handleShowShortcuts = () => setIsOpen(true)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger when typing
+      const target = event.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      if (event.key === '?' && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault()
+        setIsOpen(true)
+      }
+    }
+
+    window.addEventListener('show-keyboard-shortcuts', handleShowShortcuts)
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('show-keyboard-shortcuts', handleShowShortcuts)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  return { isOpen, setIsOpen }
 }

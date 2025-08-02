@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Table,
   TableBody,
@@ -33,6 +33,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { getSourceLabel } from '@/lib/task-source-utils'
 import { useBulkUpdateTaskStatus, useBulkDeleteTasks } from '@/hooks/use-tasks'
+import { useTaskListNavigation } from '@/hooks/use-keyboard-shortcuts'
 
 interface TaskWithGroup extends TaskWithAnalysis {
   group: TaskGroupType | null
@@ -62,8 +63,72 @@ export function TaskTableGrouped({
   isPartiallySelected = false
 }: TaskTableGroupedProps) {
   const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1)
   const bulkUpdateStatus = useBulkUpdateTaskStatus()
   const bulkDelete = useBulkDeleteTasks()
+
+  // Flatten all tasks for keyboard navigation
+  const allTasks = tasks.reduce<TaskWithAnalysis[]>((acc, task) => {
+    return [...acc, task]
+  }, [])
+
+  // Keyboard navigation
+  useTaskListNavigation(
+    allTasks,
+    selectedIndex,
+    setSelectedIndex,
+    (task) => setSelectedTask(task)
+  )
+
+  // Additional keyboard shortcuts for task actions
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger when typing in inputs
+      const target = e.target as HTMLElement
+      const isFormTag = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || 
+                       target.isContentEditable
+      
+      if (isFormTag) return
+
+      const selectedTask = allTasks[selectedIndex]
+      
+      // X - Toggle selection
+      if (e.key === 'x' && selectedTask && onToggleSelection) {
+        e.preventDefault()
+        onToggleSelection(selectedTask.id)
+      }
+      
+      // Space - Toggle task status
+      if (e.key === ' ' && selectedTask) {
+        e.preventDefault()
+        const newStatus = selectedTask.status === 'completed' ? 'to_do' : 'completed'
+        onUpdateStatus(selectedTask.id, newStatus)
+        toast.success(`Task marked as ${newStatus.replace('_', ' ')}`)
+      }
+      
+      // D - Delete selected tasks
+      if (e.key === 'd' && !e.metaKey && !e.ctrlKey && selectedIds && selectedIds.size > 0) {
+        e.preventDefault()
+        const count = selectedIds.size
+        const taskIds = Array.from(selectedIds)
+        
+        toast.promise(bulkDelete.mutateAsync(taskIds), {
+          loading: `Deleting ${count} task${count > 1 ? 's' : ''}...`,
+          success: `Deleted ${count} task${count > 1 ? 's' : ''}`,
+          error: 'Failed to delete tasks'
+        })
+      }
+      
+      // E - Edit selected task (open detail dialog)
+      if (e.key === 'e' && selectedTask) {
+        e.preventDefault()
+        setSelectedTask(selectedTask)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedIndex, allTasks, onToggleSelection, onUpdateStatus, selectedIds, bulkDelete])
 
   const copySpec = (spec: string) => {
     navigator.clipboard.writeText(spec)
@@ -133,8 +198,10 @@ export function TaskTableGrouped({
   }, {} as Record<string, { group: TaskGroupType | null; tasks: TaskWithGroup[] }>)
 
   // Render a single task row
-  const renderTaskRow = (task: TaskWithAnalysis) => {
+  const renderTaskRow = (task: TaskWithAnalysis, index?: number) => {
     const isSelected = selectedIds?.has(task.id) || false
+    const taskIndex = index !== undefined ? index : allTasks.findIndex(t => t.id === task.id)
+    const isKeyboardSelected = taskIndex === selectedIndex
     
     return (
     <TableRow 
@@ -142,13 +209,15 @@ export function TaskTableGrouped({
       className={cn(
         "group cursor-pointer hover:bg-accent/30 transition-colors duration-200",
         task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "bg-destructive/5 hover:bg-destructive/10",
-        isSelected && "bg-muted/50 hover:bg-muted/60"
+        isSelected && "bg-muted/50 hover:bg-muted/60",
+        isKeyboardSelected && "ring-2 ring-primary ring-inset"
       )}
       onClick={(e) => {
         // Don't open detail dialog if clicking checkbox
         if ((e.target as HTMLElement).closest('[data-checkbox]')) return
         setSelectedTask(task)
       }}
+      aria-selected={isKeyboardSelected}
     >
       {onToggleSelection && (
         <TableCell className="w-[40px]" data-checkbox>
@@ -274,7 +343,7 @@ export function TaskTableGrouped({
     <>
       <Table>
         <TableCaption>
-          {tasks.length} task{tasks.length !== 1 ? 's' : ''} • Click on a task to view details
+          {tasks.length} task{tasks.length !== 1 ? 's' : ''} • Click on a task to view details • Use J/K to navigate
         </TableCaption>
         <TableHeader>
           <TableRow>
@@ -298,7 +367,10 @@ export function TaskTableGrouped({
         </TableHeader>
         <TableBody>
           {/* First render ungrouped tasks */}
-          {groupedTasks.ungrouped && groupedTasks.ungrouped.tasks.map(renderTaskRow)}
+          {groupedTasks.ungrouped && groupedTasks.ungrouped.tasks.map((task, idx) => {
+            const index = allTasks.findIndex(t => t.id === task.id)
+            return renderTaskRow(task, index)
+          })}
           
           {/* Then render grouped tasks */}
           {Object.entries(groupedTasks)
@@ -308,7 +380,10 @@ export function TaskTableGrouped({
                 key={groupId}
                 group={group!}
                 tasks={tasks}
-                renderTask={renderTaskRow}
+                renderTask={(task) => {
+                  const index = allTasks.findIndex(t => t.id === task.id)
+                  return renderTaskRow(task, index)
+                }}
                 hasCheckboxes={!!onToggleSelection}
                 onBulkUpdateStatus={(taskIds, status) => {
                   bulkUpdateStatus.mutate({ taskIds, status })

@@ -6,10 +6,11 @@ import { usePathname } from 'next/navigation'
 import { useSupabase } from '@/components/providers/supabase-provider'
 import { AuthButton } from '@/components/auth/auth-button'
 import { Button } from '@/components/ui/button'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Keyboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { springs } from '@/lib/animations'
+import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 
 export function Navigation() {
   const pathname = usePathname()
@@ -82,6 +83,21 @@ export function Navigation() {
                   )
                 })}
               </nav>
+            )}
+            
+            {/* Keyboard shortcuts hint */}
+            {user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden md:flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                title="View keyboard shortcuts"
+              >
+                <Keyboard className="h-4 w-4" />
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
+                  ?
+                </kbd>
+              </Button>
             )}
             
             {/* Auth Button / User Menu */}
@@ -165,6 +181,9 @@ export function Navigation() {
           )}
         </AnimatePresence>
       </div>
+      
+      {/* Keyboard Shortcuts Dialog */}
+      <KeyboardShortcutsDialog />
     </header>
   )
 }
