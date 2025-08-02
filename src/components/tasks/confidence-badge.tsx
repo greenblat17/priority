@@ -8,9 +8,10 @@ interface ConfidenceBadgeProps {
   score: number
   showWarning?: boolean
   className?: string
+  size?: 'sm' | 'default'
 }
 
-export function ConfidenceBadge({ score, showWarning = false, className }: ConfidenceBadgeProps) {
+export function ConfidenceBadge({ score, showWarning = false, className, size = 'default' }: ConfidenceBadgeProps) {
   // Determine the variant based on score
   const getVariant = () => {
     if (score >= 80) return 'default' // Green for high confidence
@@ -34,11 +35,12 @@ export function ConfidenceBadge({ score, showWarning = false, className }: Confi
         score < 50 && 'bg-red-100 hover:bg-red-100 border-red-200',
         score >= 50 && score < 80 && 'bg-yellow-100 hover:bg-yellow-100 border-yellow-200',
         score >= 80 && 'bg-green-100 hover:bg-green-100 border-green-200',
+        size === 'sm' && 'text-xs px-1.5 py-0',
         className
       )}
     >
       {showWarning && score < 50 && (
-        <AlertCircle className="h-3 w-3" />
+        <AlertCircle className={cn("h-3 w-3", size === 'sm' && "h-2.5 w-2.5")} />
       )}
       {score}%
     </Badge>

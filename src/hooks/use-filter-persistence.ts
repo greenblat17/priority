@@ -8,6 +8,7 @@ interface FilterState {
   confidence: string
   sortBy: 'priority' | 'date' | 'status'
   sortOrder: 'asc' | 'desc'
+  view: 'table' | 'kanban'
 }
 
 const STORAGE_KEY = 'taskpriority-filters'
@@ -17,7 +18,8 @@ const defaultFilters: FilterState = {
   category: 'all',
   confidence: 'all',
   sortBy: 'priority',
-  sortOrder: 'desc'
+  sortOrder: 'desc',
+  view: 'table'
 }
 
 export function useFilterPersistence() {

@@ -28,6 +28,8 @@ import { useFilterPersistence } from '@/hooks/use-filter-persistence'
 import { GroupManagementDialog } from '@/components/tasks/group-management-dialog'
 import { useCreateTaskGroup, useUpdateTaskGroup, useDeleteTaskGroup } from '@/hooks/use-task-groups'
 import { useTaskPolling } from '@/hooks/use-task-polling'
+import { TaskKanbanView } from './task-kanban-view'
+import { ViewToggle } from './view-toggle'
 
 export function TaskList() {
   const supabase = createClient()
@@ -212,6 +214,10 @@ export function TaskList() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <ViewToggle 
+                view={filters.view || 'table'} 
+                onViewChange={(view) => updateFilter('view', view)} 
+              />
               <Button
                 variant="outline"
                 size="sm"
@@ -291,21 +297,32 @@ export function TaskList() {
                 </>
               )}
               
-              {/* Show tasks table when there are tasks */}
+              {/* Show tasks table or kanban view when there are tasks */}
               {filteredAndSortedTasks && filteredAndSortedTasks.length > 0 && (
-                <TaskTableGrouped
-                  tasks={filteredAndSortedTasks}
-                  onUpdateStatus={(taskId, status) => 
-                    updateStatusMutation.mutate({ taskId, status })
-                  }
-                  onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
-                  searchQuery={searchQuery}
-                  selectedIds={selectedIds}
-                  onToggleSelection={toggleSelection}
-                  onToggleAll={toggleAll}
-                  isAllSelected={isAllSelected}
-                  isPartiallySelected={isPartiallySelected}
-                />
+                filters.view === 'kanban' ? (
+                  <TaskKanbanView
+                    tasks={filteredAndSortedTasks}
+                    onUpdateStatus={(taskId, status) => 
+                      updateStatusMutation.mutate({ taskId, status })
+                    }
+                    onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
+                    searchQuery={searchQuery}
+                  />
+                ) : (
+                  <TaskTableGrouped
+                    tasks={filteredAndSortedTasks}
+                    onUpdateStatus={(taskId, status) => 
+                      updateStatusMutation.mutate({ taskId, status })
+                    }
+                    onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
+                    searchQuery={searchQuery}
+                    selectedIds={selectedIds}
+                    onToggleSelection={toggleSelection}
+                    onToggleAll={toggleAll}
+                    isAllSelected={isAllSelected}
+                    isPartiallySelected={isPartiallySelected}
+                  />
+                )
               )}
               
               {/* Pagination */}
