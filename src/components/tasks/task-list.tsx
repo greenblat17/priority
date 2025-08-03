@@ -60,8 +60,9 @@ export function TaskList() {
   // Quick add keyboard shortcut
   useQuickAddShortcut(() => setShowQuickAdd(true))
   
-  // Check for duplicate review on mount
+  // Check for duplicate review on mount and listen for custom event
   useEffect(() => {
+    // Check URL param on mount
     if (searchParams.get('showDuplicateReview') === 'true') {
       const data = sessionStorage.getItem('duplicateReviewData')
       if (data) {
@@ -74,6 +75,21 @@ export function TaskList() {
         url.searchParams.delete('showDuplicateReview')
         window.history.replaceState({}, '', url)
       }
+    }
+
+    // Listen for custom event to open duplicate review
+    const handleOpenDuplicateReview = (event: CustomEvent) => {
+      console.log('[TaskList] Received openDuplicateReview event:', event.detail)
+      if (event.detail) {
+        setDuplicateReviewData(event.detail)
+        setShowDuplicateReview(true)
+      }
+    }
+
+    window.addEventListener('openDuplicateReview', handleOpenDuplicateReview as EventListener)
+    
+    return () => {
+      window.removeEventListener('openDuplicateReview', handleOpenDuplicateReview as EventListener)
     }
   }, [searchParams])
 

@@ -79,9 +79,15 @@ export function useDuplicateNotifications() {
       const topDuplicate = detection.duplicates[0]
 
       // Show persistent toast with actions
-      const message = `Found similar tasks! "${task.description.substring(0, 50)}..." is ${Math.round(topDuplicate.similarity * 100)}% similar to ${duplicateCount} other task${duplicateCount > 1 ? 's' : ''}`;
+      const taskPreview = task.description.length > 60 
+        ? `${task.description.substring(0, 60)}...` 
+        : task.description;
       
-      toast.info(message, {
+      const title = 'Found similar tasks!';
+      const message = `"${taskPreview}" is ${Math.round(topDuplicate.similarity * 100)}% similar to ${duplicateCount} other task${duplicateCount > 1 ? 's' : ''}`;
+      
+      toast(title, {
+          description: message,
           duration: NOTIFICATION_DURATION,
           id: detection.id,
           action: {
@@ -106,7 +112,15 @@ export function useDuplicateNotifications() {
           },
           closeButton: true,
           style: {
-            maxWidth: '450px'
+            maxWidth: '520px',
+            padding: '16px',
+          },
+          classNames: {
+            toast: 'group-[.toaster]:text-base',
+            title: 'group-[.toaster]:font-semibold group-[.toaster]:text-base',
+            description: 'group-[.toaster]:text-sm group-[.toaster]:leading-relaxed',
+            actionButton: 'group-[.toaster]:bg-gray-900 group-[.toaster]:text-white',
+            cancelButton: 'group-[.toaster]:bg-gray-100 group-[.toaster]:text-gray-700',
           }
         }
       )
@@ -114,28 +128,77 @@ export function useDuplicateNotifications() {
   }, [pendingDetections])
 
   const openDuplicateReviewDialog = async (detection: DuplicateDetection, task: Task) => {
-    // Get full task details for duplicates
-    const duplicateTaskIds = detection.duplicates.map(d => d.taskId)
-    const { data: duplicateTasks } = await supabase
-      .from('tasks')
-      .select(`
-        *,
-        group:task_groups!group_id (*),
-        analysis:task_analyses (*)
-      `)
-      .in('id', duplicateTaskIds)
+    try {
+      console.log('[Duplicate Review] Opening dialog for task:', task.id)
+      console.log('[Duplicate Review] Detection:', detection)
+      
+      // Get full task details for duplicates
+      const duplicateTaskIds = detection.duplicates.map(d => d.taskId)
+      const { data: duplicateTasks, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          group:task_groups!group_id (*),
+          analysis:task_analyses (*)
+        `)
+        .in('id', duplicateTaskIds)
 
-    if (!duplicateTasks) return
+      if (error) {
+        console.error('[Duplicate Review] Error fetching duplicate tasks:', error)
+        toast.error('Failed to load duplicate tasks')
+        return
+      }
 
-    // Store data in session storage for the dialog
-    sessionStorage.setItem('duplicateReviewData', JSON.stringify({
-      newTask: task,
-      duplicates: duplicateTasks,
-      similarities: detection.duplicates
-    }))
+      if (!duplicateTasks || duplicateTasks.length === 0) {
+        console.error('[Duplicate Review] No duplicate tasks found')
+        toast.error('Could not find duplicate tasks')
+        return
+      }
 
-    // Navigate to tasks page with dialog open
-    router.push('/tasks?showDuplicateReview=true')
+      console.log('[Duplicate Review] Found duplicate tasks:', duplicateTasks)
+
+      // Get the full task data with analysis
+      const { data: fullTask, error: taskError } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          group:task_groups!group_id (*),
+          analysis:task_analyses (*)
+        `)
+        .eq('id', task.id)
+        .single()
+
+      if (taskError || !fullTask) {
+        console.error('[Duplicate Review] Error fetching full task:', taskError)
+        toast.error('Failed to load task details')
+        return
+      }
+
+      // Store data in session storage for the dialog
+      const reviewData = {
+        newTask: fullTask,
+        duplicates: duplicateTasks,
+        similarities: detection.duplicates
+      }
+      
+      sessionStorage.setItem('duplicateReviewData', JSON.stringify(reviewData))
+      console.log('[Duplicate Review] Stored review data:', reviewData)
+
+      // Navigate to tasks page with dialog open
+      // If already on tasks page, force a refresh of the component
+      const currentPath = window.location.pathname
+      if (currentPath === '/tasks') {
+        // Dispatch a custom event to open the dialog
+        window.dispatchEvent(new CustomEvent('openDuplicateReview', { 
+          detail: reviewData 
+        }))
+      } else {
+        router.push('/tasks?showDuplicateReview=true')
+      }
+    } catch (error) {
+      console.error('[Duplicate Review] Unexpected error:', error)
+      toast.error('Failed to open duplicate review dialog')
+    }
   }
 
   const quickGroupTasks = async (detection: DuplicateDetection, task: Task) => {
