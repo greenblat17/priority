@@ -12,6 +12,7 @@ import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { SessionTimeoutProvider } from "@/components/providers/session-timeout-provider";
 import { KeyboardShortcutsProvider } from "@/components/providers/keyboard-shortcuts-provider";
 import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
+import { DuplicateNotificationProvider } from "@/components/providers/duplicate-notification-provider";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -43,9 +44,10 @@ export default function RootLayout({
           <SessionTimeoutProvider>
             <KeyboardShortcutsProvider>
               <QueryProvider>
-                <WebVitalsProvider>
-                  <ScrollRestorationProvider>
-                    <ErrorBoundary>
+                <DuplicateNotificationProvider>
+                  <WebVitalsProvider>
+                    <ScrollRestorationProvider>
+                      <ErrorBoundary>
                   <div className="min-h-screen flex flex-col">
                     {/* Modern Navigation */}
                     <Navigation />
@@ -60,9 +62,10 @@ export default function RootLayout({
                   <Toaster position="bottom-right" />
                   <OfflineIndicator />
                   <KeyboardShortcutsDialog />
-                </ErrorBoundary>
-                  </ScrollRestorationProvider>
-                </WebVitalsProvider>
+                      </ErrorBoundary>
+                    </ScrollRestorationProvider>
+                  </WebVitalsProvider>
+                </DuplicateNotificationProvider>
               </QueryProvider>
             </KeyboardShortcutsProvider>
           </SessionTimeoutProvider>

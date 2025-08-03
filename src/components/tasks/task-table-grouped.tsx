@@ -101,8 +101,8 @@ export function TaskTableGrouped({
       // Space - Toggle task status
       if (e.key === ' ' && selectedTask) {
         e.preventDefault()
-        const newStatus = selectedTask.status === 'completed' ? 'to_do' : 'completed'
-        onUpdateStatus(selectedTask.id, newStatus)
+        const newStatus = selectedTask.status === 'completed' ? 'pending' : 'completed'
+        onUpdateStatus(selectedTask.id, newStatus as TaskStatusType)
         toast.success(`Task marked as ${newStatus.replace('_', ' ')}`)
       }
       

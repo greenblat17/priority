@@ -66,8 +66,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   const supabase = createClient()
   const router = useRouter()
   
-  // State for duplicate detection
-  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false)
+  // State for duplicate detection (kept for future dialog use)
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
   const [potentialDuplicates, setPotentialDuplicates] = useState<TaskSimilarity[]>([])
   const [pendingTaskData, setPendingTaskData] = useState<TaskInput | null>(null)
@@ -82,7 +81,6 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   })
 
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const [skipDuplicateCheck, setSkipDuplicateCheck] = useState(true)
 
   // Close on escape key
   useEscapeKey(onClose, isOpen)
@@ -148,6 +146,20 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
       
       // Trigger AI analysis asynchronously (fire and forget)
+      
+      // Trigger duplicate check in background
+      fetch('/api/tasks/check-duplicates-async', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: task.id,
+          description: task.description,
+          userId: user.id
+        }),
+        credentials: 'include'
+      }).catch(error => {
+        console.error('Background duplicate check failed:', error)
+      })
       fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -244,36 +256,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   })
 
   const handleSubmit = async (data: TaskInput) => {
-    // If skip duplicate check is enabled, create task directly
-    if (skipDuplicateCheck) {
-      createTaskMutation.mutate({ data })
-      return
-    }
-    
-    // Store the task data for later use
-    setPendingTaskData(data)
-    
-    // Check for duplicates
-    setIsCheckingDuplicates(true)
-    
-    try {
-      const duplicateResult = await checkDuplicatesMutation.mutateAsync(data.description)
-      
-      if (duplicateResult.potentialDuplicates.length > 0) {
-        // Show duplicate review dialog
-        setPotentialDuplicates(duplicateResult.potentialDuplicates)
-        setShowDuplicateDialog(true)
-      } else {
-        // No duplicates found, create task directly
-        createTaskMutation.mutate({ data })
-      }
-    } catch (error) {
-      // If duplicate check fails, proceed with task creation
-      console.error('Duplicate check failed:', error)
-      createTaskMutation.mutate({ data })
-    } finally {
-      setIsCheckingDuplicates(false)
-    }
+    // Create task immediately without duplicate check
+    createTaskMutation.mutate({ data })
   }
 
   const handleDuplicateAction = (action: ExtendedDuplicateReviewAction) => {
@@ -449,20 +433,6 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               />
             </div>
             
-            {/* Skip duplicate check */}
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="skipDuplicateCheck" 
-                checked={skipDuplicateCheck}
-                onCheckedChange={(checked) => setSkipDuplicateCheck(checked as boolean)}
-              />
-              <label 
-                htmlFor="skipDuplicateCheck" 
-                className="text-sm text-gray-600 cursor-pointer"
-              >
-                Skip duplicate check
-              </label>
-            </div>
             
             {/* Collapsible advanced options */}
             <details className="group">
@@ -497,10 +467,10 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={springs.snappy}
-                disabled={createTaskMutation.isPending || isCheckingDuplicates}
+                disabled={createTaskMutation.isPending}
                 className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50"
               >
-                {createTaskMutation.isPending ? 'Adding...' : isCheckingDuplicates ? 'Checking...' : 'Add Task'}
+                {createTaskMutation.isPending ? 'Adding...' : 'Add Task'}
               </motion.button>
             </div>
             </form>

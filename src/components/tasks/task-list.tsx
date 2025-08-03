@@ -31,6 +31,9 @@ import { useCreateTaskGroup, useUpdateTaskGroup, useDeleteTaskGroup } from '@/ho
 import { useTaskPolling } from '@/hooks/use-task-polling'
 import { TaskKanbanView } from './task-kanban-view'
 import { ViewToggle } from './view-toggle'
+import { useSearchParams } from 'next/navigation'
+import { DuplicateReviewDialog } from './duplicate-review-dialog'
+import type { TaskSimilarity } from '@/types/duplicate'
 
 export function TaskList() {
   const supabase = createClient()
@@ -44,9 +47,35 @@ export function TaskList() {
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [showGroupDialog, setShowGroupDialog] = useState(false)
   const itemsPerPage = 20
+  
+  // Duplicate review state
+  const searchParams = useSearchParams()
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
+  const [duplicateReviewData, setDuplicateReviewData] = useState<{
+    newTask: TaskWithAnalysis
+    duplicates: TaskWithAnalysis[]
+    similarities: Array<{ taskId: string; similarity: number }>
+  } | null>(null)
 
   // Quick add keyboard shortcut
   useQuickAddShortcut(() => setShowQuickAdd(true))
+  
+  // Check for duplicate review on mount
+  useEffect(() => {
+    if (searchParams.get('showDuplicateReview') === 'true') {
+      const data = sessionStorage.getItem('duplicateReviewData')
+      if (data) {
+        const parsed = JSON.parse(data)
+        setDuplicateReviewData(parsed)
+        setShowDuplicateReview(true)
+        sessionStorage.removeItem('duplicateReviewData')
+        // Remove the URL param
+        const url = new URL(window.location.href)
+        url.searchParams.delete('showDuplicateReview')
+        window.history.replaceState({}, '', url)
+      }
+    }
+  }, [searchParams])
 
   // Use optimized task hooks
   const { data: tasks, isLoading, error } = useTasks({
@@ -405,6 +434,42 @@ export function TaskList() {
         }}
         onExport={() => setShowExportDialog(true)}
       />
+      
+      {/* Duplicate Review Dialog */}
+      {showDuplicateReview && duplicateReviewData && (
+        <DuplicateReviewDialog
+          isOpen={showDuplicateReview}
+          onClose={() => {
+            setShowDuplicateReview(false)
+            setDuplicateReviewData(null)
+          }}
+          newTaskDescription={duplicateReviewData.newTask.description}
+          potentialDuplicates={duplicateReviewData.similarities.map(sim => {
+            const task = duplicateReviewData.duplicates.find(d => d.id === sim.taskId)
+            return {
+              taskId: sim.taskId,
+              task: task!,
+              similarity: sim.similarity,
+              embedding: []
+            } as TaskSimilarity
+          })}
+          onAction={async (action) => {
+            if (action.action === 'create_and_group' && 'selectedTaskIds' in action) {
+              // Group tasks
+              const allTaskIds = [duplicateReviewData.newTask.id, ...action.selectedTaskIds]
+              await createGroupMutation.mutateAsync({ 
+                name: 'Similar Tasks',
+                taskIds: allTaskIds 
+              })
+              
+              toast.success('Tasks grouped successfully!')
+              queryClient.invalidateQueries({ queryKey: ['tasks'] })
+            }
+            setShowDuplicateReview(false)
+            setDuplicateReviewData(null)
+          }}
+        />
+      )}
     </div>
   )
 }
