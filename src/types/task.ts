@@ -3,6 +3,7 @@ import { z } from 'zod'
 // Task source enum
 export const TaskSource = {
   INTERNAL: 'internal',
+  MCP: 'mcp',
   TELEGRAM: 'telegram',
   REDDIT: 'reddit',
   MAIL: 'mail',
@@ -31,6 +32,7 @@ export const taskInputSchema = z.object({
     .max(5000, 'Description must be less than 5000 characters'),
   source: z.enum([
     TaskSource.INTERNAL,
+    TaskSource.MCP,
     TaskSource.TELEGRAM,
     TaskSource.REDDIT,
     TaskSource.MAIL,

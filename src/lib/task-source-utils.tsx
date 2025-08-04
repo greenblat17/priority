@@ -6,12 +6,14 @@ import {
   Youtube, 
   Twitter, 
   Smartphone,
-  Play
+  Play,
+  Bot
 } from 'lucide-react'
 import { TaskSource } from '@/types/task'
 
 export const sourceIcons = {
   [TaskSource.INTERNAL]: Building,
+  [TaskSource.MCP]: Bot,
   [TaskSource.TELEGRAM]: Send,
   [TaskSource.REDDIT]: MessageSquare,
   [TaskSource.MAIL]: Mail,
@@ -23,6 +25,7 @@ export const sourceIcons = {
 
 export const sourceLabels = {
   [TaskSource.INTERNAL]: 'Internal',
+  [TaskSource.MCP]: 'MCP',
   [TaskSource.TELEGRAM]: 'Telegram',
   [TaskSource.REDDIT]: 'Reddit',
   [TaskSource.MAIL]: 'Mail',
