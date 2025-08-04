@@ -4,11 +4,11 @@ import { NextResponse } from 'next/server'
 // GET /api/pages/[id]/tasks - Get tasks linked to a page
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id: pageId } = params
+    const { id: pageId } = await params
     
     // Get linked tasks
     const { data: taskLinks, error } = await supabase
@@ -42,11 +42,11 @@ export async function GET(
 // POST /api/pages/[id]/tasks - Link a task to a page
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id: pageId } = params
+    const { id: pageId } = await params
     const body = await request.json()
     const { taskId } = body
     
@@ -135,11 +135,11 @@ export async function POST(
 // DELETE /api/pages/[id]/tasks/[taskId] - Unlink a task from a page
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id: pageId } = params
+    const { id: pageId } = await params
     const url = new URL(request.url)
     const taskId = url.pathname.split('/').pop()
     

@@ -5,11 +5,11 @@ import { updatePageSchema } from '@/types/page'
 // GET /api/pages/[id] - Get a single page
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id } = params
+    const { id } = await params
     
     const { data: page, error } = await supabase
       .from('pages')
@@ -46,11 +46,11 @@ export async function GET(
 // PUT /api/pages/[id] - Update a page
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     
     // Validate input
@@ -159,11 +159,11 @@ export async function PUT(
 // DELETE /api/pages/[id] - Delete a page
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id } = params
+    const { id } = await params
     
     // Check if page has children
     const { data: children } = await supabase

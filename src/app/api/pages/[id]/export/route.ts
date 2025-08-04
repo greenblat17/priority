@@ -4,11 +4,11 @@ import { NextResponse } from 'next/server'
 // GET /api/pages/[id]/export?format=markdown - Export page in specified format
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id: pageId } = params
+    const { id: pageId } = await params
     const url = new URL(request.url)
     const format = url.searchParams.get('format') || 'markdown'
     
