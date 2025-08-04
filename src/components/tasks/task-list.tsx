@@ -21,9 +21,8 @@ import { searchTasks } from '@/lib/search-utils'
 import { useBulkSelection } from '@/hooks/use-bulk-selection'
 import { BulkActionsBar } from '@/components/tasks/bulk-actions-bar'
 import { useBulkUpdateTaskStatus, useBulkDeleteTasks } from '@/hooks/use-tasks'
-import { ExportDialog } from '@/components/tasks/export-dialog'
 import { Button } from '@/components/ui/button'
-import { Download, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { useQuickAddShortcut } from '@/hooks/use-keyboard-shortcuts'
 import { useFilterPersistence } from '@/hooks/use-filter-persistence'
 import { GroupManagementDialog } from '@/components/tasks/group-management-dialog'
@@ -44,7 +43,6 @@ export function TaskList() {
   const [currentPage, setCurrentPage] = useState(1)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [showExportDialog, setShowExportDialog] = useState(false)
   const [showGroupDialog, setShowGroupDialog] = useState(false)
   const itemsPerPage = 20
   
@@ -267,13 +265,15 @@ export function TaskList() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Tasks</CardTitle>
-              <CardDescription>
-                AI-prioritized tasks based on business impact
-              </CardDescription>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search tasks by description, category, priority, or status..."
+                className="h-9"
+              />
             </div>
             <div className="flex items-center gap-2">
               <ViewToggle 
@@ -285,20 +285,12 @@ export function TaskList() {
                 size="sm"
                 onClick={() => setShowGroupDialog(true)}
                 disabled={!tasks || tasks.length === 0}
+                className="h-9"
               >
                 <Users className="h-4 w-4 mr-1" />
                 Groups
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowExportDialog(true)}
-                disabled={!filteredAndSortedTasks || filteredAndSortedTasks.length === 0}
-              >
-                <Download className="h-4 w-4 mr-1" />
-                Export
-              </Button>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground whitespace-nowrap">
                 {filteredAndSortedTasks?.length || 0} tasks
               </div>
             </div>
@@ -313,20 +305,11 @@ export function TaskList() {
             />
           ) : (
             <>
-              {/* Search bar */}
-              <div className="mb-4">
-                <SearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Search tasks by description, category, priority, or status..."
-                  className="max-w-md"
-                />
-                {searchQuery && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Found {filteredAndSortedTasks?.length || 0} results for "{searchQuery}"
-                  </p>
-                )}
-              </div>
+              {searchQuery && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Found {filteredAndSortedTasks?.length || 0} results for "{searchQuery}"
+                </p>
+              )}
               
               <TaskFilters
                 statusFilter={filters.status}
@@ -406,14 +389,6 @@ export function TaskList() {
         onClose={() => setShowQuickAdd(false)} 
       />
       
-      {/* Export Dialog */}
-      <ExportDialog
-        open={showExportDialog}
-        onOpenChange={setShowExportDialog}
-        tasks={filteredAndSortedTasks || []}
-        selectedTasks={selectedItems}
-      />
-      
       {/* Group Management Dialog */}
       <GroupManagementDialog
         open={showGroupDialog}
@@ -448,7 +423,6 @@ export function TaskList() {
             clearSelection()
           }
         }}
-        onExport={() => setShowExportDialog(true)}
       />
       
       {/* Duplicate Review Dialog */}

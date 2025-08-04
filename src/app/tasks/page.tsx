@@ -3,8 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { TaskList } from '@/components/tasks/task-list'
 import { QuickAddModal } from '@/components/tasks/quick-add-modal'
-import { PrefetchLink } from '@/components/ui/prefetch-link'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useQuickAddShortcut } from '@/hooks/use-keyboard-shortcuts'
 import { getPlatformKey } from '@/hooks/use-hotkeys'
@@ -18,14 +17,7 @@ export default function TasksPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <Button asChild variant="ghost" size="sm">
-            <PrefetchLink href="/overview">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Overview
-            </PrefetchLink>
-          </Button>
-          
+        <div className="flex items-center justify-end mb-4">
           <Button onClick={() => setIsQuickAddOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
             Add Task
