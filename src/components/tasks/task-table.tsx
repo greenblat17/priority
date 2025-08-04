@@ -23,7 +23,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { TaskDetailDialog } from './task-detail-dialog'
-import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw, Loader2 } from 'lucide-react'
+import { TaskEditDialog } from './task-edit-dialog'
+import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw, Loader2, Edit } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { getSourceLabel } from '@/lib/task-source-utils'
@@ -38,6 +39,7 @@ interface TaskTableProps {
 
 export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProps) {
   const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
+  const [editingTask, setEditingTask] = useState<TaskWithAnalysis | null>(null)
   const [selectedIndex, setSelectedIndex] = useState<number>(-1)
 
   // Keyboard navigation
@@ -276,6 +278,13 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
                       <Eye className="mr-2 h-4 w-4" />
                       View Details
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingTask(task)
+                    }}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Details
+                    </DropdownMenuItem>
                     {task.analysis?.implementation_spec && (
                       <DropdownMenuItem onClick={(e) => {
                         e.stopPropagation()
@@ -301,6 +310,13 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingTask(task)
+                    }}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive"
                       onClick={(e) => {
@@ -327,6 +343,14 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}
           onUpdateStatus={onUpdateStatus}
+        />
+      )}
+
+      {editingTask && (
+        <TaskEditDialog
+          task={editingTask}
+          open={!!editingTask}
+          onOpenChange={(open) => !open && setEditingTask(null)}
         />
       )}
     </>

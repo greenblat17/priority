@@ -21,10 +21,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { TaskDetailDialog } from './task-detail-dialog'
+import { TaskEditDialog } from './task-edit-dialog'
 import { TaskGroup } from './task-group'
 import { ConfidenceBadge } from './confidence-badge'
 import { PriorityDot } from './priority-dot'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
@@ -63,6 +64,7 @@ export function TaskTableGrouped({
   isPartiallySelected = false
 }: TaskTableGroupedProps) {
   const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
+  const [editingTask, setEditingTask] = useState<TaskWithAnalysis | null>(null)
   const [selectedIndex, setSelectedIndex] = useState<number>(-1)
   const bulkUpdateStatus = useBulkUpdateTaskStatus()
   const bulkDelete = useBulkDeleteTasks()
@@ -315,6 +317,13 @@ export function TaskTableGrouped({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation()
+              setEditingTask(task)
+            }}>
+              <Edit className="h-3.5 w-3.5 mr-2" />
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={(e) => {
@@ -322,6 +331,7 @@ export function TaskTableGrouped({
                 onDeleteTask(task.id)
               }}
             >
+              <Trash2 className="h-3.5 w-3.5 mr-2" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -402,6 +412,14 @@ export function TaskTableGrouped({
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}
           onUpdateStatus={onUpdateStatus}
+        />
+      )}
+
+      {editingTask && (
+        <TaskEditDialog
+          task={editingTask}
+          open={!!editingTask}
+          onOpenChange={(open) => !open && setEditingTask(null)}
         />
       )}
     </>
