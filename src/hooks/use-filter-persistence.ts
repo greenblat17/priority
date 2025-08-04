@@ -17,7 +17,7 @@ const defaultFilters: FilterState = {
   status: 'all',
   category: 'all',
   confidence: 'all',
-  sortBy: 'priority',
+  sortBy: 'date',
   sortOrder: 'desc',
   view: 'table'
 }
