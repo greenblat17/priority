@@ -4,7 +4,7 @@ import "./globals.css";
 import SupabaseProvider from "@/components/providers/supabase-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { WebVitalsProvider } from "@/components/providers/web-vitals-provider";
-import { Navigation } from "@/components/layout/navigation";
+import { SidebarLayout } from "@/components/layout/sidebar-layout";
 import { SmoothPageTransition } from "@/components/layout/page-transition";
 import { ScrollRestorationProvider } from "@/components/providers/scroll-restoration-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -48,20 +48,16 @@ export default function RootLayout({
                   <WebVitalsProvider>
                     <ScrollRestorationProvider>
                       <ErrorBoundary>
-                  <div className="min-h-screen flex flex-col">
-                    {/* Modern Navigation */}
-                    <Navigation />
-                    
-                    {/* Main content with page transitions */}
-                    <main className="flex-1">
-                      <SmoothPageTransition>
-                        {children}
-                      </SmoothPageTransition>
-                    </main>
-                  </div>
-                  <Toaster position="bottom-right" />
-                  <OfflineIndicator />
-                  <KeyboardShortcutsDialog />
+                        <SidebarLayout>
+                          <main className="flex-1 overflow-auto">
+                            <SmoothPageTransition>
+                              {children}
+                            </SmoothPageTransition>
+                          </main>
+                        </SidebarLayout>
+                        <Toaster position="bottom-right" />
+                        <OfflineIndicator />
+                        <KeyboardShortcutsDialog />
                       </ErrorBoundary>
                     </ScrollRestorationProvider>
                   </WebVitalsProvider>
