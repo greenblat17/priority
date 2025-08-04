@@ -137,10 +137,18 @@ export function useDuplicateNotifications() {
       const duplicateTaskIds = detection.duplicates.map(d => d.taskId)
       console.log('[Duplicate Review] Fetching tasks with IDs:', duplicateTaskIds)
       
-      // First try a simple query without joins
+      // Query with group information included
       const { data: duplicateTasks, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select(`
+          *,
+          group:task_groups!group_id (
+            id,
+            name,
+            created_at,
+            updated_at
+          )
+        `)
         .in('id', duplicateTaskIds)
 
       if (error) {
@@ -162,11 +170,20 @@ export function useDuplicateNotifications() {
       }
 
       console.log('[Duplicate Review] Found duplicate tasks:', duplicateTasks)
+      console.log('[Duplicate Review] Tasks with groups:', duplicateTasks.map(t => ({ id: t.id, group: t.group })))
 
-      // Get the full task data
+      // Get the full task data with group information
       const { data: fullTask, error: taskError } = await supabase
         .from('tasks')
-        .select('*')
+        .select(`
+          *,
+          group:task_groups!group_id (
+            id,
+            name,
+            created_at,
+            updated_at
+          )
+        `)
         .eq('id', task.id)
         .single()
 

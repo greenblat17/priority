@@ -75,6 +75,7 @@ export async function POST(request: Request) {
     const newTaskEmbedding = await getEmbedding(description)
 
     console.log(`[Duplicate Check] Found ${potentialDuplicates.length} potential duplicates`)
+    console.log('[Duplicate Check] Tasks with groups:', tasksToCheck.filter(t => t.group).map(t => ({ id: t.id, group: t.group })))
 
     // Limit to top 5 most similar tasks
     const topDuplicates = potentialDuplicates.slice(0, 5)

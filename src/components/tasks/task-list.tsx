@@ -426,12 +426,13 @@ export function TaskList() {
       />
       
       {/* Duplicate Review Dialog */}
-      {showDuplicateReview && duplicateReviewData && (
+      {duplicateReviewData && (
         <DuplicateReviewDialog
           isOpen={showDuplicateReview}
           onClose={() => {
             setShowDuplicateReview(false)
-            setDuplicateReviewData(null)
+            // Delay clearing data to prevent unmounting during animation
+            setTimeout(() => setDuplicateReviewData(null), 200)
           }}
           newTaskDescription={duplicateReviewData.newTask.description}
           potentialDuplicates={duplicateReviewData.similarities.map(sim => {
@@ -445,43 +446,49 @@ export function TaskList() {
           })}
           onAction={async (action) => {
             if (action.action === 'create_and_group' && 'selectedTaskIds' in action) {
-              try {
-                // Group tasks
-                const allTaskIds = [duplicateReviewData.newTask.id, ...action.selectedTaskIds]
-                await createGroupMutation.mutateAsync({ 
-                  name: 'Similar Tasks',
-                  taskIds: allTaskIds 
-                })
-                
-                toast.success('Tasks grouped successfully!')
-                
-                console.log('[GROUPING] Tasks grouped, invalidating queries...')
-                
-                // Wait a moment for database to update, then invalidate and refetch
-                await new Promise(resolve => setTimeout(resolve, 1000))
-                
-                // Invalidate all task-related queries
-                queryClient.removeQueries({ queryKey: ['tasks'] })
-                queryClient.removeQueries({ queryKey: ['task-groups'] })
-                
-                // Force immediate refetch
-                queryClient.refetchQueries({ queryKey: ['tasks'] })
-                
-                // Close dialog only after successful grouping
-                setShowDuplicateReview(false)
-                setDuplicateReviewData(null)
-              } catch (error) {
-                console.error('Failed to group tasks:', error)
-                toast.error('Failed to group tasks')
-              }
+              console.log('[GROUPING] Action received:', action)
+              console.log('[GROUPING] Selected task IDs:', action.selectedTaskIds)
+              
+              // Store the data we need before clearing state
+              const newTaskId = duplicateReviewData.newTask.id
+              const selectedTaskIds = action.selectedTaskIds
+              
+              // Close the dialog immediately for better UX  
+              console.log('[GROUPING] Closing dialog immediately')
+              setShowDuplicateReview(false)
+              // Don't clear data immediately to prevent component unmounting
+              
+              // Handle grouping in the background - DON'T AWAIT to prevent dialog re-render
+              setTimeout(async () => {
+                try {
+                  const allTaskIds = [newTaskId, ...selectedTaskIds]
+                  console.log('[GROUPING] Grouping tasks:', allTaskIds)
+                  
+                  await createGroupMutation.mutateAsync({ 
+                    name: 'Similar Tasks',
+                    taskIds: allTaskIds 
+                  })
+                  
+                  toast.success('Tasks grouped successfully!')
+                  
+                  // Refresh data after success
+                  setTimeout(() => {
+                    queryClient.removeQueries({ queryKey: ['tasks'] })
+                    queryClient.removeQueries({ queryKey: ['task-groups'] })
+                    queryClient.refetchQueries({ queryKey: ['tasks'] })
+                  }, 500)
+                  
+                } catch (error) {
+                  console.error('Failed to group tasks:', error)
+                  toast.error('Failed to group tasks')
+                }
+              }, 100)
             } else if (action.action === 'create_new') {
               // Just close the dialog for create new
               setShowDuplicateReview(false)
-              setDuplicateReviewData(null)
             } else if (action.action === 'cancel') {
               // Cancel - don't create the task at all
               setShowDuplicateReview(false)
-              setDuplicateReviewData(null)
               // TODO: We might need to delete the newly created task here
             }
           }}

@@ -35,6 +35,7 @@ export function DuplicateReviewDialog({
   potentialDuplicates,
   onAction
 }: DuplicateReviewDialogProps) {
+  console.log('[DUPLICATE DIALOG] Render - isOpen:', isOpen)
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set())
   
@@ -52,28 +53,71 @@ export function DuplicateReviewDialog({
   }, {} as Record<string, { group: any; tasks: TaskSimilarity[] }>)
 
   const handleCreateNew = () => {
+    console.log('[DUPLICATE DIALOG] Create new clicked - closing dialog')
     onAction({ action: 'create_new' })
+    onClose()
   }
 
   const handleCancel = () => {
+    console.log('[DUPLICATE DIALOG] Cancel clicked - closing dialog')
     onAction({ action: 'cancel' })
+    onClose()
   }
 
   const handleAddToGroup = () => {
+    console.log('[DUPLICATE DIALOG] handleAddToGroup called')
+    console.log('[DUPLICATE DIALOG] selectedGroupId:', selectedGroupId)
+    console.log('[DUPLICATE DIALOG] selectedTaskIds:', Array.from(selectedTaskIds))
+    console.log('[DUPLICATE DIALOG] hasGroupSelection:', hasGroupSelection)
+    console.log('[DUPLICATE DIALOG] hasTaskSelection:', hasTaskSelection)
+    
     if (selectedGroupId && selectedGroupId !== 'ungrouped') {
       // Add to existing group - get all task IDs from that group
       const groupTasks = groupedDuplicates[selectedGroupId].tasks
+      const taskIds = groupTasks.map(t => t.taskId)
+      console.log('[DUPLICATE DIALOG] Adding to existing group:', taskIds)
       onAction({ 
         action: 'create_and_group', 
-        selectedTaskIds: groupTasks.map(t => t.taskId)
+        selectedTaskIds: taskIds
       })
     } else if (selectedTaskIds.size > 0) {
       // Create new group with selected ungrouped tasks
+      const taskIds = Array.from(selectedTaskIds)
+      console.log('[DUPLICATE DIALOG] Creating new group with tasks:', taskIds)
       onAction({ 
         action: 'create_and_group', 
-        selectedTaskIds: Array.from(selectedTaskIds) 
+        selectedTaskIds: taskIds 
       })
     }
+    
+    // Close dialog immediately regardless of the action - multiple approaches
+    console.log('[DUPLICATE DIALOG] Closing dialog after action')
+    
+    // Try multiple ways to close the dialog
+    onClose()
+    
+    // Also try to trigger the dialog close via DOM
+    setTimeout(() => {
+      const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement
+      if (closeButton) {
+        closeButton.click()
+      }
+    }, 50)
+    
+    // Force the dialog to close by finding the dialog element
+    setTimeout(() => {
+      const dialog = document.querySelector('[role="dialog"]') as HTMLElement
+      if (dialog) {
+        const event = new KeyboardEvent('keydown', { key: 'Escape' })
+        dialog.dispatchEvent(event)
+      }
+      
+      // As a last resort, hide the dialog with CSS
+      const dialogOverlay = document.querySelector('[data-state="open"]') as HTMLElement
+      if (dialogOverlay) {
+        dialogOverlay.style.display = 'none'
+      }
+    }, 100)
   }
 
   const toggleTaskSelection = (taskId: string) => {
@@ -89,17 +133,10 @@ export function DuplicateReviewDialog({
   const hasGroupSelection = selectedGroupId && selectedGroupId !== 'ungrouped'
   const hasTaskSelection = selectedTaskIds.size > 0
   
-  // Debug logging
-  console.log('[DUPLICATE DIALOG] potentialDuplicates:', potentialDuplicates)
-  console.log('[DUPLICATE DIALOG] groupedDuplicates:', groupedDuplicates)
-  console.log('[DUPLICATE DIALOG] hasGroupSelection:', hasGroupSelection)
-  console.log('[DUPLICATE DIALOG] hasTaskSelection:', hasTaskSelection)
-  console.log('[DUPLICATE DIALOG] selectedTaskIds:', Array.from(selectedTaskIds))
-  console.log('[DUPLICATE DIALOG] selectedGroupId:', selectedGroupId)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col" data-dialog-close>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
@@ -139,10 +176,10 @@ export function DuplicateReviewDialog({
                     return (
                       <Card 
                         key={groupId}
-                        className={`cursor-pointer transition-colors ${
+                        className={`cursor-pointer transition-colors bg-blue-50/30 border-blue-200/50 ${
                           isSelected 
-                            ? 'border-primary ring-2 ring-primary/20' 
-                            : 'hover:border-gray-400'
+                            ? 'border-primary ring-2 ring-primary/20 bg-blue-100/40' 
+                            : 'hover:border-blue-300/60 hover:bg-blue-50/50'
                         }`}
                         onClick={() => {
                           setSelectedGroupId(groupId)
@@ -153,10 +190,12 @@ export function DuplicateReviewDialog({
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <CardTitle className="text-sm flex items-center gap-2">
-                                <Badge variant="outline">
-                                  <Users className="h-3 w-3 mr-1" />
-                                  {group?.name || `Group of ${tasks.length} tasks`}
+                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0">
+                                  Group
                                 </Badge>
+                                <span className="text-sm font-medium text-gray-900">
+                                  {group?.name || `Group of ${tasks.length} tasks`}
+                                </span>
                                 <Badge 
                                   variant={avgSimilarity >= 0.90 ? 'destructive' : 'secondary'}
                                   className="text-xs"
@@ -272,7 +311,15 @@ export function DuplicateReviewDialog({
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={handleAddToGroup}
+                onClick={() => {
+                  console.log('[DUPLICATE DIALOG] Button clicked - forcing close')
+                  if (hasGroupSelection || hasTaskSelection) {
+                    handleAddToGroup()
+                  } else {
+                    // If nothing selected, just close
+                    onClose()
+                  }
+                }}
                 disabled={!hasGroupSelection && !hasTaskSelection}
               >
                 <Users className="mr-2 h-4 w-4" />
