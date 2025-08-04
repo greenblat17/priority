@@ -11,11 +11,11 @@ const createCommentSchema = z.object({
 // GET /api/pages/[id]/comments - Get comments for a page
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id: pageId } = params
+    const { id: pageId } = await params
     
     // Get comments with user info
     const { data: comments, error } = await supabase
@@ -60,11 +60,11 @@ export async function GET(
 // POST /api/pages/[id]/comments - Create a comment
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id: pageId } = params
+    const { id: pageId } = await params
     const body = await request.json()
     
     // Validate input
@@ -132,10 +132,11 @@ export async function POST(
 // PUT /api/pages/[id]/comments/[commentId] - Update a comment
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
+    await params // Consume params even though we don't use it
     const url = new URL(request.url)
     const commentId = url.pathname.split('/').pop()
     const body = await request.json()
@@ -197,10 +198,11 @@ export async function PUT(
 // DELETE /api/pages/[id]/comments/[commentId] - Delete a comment
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
+    await params // Consume params even though we don't use it
     const url = new URL(request.url)
     const commentId = url.pathname.split('/').pop()
     

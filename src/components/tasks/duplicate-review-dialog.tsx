@@ -35,7 +35,6 @@ export function DuplicateReviewDialog({
   potentialDuplicates,
   onAction
 }: DuplicateReviewDialogProps) {
-  console.log('[DUPLICATE DIALOG] Render - isOpen:', isOpen)
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set())
   
@@ -53,29 +52,20 @@ export function DuplicateReviewDialog({
   }, {} as Record<string, { group: any; tasks: TaskSimilarity[] }>)
 
   const handleCreateNew = () => {
-    console.log('[DUPLICATE DIALOG] Create new clicked - closing dialog')
     onAction({ action: 'create_new' })
     onClose()
   }
 
   const handleCancel = () => {
-    console.log('[DUPLICATE DIALOG] Cancel clicked - closing dialog')
     onAction({ action: 'cancel' })
     onClose()
   }
 
   const handleAddToGroup = () => {
-    console.log('[DUPLICATE DIALOG] handleAddToGroup called')
-    console.log('[DUPLICATE DIALOG] selectedGroupId:', selectedGroupId)
-    console.log('[DUPLICATE DIALOG] selectedTaskIds:', Array.from(selectedTaskIds))
-    console.log('[DUPLICATE DIALOG] hasGroupSelection:', hasGroupSelection)
-    console.log('[DUPLICATE DIALOG] hasTaskSelection:', hasTaskSelection)
-    
     if (selectedGroupId && selectedGroupId !== 'ungrouped') {
       // Add to existing group - get all task IDs from that group
       const groupTasks = groupedDuplicates[selectedGroupId].tasks
       const taskIds = groupTasks.map(t => t.taskId)
-      console.log('[DUPLICATE DIALOG] Adding to existing group:', taskIds)
       onAction({ 
         action: 'create_and_group', 
         selectedTaskIds: taskIds
@@ -83,7 +73,6 @@ export function DuplicateReviewDialog({
     } else if (selectedTaskIds.size > 0) {
       // Create new group with selected ungrouped tasks
       const taskIds = Array.from(selectedTaskIds)
-      console.log('[DUPLICATE DIALOG] Creating new group with tasks:', taskIds)
       onAction({ 
         action: 'create_and_group', 
         selectedTaskIds: taskIds 
@@ -91,9 +80,6 @@ export function DuplicateReviewDialog({
     }
     
     // Close dialog immediately regardless of the action - multiple approaches
-    console.log('[DUPLICATE DIALOG] Closing dialog after action')
-    
-    // Try multiple ways to close the dialog
     onClose()
     
     // Also try to trigger the dialog close via DOM
@@ -312,7 +298,6 @@ export function DuplicateReviewDialog({
               <Button
                 variant="outline"
                 onClick={() => {
-                  console.log('[DUPLICATE DIALOG] Button clicked - forcing close')
                   if (hasGroupSelection || hasTaskSelection) {
                     handleAddToGroup()
                   } else {
