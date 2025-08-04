@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { TaskDetailDialog } from './task-detail-dialog'
+import { TaskDetailPanel } from './task-detail-panel'
 import { TaskEditDialog } from './task-edit-dialog'
 import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw, Loader2, Edit } from 'lucide-react'
 import { toast } from 'sonner'
@@ -338,7 +338,7 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
       </Table>
 
       {selectedTask && (
-        <TaskDetailDialog
+        <TaskDetailPanel
           task={selectedTask}
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}

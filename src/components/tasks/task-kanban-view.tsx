@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { TaskDetailDialog } from './task-detail-dialog'
+import { TaskDetailPanel } from './task-detail-panel'
 import { ConfidenceBadge } from './confidence-badge'
 import { TaskWithAnalysis, TaskStatusType, TaskStatus } from '@/types/task'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
@@ -301,7 +301,7 @@ export function TaskKanbanView({
       </div>
 
       {selectedTask && (
-        <TaskDetailDialog
+        <TaskDetailPanel
           task={selectedTask}
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}

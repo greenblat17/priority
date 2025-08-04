@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { TaskDetailDialog } from './task-detail-dialog'
+import { TaskDetailPanel } from './task-detail-panel'
 import { TaskEditDialog } from './task-edit-dialog'
 import { TaskGroup } from './task-group'
 import { ConfidenceBadge } from './confidence-badge'
@@ -407,7 +407,7 @@ export function TaskTableGrouped({
       </Table>
 
       {selectedTask && (
-        <TaskDetailDialog
+        <TaskDetailPanel
           task={selectedTask}
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}
