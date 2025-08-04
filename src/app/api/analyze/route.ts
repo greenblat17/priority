@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/route'
+import { supabaseService } from '@/lib/supabase/service'
 import { verifyApiKeyAuth } from '@/lib/api-auth-middleware'
 import openai from '@/lib/openai/client'
 import { buildAnalysisPrompt, validateAnalysisResponse } from '@/lib/openai/prompts'
@@ -27,16 +28,18 @@ export async function POST(request: NextRequest) {
     console.log(`[AI Analysis] Processing task: ${taskId}`)
 
     // Initialize Supabase client
-    const supabase = await createClient()
     let userId: string | null = null
+    let useServiceRole = false
 
     // Try API key authentication first
     const { authorized: apiKeyAuth, context: apiContext } = await verifyApiKeyAuth(request)
     
     if (apiKeyAuth && apiContext) {
       userId = apiContext.userId
+      useServiceRole = true
     } else {
       // Fall back to session authentication
+      const supabase = await createClient()
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (authError || !user) {
         console.error('[AI Analysis] Authentication error:', authError)
@@ -48,8 +51,11 @@ export async function POST(request: NextRequest) {
       userId = user.id
     }
 
+    // Use appropriate client based on auth method
+    const dbClient = useServiceRole ? supabaseService : await createClient()
+
     // Fetch task data
-    const { data: task, error: taskError } = await supabase
+    const { data: task, error: taskError } = await dbClient
       .from('tasks')
       .select('*')
       .eq('id', taskId)
@@ -65,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if analysis already exists
-    const { data: existingAnalysis } = await supabase
+    const { data: existingAnalysis } = await dbClient
       .from('task_analyses')
       .select('*')
       .eq('task_id', taskId)
@@ -81,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch GTM manifest for context
-    const { data: manifest } = await supabase
+    const { data: manifest } = await dbClient
       .from('gtm_manifests')
       .select('*')
       .eq('user_id', userId)
@@ -162,7 +168,7 @@ export async function POST(request: NextRequest) {
       implementation_spec: validatedAnalysis.implementation_spec
     }
 
-    const { data: savedAnalysis, error: saveError } = await supabase
+    const { data: savedAnalysis, error: saveError } = await dbClient
       .from('task_analyses')
       .insert(analysisRecord)
       .select()
