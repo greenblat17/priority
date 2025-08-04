@@ -455,9 +455,17 @@ export function TaskList() {
                 
                 toast.success('Tasks grouped successfully!')
                 
+                console.log('[GROUPING] Tasks grouped, invalidating queries...')
+                
                 // Invalidate all task-related queries to ensure UI updates
                 await queryClient.invalidateQueries({ queryKey: ['tasks'] })
                 await queryClient.invalidateQueries({ queryKey: ['task-groups'] })
+                
+                // Force refetch with a small delay to ensure database is updated
+                setTimeout(() => {
+                  console.log('[GROUPING] Refetching tasks after grouping...')
+                  queryClient.refetchQueries({ queryKey: ['tasks'] })
+                }, 500)
                 
                 // Close dialog only after successful grouping
                 setShowDuplicateReview(false)

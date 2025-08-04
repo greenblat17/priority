@@ -200,6 +200,14 @@ export function TaskTableGrouped({
     return acc
   }, {} as Record<string, { group: TaskGroupType | null; tasks: TaskWithGroup[] }>)
 
+  // Debug logging
+  console.log('[TASK TABLE] Total tasks:', tasks.length)
+  console.log('[TASK TABLE] Grouped tasks:', Object.keys(groupedTasks).map(key => ({
+    groupId: key,
+    taskCount: groupedTasks[key].tasks.length,
+    groupName: groupedTasks[key].group?.name
+  })))
+
   // Render a single task row
   const renderTaskRow = (task: TaskWithAnalysis, index?: number) => {
     const isSelected = selectedIds?.has(task.id) || false

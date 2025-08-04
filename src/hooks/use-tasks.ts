@@ -144,7 +144,12 @@ export function useTasks(filters?: {
         .select(`
           *,
           task_analyses!task_id (*),
-          group:task_groups!group_id (*)
+          group:task_groups!group_id (
+            id,
+            name,
+            created_at,
+            updated_at
+          )
         `)
         .order('created_at', { ascending: false })
 
