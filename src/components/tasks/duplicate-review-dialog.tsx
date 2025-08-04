@@ -88,6 +88,14 @@ export function DuplicateReviewDialog({
   
   const hasGroupSelection = selectedGroupId && selectedGroupId !== 'ungrouped'
   const hasTaskSelection = selectedTaskIds.size > 0
+  
+  // Debug logging
+  console.log('[DUPLICATE DIALOG] potentialDuplicates:', potentialDuplicates)
+  console.log('[DUPLICATE DIALOG] groupedDuplicates:', groupedDuplicates)
+  console.log('[DUPLICATE DIALOG] hasGroupSelection:', hasGroupSelection)
+  console.log('[DUPLICATE DIALOG] hasTaskSelection:', hasTaskSelection)
+  console.log('[DUPLICATE DIALOG] selectedTaskIds:', Array.from(selectedTaskIds))
+  console.log('[DUPLICATE DIALOG] selectedGroupId:', selectedGroupId)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -262,15 +270,15 @@ export function DuplicateReviewDialog({
             </Button>
             
             <div className="flex gap-2">
-              {(hasGroupSelection || hasTaskSelection) && (
-                <Button
-                  variant="outline"
-                  onClick={handleAddToGroup}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  {hasGroupSelection ? 'Add to Group' : 'Create Group'}
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                onClick={handleAddToGroup}
+                disabled={!hasGroupSelection && !hasTaskSelection}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                {hasGroupSelection ? 'Add to Group' : 'Create Group'} 
+                {hasTaskSelection && ` (${selectedTaskIds.size})`}
+              </Button>
               
               <Button
                 onClick={handleCreateNew}
