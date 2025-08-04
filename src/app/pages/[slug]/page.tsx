@@ -30,6 +30,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDeletePage } from '@/hooks/use-pages'
 import { MarkdownRenderer } from '@/components/pages/markdown-renderer'
 import { PageBreadcrumbs } from '@/components/pages/page-breadcrumbs'
+import { PageExport } from '@/components/pages/page-export'
 import type { PageWithRelations } from '@/types/page'
 
 interface PageViewProps {
@@ -155,7 +156,10 @@ export default function PageView({ params }: PageViewProps) {
               )}
             </div>
             
-            <DropdownMenu>
+            <div className="flex items-center gap-2">
+              <PageExport pageId={page.id} pageSlug={page.slug} />
+              
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -186,6 +190,7 @@ export default function PageView({ params }: PageViewProps) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

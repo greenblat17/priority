@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageList } from '@/components/pages/page-list'
 import { PageSearch, type SearchFilters } from '@/components/pages/page-search'
+import { PageImport } from '@/components/pages/page-import'
 import { usePageSearch, usePageTags } from '@/hooks/use-page-search'
 import { useRouter } from 'next/navigation'
 
@@ -53,10 +54,13 @@ export default function PagesPage() {
             availableTags={availableTags || []}
           />
         </div>
-        <Button onClick={handleCreatePage} className="shrink-0">
-          <Plus className="h-4 w-4 mr-2" />
-          New Page
-        </Button>
+        <div className="flex gap-2">
+          <PageImport />
+          <Button onClick={handleCreatePage} className="shrink-0">
+            <Plus className="h-4 w-4 mr-2" />
+            New Page
+          </Button>
+        </div>
       </div>
 
       <Card>
