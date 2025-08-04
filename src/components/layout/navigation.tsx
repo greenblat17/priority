@@ -24,6 +24,7 @@ export function Navigation() {
 
   const navItems = [
     { href: '/tasks', label: 'Tasks' },
+    { href: '/pages', label: 'Pages' },
     { href: '/overview', label: 'Overview' },
     { href: '/settings/gtm', label: 'Settings' },
   ]

@@ -55,6 +55,10 @@ export interface Task {
   group_id: string | null
   created_at: string
   updated_at: string
+  // Extended fields from analysis for display
+  priority?: number
+  category?: string
+  complexity?: string
 }
 
 // Task with analysis (joined data)
