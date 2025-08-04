@@ -104,7 +104,7 @@ function generateMarkdown(page: any, linkedTasks: any[]): string {
     statusOrder.forEach(status => {
       if (tasksByStatus[status]?.length > 0) {
         markdown += `\n### ${formatStatus(status)}\n\n`
-        tasksByStatus[status].forEach(task => {
+        tasksByStatus[status].forEach((task: any) => {
           const checkbox = task.status === 'completed' ? '[x]' : '[ ]'
           markdown += `- ${checkbox} **${task.name}**`
           

@@ -36,10 +36,15 @@ export async function GET(
     }
     
     // Format comments with user email
-    const formattedComments = comments?.map(comment => ({
-      ...comment,
+    const formattedComments = comments?.map((comment: any) => ({
+      id: comment.id,
+      page_id: comment.page_id,
+      content: comment.content,  
+      parent_comment_id: comment.parent_comment_id,
+      created_at: comment.created_at,
+      updated_at: comment.updated_at,
+      user_id: comment.user_id,
       user_email: comment.user?.email || null,
-      user: undefined, // Remove the user object
     })) || []
     
     return NextResponse.json({ comments: formattedComments })
@@ -66,7 +71,7 @@ export async function POST(
     const validationResult = createCommentSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validationResult.error.errors },
+        { error: 'Invalid input', details: validationResult.error.issues },
         { status: 400 }
       )
     }
@@ -150,7 +155,7 @@ export async function PUT(
     const validationResult = contentSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validationResult.error.errors },
+        { error: 'Invalid input', details: validationResult.error.issues },
         { status: 400 }
       )
     }

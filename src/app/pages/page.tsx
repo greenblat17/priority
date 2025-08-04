@@ -51,7 +51,7 @@ export default function PagesPage() {
           <PageSearch 
             onSearch={handleSearch}
             onFiltersChange={handleFiltersChange}
-            availableTags={availableTags || []}
+            availableTags={(availableTags as string[]) || []}
           />
         </div>
         <div className="flex gap-2">

@@ -87,12 +87,12 @@ export function TaskDetailPanel({
   const getCategoryVariant = (category?: string | null) => {
     if (!category) return 'outline'
     
-    const categoryMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost'> = {
+    const categoryMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       'feature': 'default',
       'bug': 'destructive',
       'improvement': 'secondary',
       'chore': 'outline',
-      'research': 'ghost',
+      'research': 'outline',
     }
     
     return categoryMap[category.toLowerCase()] || 'outline'
@@ -253,7 +253,7 @@ export function TaskDetailPanel({
               >
                 <p className="text-sm text-muted-foreground mb-1">Priority</p>
                 <div className="flex items-center gap-2">
-                  <PriorityDot priority={task.analysis.priority || 5} showLabel={false} />
+                  <PriorityDot priority={task.analysis.priority || 5} />
                   <motion.span 
                     className="font-medium"
                     initial={{ opacity: 0 }}
@@ -314,7 +314,7 @@ export function TaskDetailPanel({
               </motion.div>
             </div>
 
-            {task.analysis.reasoning && (
+            {task.analysis?.reasoning && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -397,7 +397,7 @@ export function TaskDetailPanel({
                 <Tag className="h-4 w-4 text-muted-foreground" />
                 <h4 className="text-sm font-medium">Group</h4>
               </div>
-              <p className="text-sm text-muted-foreground">{task.group.name}</p>
+              <p className="text-sm text-muted-foreground">{task.group?.name}</p>
             </motion.div>
           </>
         )}

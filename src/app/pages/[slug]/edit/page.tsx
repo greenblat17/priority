@@ -65,7 +65,7 @@ export default function EditPagePage({ params }: EditPageProps) {
       setPage(pageData)
       setTitle(pageData.title)
       setContent(pageData.content || '')
-      setTags(pageData.tags?.map(t => t.tag_name) || [])
+      setTags(pageData.tags?.map((t: any) => t.tag_name) || [])
       setIsLoading(false)
     }
     
@@ -194,7 +194,7 @@ export default function EditPagePage({ params }: EditPageProps) {
               <PageTags
                 tags={tags}
                 onTagsChange={setTags}
-                availableTags={availableTags || []}
+                availableTags={(availableTags as string[]) || []}
               />
             </div>
           </CardContent>

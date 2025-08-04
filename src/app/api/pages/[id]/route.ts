@@ -57,7 +57,7 @@ export async function PUT(
     const validationResult = updatePageSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validationResult.error.errors },
+        { error: 'Invalid input', details: validationResult.error.issues },
         { status: 400 }
       )
     }
@@ -131,7 +131,7 @@ export async function PUT(
       validationResult.data.title !== undefined
     ) {
       const latestVersion = Math.max(
-        ...currentPage.page_versions.map(v => v.version_number),
+        ...currentPage.page_versions.map((v: any) => v.version_number),
         0
       )
       

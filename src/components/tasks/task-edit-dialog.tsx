@@ -223,7 +223,7 @@ export function TaskEditDialog({
           
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select value={category} onValueChange={(value: any) => setCategory(value)}>
               <SelectTrigger id="category" disabled={isLoading}>
                 <SelectValue />
               </SelectTrigger>
@@ -238,7 +238,7 @@ export function TaskEditDialog({
           
           <div className="space-y-2">
             <Label htmlFor="complexity">Complexity</Label>
-            <Select value={complexity} onValueChange={setComplexity}>
+            <Select value={complexity} onValueChange={(value: any) => setComplexity(value)}>
               <SelectTrigger id="complexity" disabled={isLoading}>
                 <SelectValue />
               </SelectTrigger>

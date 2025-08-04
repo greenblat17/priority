@@ -106,11 +106,12 @@ export function PageEditor({
             }
             
             const Icon = action.icon
+            if (!Icon) return null
             return (
               <Toggle
                 key={index}
                 size="sm"
-                onPressedChange={() => action.action()}
+                onPressedChange={() => action.action?.()}
                 aria-label={action.label}
               >
                 <Icon className="h-4 w-4" />

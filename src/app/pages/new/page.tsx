@@ -61,6 +61,8 @@ export default function NewPagePage() {
         content: content.trim(),
         tags: tags,
         is_template: false,
+        is_published: true,
+        meta_data: {},
       })
       
       router.push(`/pages/${page.slug}`)
@@ -143,7 +145,7 @@ export default function NewPagePage() {
               <PageTags
                 tags={tags}
                 onTagsChange={setTags}
-                availableTags={availableTags || []}
+                availableTags={(availableTags as string[]) || []}
               />
             </div>
           </CardContent>

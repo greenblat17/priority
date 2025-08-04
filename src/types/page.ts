@@ -77,7 +77,7 @@ export const createPageSchema = z.object({
   is_published: z.boolean().default(true),
   is_template: z.boolean().default(false),
   template_type: z.string().optional().nullable(),
-  meta_data: z.record(z.any()).default({}),
+  meta_data: z.record(z.string(), z.any()).default({}),
   tags: z.array(z.string()).optional().default([]),
 })
 

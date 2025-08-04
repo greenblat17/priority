@@ -70,10 +70,16 @@ export interface TaskWithAnalysis extends Task {
     priority: number | null
     complexity: 'easy' | 'medium' | 'hard' | null
     estimated_hours: number | null
+    time_estimate?: string | null
     confidence_score: number | null
     implementation_spec: string | null
+    reasoning?: string | null
     duplicate_of: string | null
     similar_tasks: any | null
     analyzed_at: string
   }
+  group?: {
+    id: string
+    name: string | null
+  } | null
 }

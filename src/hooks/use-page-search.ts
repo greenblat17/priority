@@ -71,7 +71,7 @@ export function usePageTags() {
   
   return useQuery<string[]>({
     queryKey: ['pages', 'tags'],
-    queryFn: async () => {
+    queryFn: async (): Promise<string[]> => {
       const { data: tags, error } = await supabase
         .from('page_tags')
         .select('tag_name')
@@ -82,7 +82,7 @@ export function usePageTags() {
       }
       
       // Get unique tags
-      const uniqueTags = Array.from(new Set(tags?.map(t => t.tag_name) || []))
+      const uniqueTags = Array.from(new Set(tags?.map((t: { tag_name: string }) => t.tag_name) || [])) as string[]
       return uniqueTags
     },
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes

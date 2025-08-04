@@ -36,7 +36,8 @@ import { getSourceLabel } from '@/lib/task-source-utils'
 import { useBulkUpdateTaskStatus, useBulkDeleteTasks } from '@/hooks/use-tasks'
 import { useTaskListNavigation } from '@/hooks/use-keyboard-shortcuts'
 
-interface TaskWithGroup extends TaskWithAnalysis {
+// Use TaskWithAnalysis directly since it now includes group
+type TaskWithGroup = TaskWithAnalysis & {
   group: TaskGroupType | null
 }
 

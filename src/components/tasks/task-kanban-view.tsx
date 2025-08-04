@@ -23,7 +23,8 @@ import { cn } from '@/lib/utils'
 import { getSourceLabel } from '@/lib/task-source-utils'
 import { toast } from 'sonner'
 
-interface TaskWithGroup extends TaskWithAnalysis {
+// Use TaskWithAnalysis directly since it now includes group
+type TaskWithGroup = TaskWithAnalysis & {
   group: TaskGroupType | null
 }
 
