@@ -4,6 +4,7 @@ import { supabaseService } from '@/lib/supabase/service'
 import { verifyApiKeyAuth } from '@/lib/api-auth-middleware'
 import type { TaskInput } from '@/types/task'
 import { taskInputSchema } from '@/types/task'
+import { analyzeTask } from '@/lib/task-analysis'
 
 // GET /api/v1/tasks - List tasks
 export async function GET(request: NextRequest) {
@@ -152,10 +153,8 @@ export async function POST(request: NextRequest) {
         console.error('Failed to trigger analysis with API key:', error)
       })
     } else {
-      // For session auth, we need a different approach
-      // Import at the top of the file: import { analyzeTask } from '@/lib/task-analysis'
-      // Call the analysis function directly
-      const { analyzeTask } = await import('@/lib/task-analysis')
+      // For session auth, call the analysis function directly
+      console.log('[API] Triggering analysis for session-authenticated task:', task.id)
       analyzeTask(task.id, userId).catch(error => {
         console.error('Failed to trigger analysis:', error)
       })

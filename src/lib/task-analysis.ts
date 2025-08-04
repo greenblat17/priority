@@ -9,7 +9,7 @@ import type { TaskAnalysisRecord } from '@/types/analysis'
  * from server-side contexts where we need to bypass authentication.
  */
 export async function analyzeTask(taskId: string, userId: string): Promise<void> {
-  console.log(`[AI Analysis] Starting analysis for task: ${taskId}`)
+  console.log(`[AI Analysis] Starting analysis for task: ${taskId}, user: ${userId}`)
 
   try {
     // Fetch task data using service role
@@ -66,6 +66,7 @@ export async function analyzeTask(taskId: string, userId: string): Promise<void>
 
     // Call OpenAI with retry logic
     console.log('[AI Analysis] Calling OpenAI API')
+    console.log('[AI Analysis] OpenAI API key exists:', !!process.env.OPENAI_API_KEY)
     const completion = await withRetry(async () => {
       const response = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -128,6 +129,11 @@ export async function analyzeTask(taskId: string, userId: string): Promise<void>
     console.log('[AI Analysis] Analysis completed successfully')
   } catch (error) {
     console.error('[AI Analysis] Error during analysis:', error)
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('[AI Analysis] Error message:', error.message)
+      console.error('[AI Analysis] Error stack:', error.stack)
+    }
     // We're not re-throwing here because this is a background operation
     // The task creation should succeed even if analysis fails
   }
