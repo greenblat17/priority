@@ -445,18 +445,37 @@ export function TaskList() {
           })}
           onAction={async (action) => {
             if (action.action === 'create_and_group' && 'selectedTaskIds' in action) {
-              // Group tasks
-              const allTaskIds = [duplicateReviewData.newTask.id, ...action.selectedTaskIds]
-              await createGroupMutation.mutateAsync({ 
-                name: 'Similar Tasks',
-                taskIds: allTaskIds 
-              })
-              
-              toast.success('Tasks grouped successfully!')
-              queryClient.invalidateQueries({ queryKey: ['tasks'] })
+              try {
+                // Group tasks
+                const allTaskIds = [duplicateReviewData.newTask.id, ...action.selectedTaskIds]
+                await createGroupMutation.mutateAsync({ 
+                  name: 'Similar Tasks',
+                  taskIds: allTaskIds 
+                })
+                
+                toast.success('Tasks grouped successfully!')
+                
+                // Invalidate all task-related queries to ensure UI updates
+                await queryClient.invalidateQueries({ queryKey: ['tasks'] })
+                await queryClient.invalidateQueries({ queryKey: ['task-groups'] })
+                
+                // Close dialog only after successful grouping
+                setShowDuplicateReview(false)
+                setDuplicateReviewData(null)
+              } catch (error) {
+                console.error('Failed to group tasks:', error)
+                toast.error('Failed to group tasks')
+              }
+            } else if (action.action === 'create_new') {
+              // Just close the dialog for create new
+              setShowDuplicateReview(false)
+              setDuplicateReviewData(null)
+            } else if (action.action === 'cancel') {
+              // Cancel - don't create the task at all
+              setShowDuplicateReview(false)
+              setDuplicateReviewData(null)
+              // TODO: We might need to delete the newly created task here
             }
-            setShowDuplicateReview(false)
-            setDuplicateReviewData(null)
           }}
         />
       )}
