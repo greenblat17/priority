@@ -27,7 +27,7 @@ export type TaskStatusType = typeof TaskStatus[keyof typeof TaskStatus]
 // Form input schema
 export const taskInputSchema = z.object({
   description: z.string()
-    .min(10, 'Description must be at least 10 characters')
+    .min(1, 'Description is required')
     .max(5000, 'Description must be less than 5000 characters'),
   source: z.enum([
     TaskSource.INTERNAL,

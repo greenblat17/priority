@@ -22,9 +22,16 @@ export async function createTaskGroup(
     const groupName = request.name || generateGroupName(request.taskIds.length)
     
     // Create the group - log any errors
+    console.log('[createTaskGroup] Creating group with name:', groupName, 'for user:', user.id)
+    
     const { data: group, error: groupError } = await supabase
       .from('task_groups')
-      .insert({ name: groupName })
+      .insert({ 
+        name: groupName,
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
       .select()
       .single()
     

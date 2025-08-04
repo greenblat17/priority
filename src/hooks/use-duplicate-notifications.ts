@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import type { DuplicateDetection } from '@/types/duplicate-detection'
 import type { Task } from '@/types/task'
+import { createTaskGroupClient } from '@/lib/task-grouping-client'
 
 const POLL_INTERVAL = 5000 // Check every 5 seconds
 const NOTIFICATION_DURATION = 30000 // 30 seconds
@@ -134,17 +135,22 @@ export function useDuplicateNotifications() {
       
       // Get full task details for duplicates
       const duplicateTaskIds = detection.duplicates.map(d => d.taskId)
+      console.log('[Duplicate Review] Fetching tasks with IDs:', duplicateTaskIds)
+      
+      // First try a simple query without joins
       const { data: duplicateTasks, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          group:task_groups!group_id (*),
-          analysis:task_analyses (*)
-        `)
+        .select('*')
         .in('id', duplicateTaskIds)
 
       if (error) {
         console.error('[Duplicate Review] Error fetching duplicate tasks:', error)
+        console.error('[Duplicate Review] Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
         toast.error('Failed to load duplicate tasks')
         return
       }
@@ -157,14 +163,10 @@ export function useDuplicateNotifications() {
 
       console.log('[Duplicate Review] Found duplicate tasks:', duplicateTasks)
 
-      // Get the full task data with analysis
+      // Get the full task data
       const { data: fullTask, error: taskError } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          group:task_groups!group_id (*),
-          analysis:task_analyses (*)
-        `)
+        .select('*')
         .eq('id', task.id)
         .single()
 
@@ -206,21 +208,17 @@ export function useDuplicateNotifications() {
       // Create a group with all similar tasks
       const allTaskIds = [task.id, ...detection.duplicates.map(d => d.taskId)]
       
-      const response = await fetch('/api/tasks/group', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          taskIds: allTaskIds,
-          similarities: detection.duplicates.map(d => ({
-            taskId: task.id,
-            similarTaskId: d.taskId,
-            similarityScore: d.similarity
-          }))
-        }),
-        credentials: 'include'
+      const group = await createTaskGroupClient({
+        name: 'Similar Tasks',
+        taskIds: allTaskIds,
+        similarities: detection.duplicates.map(d => ({
+          taskId: task.id,
+          similarTaskId: d.taskId,
+          similarityScore: d.similarity
+        }))
       })
 
-      if (!response.ok) throw new Error('Failed to group tasks')
+      if (!group) throw new Error('Failed to group tasks')
 
       toast.success('Tasks grouped successfully!', {
         description: `${allTaskIds.length} similar tasks have been grouped together.`

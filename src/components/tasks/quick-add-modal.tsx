@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -71,6 +71,12 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   const [potentialDuplicates, setPotentialDuplicates] = useState<TaskSimilarity[]>([])
   const [pendingTaskData, setPendingTaskData] = useState<TaskInput | null>(null)
   
+  // Detect platform for keyboard shortcut display
+  const [isMac, setIsMac] = useState(false)
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0)
+  }, [])
+  
   const form = useForm<TaskInput>({
     resolver: zodResolver(taskInputSchema) as any,
     defaultValues: {
@@ -84,6 +90,23 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
 
   // Close on escape key
   useEscapeKey(onClose, isOpen)
+
+  // Submit on Cmd/Ctrl + Enter
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if Cmd (Mac) or Ctrl (Windows/Linux) + Enter
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault()
+        // Only submit if form is valid
+        form.handleSubmit(handleSubmit)()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, form])
 
   const createTaskMutation = useMutation({
     mutationFn: async (params: { 
@@ -468,9 +491,18 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                 whileTap={{ scale: 0.98 }}
                 transition={springs.snappy}
                 disabled={createTaskMutation.isPending}
-                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
+                title="Add Task (⌘↵)"
               >
-                {createTaskMutation.isPending ? 'Adding...' : 'Add Task'}
+                {createTaskMutation.isPending ? 'Adding...' : (
+                  <>
+                    Add Task
+                    <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-white/20 rounded">
+                      <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>
+                      <span className="text-xs">↵</span>
+                    </kbd>
+                  </>
+                )}
               </motion.button>
             </div>
             </form>

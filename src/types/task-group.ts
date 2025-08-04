@@ -4,6 +4,7 @@ import type { Task } from './task'
 export interface TaskGroup {
   id: string
   name: string | null
+  user_id: string
   created_at: string
   updated_at: string
 }

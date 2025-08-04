@@ -143,7 +143,8 @@ export function useTasks(filters?: {
         .from('tasks')
         .select(`
           *,
-          task_analyses!task_id (*)
+          task_analyses!task_id (*),
+          group:task_groups!group_id (*)
         `)
         .order('created_at', { ascending: false })
 
@@ -168,7 +169,7 @@ export function useTasks(filters?: {
       return data?.map((task: any) => ({
         ...task,
         analysis: task.task_analyses || null,
-        group: null // We'll handle groups separately for now
+        group: task.group || null
       })) as Array<TaskWithAnalysis & { group: TaskGroup | null }>
     },
     // Keep previous data while fetching new data
