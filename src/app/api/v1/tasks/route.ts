@@ -137,19 +137,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Trigger AI analysis (fire and forget)
-    fetch(`${request.nextUrl.origin}/api/analyze`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Forward the authorization header if using API key
-        ...(apiKeyAuth && request.headers.get('authorization')
-          ? { 'Authorization': request.headers.get('authorization')! }
-          : {}),
-      },
-      body: JSON.stringify({ taskId: task.id }),
-    }).catch(error => {
-      console.error('Failed to trigger analysis:', error)
-    })
+    // For API key auth, forward the authorization header
+    // For session auth, we need to use the service role to bypass RLS
+    if (apiKeyAuth && request.headers.get('authorization')) {
+      // If using API key, forward it to the analyze endpoint
+      fetch(`${request.nextUrl.origin}/api/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': request.headers.get('authorization')!,
+        },
+        body: JSON.stringify({ taskId: task.id }),
+      }).catch(error => {
+        console.error('Failed to trigger analysis with API key:', error)
+      })
+    } else {
+      // For session auth, we need a different approach
+      // Import at the top of the file: import { analyzeTask } from '@/lib/task-analysis'
+      // Call the analysis function directly
+      const { analyzeTask } = await import('@/lib/task-analysis')
+      analyzeTask(task.id, userId).catch(error => {
+        console.error('Failed to trigger analysis:', error)
+      })
+    }
 
     return NextResponse.json({ task }, { status: 201 })
   } catch (error) {
