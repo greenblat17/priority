@@ -22,9 +22,9 @@ import type { PageWithRelations } from '@/types/page'
 import { toast } from 'sonner'
 
 interface EditPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export default function EditPagePage({ params }: EditPageProps) {
@@ -38,6 +38,7 @@ export default function EditPagePage({ params }: EditPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [slug, setSlug] = useState<string | null>(null)
   
   // Task linking
   const { data: linkedTasks = [] } = usePageTasks(page?.id)
@@ -45,7 +46,14 @@ export default function EditPagePage({ params }: EditPageProps) {
   const linkTask = useLinkTask(page?.id || '')
   const unlinkTask = useUnlinkTask(page?.id || '')
 
+  // Handle async params
   useEffect(() => {
+    params.then(p => setSlug(p.slug))
+  }, [params])
+
+  useEffect(() => {
+    if (!slug) return
+    
     async function fetchPage() {
       const supabase = createClient()
       
@@ -55,7 +63,7 @@ export default function EditPagePage({ params }: EditPageProps) {
           *,
           tags:page_tags(id, tag_name)
         `)
-        .eq('slug', params.slug)
+        .eq('slug', slug)
         .single()
       
       if (error || !pageData) {
@@ -70,7 +78,7 @@ export default function EditPagePage({ params }: EditPageProps) {
     }
     
     fetchPage()
-  }, [params.slug])
+  }, [slug])
 
   // Track changes
   useEffect(() => {

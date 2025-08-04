@@ -34,9 +34,9 @@ import { PageExport } from '@/components/pages/page-export'
 import type { PageWithRelations } from '@/types/page'
 
 interface PageViewProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export default function PageView({ params }: PageViewProps) {
@@ -45,8 +45,16 @@ export default function PageView({ params }: PageViewProps) {
   const [isLoading, setIsLoading] = useState(true)
   const deletePage = useDeletePage()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [slug, setSlug] = useState<string | null>(null)
+
+  // Handle async params
+  useEffect(() => {
+    params.then(p => setSlug(p.slug))
+  }, [params])
 
   useEffect(() => {
+    if (!slug) return
+    
     async function fetchPage() {
       const supabase = createClient()
       
@@ -58,7 +66,7 @@ export default function PageView({ params }: PageViewProps) {
           parent:parent_id(id, title, slug),
           tags:page_tags(id, tag_name)
         `)
-        .eq('slug', params.slug)
+        .eq('slug', slug)
         .single()
       
       if (error || !pageData) {
@@ -70,7 +78,7 @@ export default function PageView({ params }: PageViewProps) {
     }
     
     fetchPage()
-  }, [params.slug])
+  }, [slug])
 
   const handleDelete = async () => {
     if (!page || !confirm(`Are you sure you want to delete "${page.title}"?`)) {
