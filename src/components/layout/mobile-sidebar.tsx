@@ -6,8 +6,6 @@ import { useSupabase } from '@/components/providers/supabase-provider'
 import { cn } from '@/lib/utils'
 import { 
   LayoutList, 
-  FileText, 
-  BarChart3, 
   Settings, 
   Plus,
   Menu,
@@ -48,18 +46,6 @@ export function MobileSidebar() {
       href: '/tasks', 
       label: 'Tasks', 
       icon: LayoutList,
-    },
-    { 
-      id: 'pages',
-      href: '/pages', 
-      label: 'Pages', 
-      icon: FileText,
-    },
-    { 
-      id: 'overview',
-      href: '/overview', 
-      label: 'Overview', 
-      icon: BarChart3,
     },
     { 
       id: 'settings',

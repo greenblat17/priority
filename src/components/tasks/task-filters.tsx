@@ -64,10 +64,12 @@ export function TaskFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="backlog">Backlog</SelectItem>
+          <SelectItem value="todo">Todo</SelectItem>
           <SelectItem value="in_progress">In Progress</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
-          <SelectItem value="blocked">Blocked</SelectItem>
+          <SelectItem value="done">Done</SelectItem>
+          <SelectItem value="canceled">Canceled</SelectItem>
+          <SelectItem value="duplicate">Duplicate</SelectItem>
         </SelectContent>
       </Select>
 
@@ -104,7 +106,7 @@ export function TaskFilters({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="priority">Priority</SelectItem>
+            <SelectItem value="priority">ICE Score</SelectItem>
             <SelectItem value="date">Date</SelectItem>
             <SelectItem value="status">Status</SelectItem>
           </SelectContent>

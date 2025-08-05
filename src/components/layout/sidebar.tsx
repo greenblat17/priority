@@ -6,8 +6,6 @@ import { useSupabase } from '@/components/providers/supabase-provider'
 import { cn } from '@/lib/utils'
 import { 
   LayoutList, 
-  FileText, 
-  BarChart3, 
   Settings, 
   Plus,
   Search,
@@ -17,7 +15,8 @@ import {
   User,
   CreditCard,
   Bell,
-  Keyboard
+  Keyboard,
+  SquarePen
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { springs } from '@/lib/animations'
@@ -40,6 +39,18 @@ export function Sidebar() {
   const { user, signOut } = useSupabase()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Handle search
+  useEffect(() => {
+    if (searchQuery) {
+      const timeoutId = setTimeout(() => {
+        router.push(`/tasks?search=${encodeURIComponent(searchQuery)}`)
+      }, 300) // Debounce for 300ms
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [searchQuery, router])
   
   // Connect keyboard shortcut
   useQuickAddShortcut(() => setIsQuickAddOpen(true))
@@ -63,18 +74,6 @@ export function Sidebar() {
       href: '/tasks', 
       label: 'Tasks', 
       icon: LayoutList,
-    },
-    { 
-      id: 'pages',
-      href: '/pages', 
-      label: 'Pages', 
-      icon: FileText,
-    },
-    { 
-      id: 'overview',
-      href: '/overview', 
-      label: 'Overview', 
-      icon: BarChart3,
     },
     { 
       id: 'settings',
@@ -153,18 +152,53 @@ export function Sidebar() {
           </Button>
         </div>
 
-        {/* Quick Add Button */}
+        {/* Search with Add Button */}
         <div className="p-4">
-          <Button
-            onClick={() => setIsQuickAddOpen(true)}
-            className={cn(
-              "w-full gap-2",
-              isCollapsed && "justify-center px-3"
-            )}
-          >
-            <Plus className="h-4 w-4 flex-shrink-0" />
-            {!isCollapsed && <span>Add Task</span>}
-          </Button>
+          {!isCollapsed && (
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search tasks..."
+                  className="w-full h-9 pl-9 pr-10 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                />
+                {!searchQuery && (
+                  <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
+                    /
+                  </kbd>
+                )}
+              </div>
+              <Button
+                onClick={() => setIsQuickAddOpen(true)}
+                size="icon"
+                className="h-9 w-9 bg-black hover:bg-gray-800 text-white"
+              >
+                <SquarePen className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          {isCollapsed && (
+            <div className="space-y-2">
+              <Button
+                onClick={() => setIsQuickAddOpen(true)}
+                size="icon"
+                className="w-full h-10 bg-black hover:bg-gray-800 text-white"
+              >
+                <SquarePen className="h-5 w-5" />
+              </Button>
+              <Button
+                onClick={() => router.push('/tasks?focus=search')}
+                size="icon"
+                variant="outline"
+                className="w-full h-10"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Primary Navigation */}

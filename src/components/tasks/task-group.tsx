@@ -97,7 +97,7 @@ export function TaskGroup({
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel className="text-xs">Update All Status</DropdownMenuLabel>
-                        {(['pending', 'in_progress', 'completed', 'blocked'] as const).map((status) => (
+                        {(['backlog', 'todo', 'in_progress', 'done', 'canceled'] as const).map((status) => (
                           <DropdownMenuItem
                             key={status}
                             onClick={(e) => {

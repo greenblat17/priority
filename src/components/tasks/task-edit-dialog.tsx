@@ -169,10 +169,12 @@ export function TaskEditDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="backlog">Backlog</SelectItem>
+                <SelectItem value="todo">Todo</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
+                <SelectItem value="done">Done</SelectItem>
+                <SelectItem value="canceled">Canceled</SelectItem>
+                <SelectItem value="duplicate">Duplicate</SelectItem>
               </SelectContent>
             </Select>
           </div>

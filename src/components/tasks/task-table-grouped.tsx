@@ -25,6 +25,8 @@ import { TaskEditDialog } from './task-edit-dialog'
 import { TaskGroup } from './task-group'
 import { ConfidenceBadge } from './confidence-badge'
 import { PriorityDot } from './priority-dot'
+import { TaskStatusDropdown } from './task-status-dropdown'
+import { ICEScoreBadge } from './ice-score-badge'
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
@@ -51,6 +53,7 @@ interface TaskTableGroupedProps {
   onToggleAll?: () => void
   isAllSelected?: boolean
   isPartiallySelected?: boolean
+  hideHeader?: boolean
 }
 
 export function TaskTableGrouped({ 
@@ -62,7 +65,8 @@ export function TaskTableGrouped({
   onToggleSelection,
   onToggleAll,
   isAllSelected = false,
-  isPartiallySelected = false
+  isPartiallySelected = false,
+  hideHeader = false
 }: TaskTableGroupedProps) {
   const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
   const [editingTask, setEditingTask] = useState<TaskWithAnalysis | null>(null)
@@ -104,7 +108,7 @@ export function TaskTableGrouped({
       // Space - Toggle task status
       if (e.key === ' ' && selectedTask) {
         e.preventDefault()
-        const newStatus = selectedTask.status === 'completed' ? 'pending' : 'completed'
+        const newStatus = selectedTask.status === 'done' ? 'todo' : 'done'
         onUpdateStatus(selectedTask.id, newStatus as TaskStatusType)
         toast.success(`Task marked as ${newStatus.replace('_', ' ')}`)
       }
@@ -155,12 +159,14 @@ export function TaskTableGrouped({
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'completed':
+      case 'done':
         return 'default'
       case 'in_progress':
         return 'secondary'
-      case 'blocked':
+      case 'canceled':
         return 'destructive'
+      case 'duplicate':
+        return 'outline'
       default:
         return 'outline'
     }
@@ -218,7 +224,7 @@ export function TaskTableGrouped({
     <TableRow 
       key={task.id}
       className={cn(
-        "group cursor-pointer hover:bg-accent/30 transition-colors duration-200",
+        "group cursor-pointer hover:bg-gray-50 transition-colors duration-75 h-10",
         task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "bg-destructive/5 hover:bg-destructive/10",
         isSelected && "bg-muted/50 hover:bg-muted/60",
         isKeyboardSelected && "ring-2 ring-primary ring-inset"
@@ -231,39 +237,41 @@ export function TaskTableGrouped({
       aria-selected={isKeyboardSelected}
     >
       {onToggleSelection && (
-        <TableCell className="w-[40px]" data-checkbox>
+        <TableCell className="w-[30px] px-1" data-checkbox>
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => onToggleSelection(task.id)}
             onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4"
           />
         </TableCell>
       )}
       <TableCell className="font-medium">
         <div className="max-w-md">
-          <div className="truncate">{searchQuery ? highlightSearchTerm(task.description, searchQuery) : task.description}</div>
+          <div className="text-sm truncate">{searchQuery ? highlightSearchTerm(task.description, searchQuery) : task.description}</div>
           {task.source && (
-            <div className="text-sm text-muted-foreground mt-1">
+            <div className="text-xs text-muted-foreground">
               Source: {searchQuery ? highlightSearchTerm(getSourceLabel(task.source), searchQuery) : getSourceLabel(task.source)}
             </div>
           )}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="w-[120px]">
         <Badge variant={getCategoryVariant(task.analysis?.category)} className="text-xs">
           <span>{searchQuery && task.analysis?.category ? highlightSearchTerm(task.analysis.category, searchQuery) : (task.analysis?.category || 'pending')}</span>
         </Badge>
       </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1.5">
-          <PriorityDot priority={task.analysis?.priority} />
-          <span className="text-sm text-muted-foreground">
-            {task.analysis?.priority || '-'}
-          </span>
-        </div>
+      <TableCell className="w-[100px]">
+        <ICEScoreBadge
+          impact={task.analysis?.ice_impact}
+          confidence={task.analysis?.ice_confidence}
+          ease={task.analysis?.ice_ease}
+          score={task.analysis?.ice_score}
+          size="sm"
+        />
       </TableCell>
-      <TableCell>
-        <span className={cn("text-sm", getComplexityColor(task.analysis?.complexity))}>
+      <TableCell className="w-[120px]">
+        <span className={cn("text-xs", getComplexityColor(task.analysis?.complexity))}>
           {task.analysis?.complexity || 'analyzing'}
         </span>
         {task.analysis?.estimated_hours && (
@@ -272,7 +280,7 @@ export function TaskTableGrouped({
           </span>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="w-[100px]">
         {task.analysis?.confidence_score !== undefined && task.analysis.confidence_score !== null ? (
           <ConfidenceBadge 
             score={task.analysis.confidence_score} 
@@ -283,12 +291,14 @@ export function TaskTableGrouped({
           <span className="text-sm text-muted-foreground">-</span>
         )}
       </TableCell>
-      <TableCell>
-        <Badge variant={getStatusVariant(task.status)}>
-          <span>{searchQuery ? highlightSearchTerm(task.status.replace('_', ' '), searchQuery) : task.status.replace('_', ' ')}</span>
-        </Badge>
+      <TableCell className="w-[120px]">
+        <TaskStatusDropdown
+          taskId={task.id}
+          currentStatus={task.status}
+          onStatusChange={(newStatus) => onUpdateStatus(task.id, newStatus)}
+        />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="w-[80px] text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button variant="ghost" className="h-8 w-8 p-0 opacity-60 hover:opacity-100 group-hover:opacity-100 transition-opacity duration-200">
@@ -311,20 +321,6 @@ export function TaskTableGrouped({
                 Copy Spec
               </DropdownMenuItem>
             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-sm">Update Status</DropdownMenuLabel>
-            {(['pending', 'in_progress', 'completed', 'blocked'] as const).map((status) => (
-              <DropdownMenuItem
-                key={status}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onUpdateStatus(task.id, status)
-                }}
-                disabled={task.status === status}
-              >
-                {status.replace('_', ' ')}
-              </DropdownMenuItem>
-            ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={(e) => {
               e.stopPropagation()
@@ -361,29 +357,29 @@ export function TaskTableGrouped({
   return (
     <>
       <Table>
-        <TableCaption>
-          {tasks.length} task{tasks.length !== 1 ? 's' : ''} • Click on a task to view details • Use J/K to navigate
-        </TableCaption>
-        <TableHeader>
-          <TableRow>
-            {onToggleAll && (
-              <TableHead className="w-[40px]">
-                <Checkbox
-                  checked={isAllSelected}
-                  onCheckedChange={onToggleAll}
-                  data-state={isPartiallySelected && !isAllSelected ? "indeterminate" : undefined}
-                />
-              </TableHead>
-            )}
-            <TableHead className="w-[40%]">Task</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Complexity</TableHead>
-            <TableHead>Confidence</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
+        {!hideHeader && (
+          <TableHeader>
+            <TableRow className="border-0">
+              {onToggleAll && (
+                <TableHead className="w-[30px] px-1">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={onToggleAll}
+                    data-state={isPartiallySelected && !isAllSelected ? "indeterminate" : undefined}
+                    className="h-4 w-4"
+                  />
+                </TableHead>
+              )}
+              <TableHead>Task</TableHead>
+              <TableHead className="w-[120px]">Category</TableHead>
+              <TableHead className="w-[100px]">ICE Score</TableHead>
+              <TableHead className="w-[120px]">Complexity</TableHead>
+              <TableHead className="w-[100px]">Confidence</TableHead>
+              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="w-[80px] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+        )}
         <TableBody>
           {/* First render ungrouped tasks */}
           {groupedTasks.ungrouped && groupedTasks.ungrouped.tasks.map((task, idx) => {

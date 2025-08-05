@@ -37,6 +37,14 @@ Please analyze this task and provide a response in JSON format with the followin
   "estimated_hours": <decimal number>,
   "confidence_score": <number 0-100>,
   "implementation_spec": "<detailed multi-line specification>",
+  "ice_impact": <number 1-10>,
+  "ice_confidence": <number 1-10>,
+  "ice_ease": <number 1-10>,
+  "ice_reasoning": {
+    "impact": "<why this impact score>",
+    "confidence": "<why this confidence score>",
+    "ease": "<why this ease score>"
+  },
   "reasoning": {
     "category_reasoning": "<why this category>",
     "priority_reasoning": "<why this priority score>",
@@ -53,28 +61,58 @@ Guidelines for analysis:
    - business: Marketing, sales, or operational task
    - other: Doesn't fit above categories
 
-2. Priority Score (1-10):
-   - 9-10: Critical bugs, security issues, or features blocking major user workflows
-   - 7-8: Important features or bugs affecting many users
-   - 5-6: Nice-to-have features or minor bugs
-   - 3-4: Low-impact improvements
-   - 1-2: Cosmetic changes or very low priority items
-   
-   Consider:
-   - Business impact (revenue, user retention)
-   - Number of users affected
-   - Urgency (blocking issues score higher)
-   - Strategic alignment with product goals
-   - Current product stage (MVP should focus on core features, Growth on user experience)
-   - Target audience needs (prioritize features that serve the specific audience)
-   - Value proposition alignment (does this reinforce the unique value?)
+2. Priority Score (1-10) - LEGACY, still required but use ICE for actual prioritization
 
-3. Complexity:
+3. ICE Prioritization Framework:
+   
+   Impact (1-10): How much will this affect key metrics?
+   - 9-10: Game-changing impact on revenue, user retention, or core metrics
+   - 7-8: Significant positive impact on important metrics
+   - 5-6: Moderate impact, noticeable improvements
+   - 3-4: Minor impact, incremental improvements
+   - 1-2: Minimal impact on metrics
+   
+   Confidence (1-10): How sure are we about the impact?
+   - 9-10: Very high confidence, backed by data or clear user feedback
+   - 7-8: High confidence, strong indicators of success
+   - 5-6: Moderate confidence, reasonable assumptions
+   - 3-4: Low confidence, many unknowns
+   - 1-2: Very low confidence, mostly guessing
+   
+   Ease (1-10): How easy is this to implement?
+   - 9-10: Very easy, <2 hours, no dependencies
+   - 7-8: Easy, <4 hours, minimal complexity
+   - 5-6: Moderate, 4-16 hours, some complexity
+   - 3-4: Hard, 16-40 hours, significant complexity
+   - 1-2: Very hard, >40 hours, major architectural changes
+   
+   ICE Score = Impact × Confidence × Ease (1-1000)
+   
+   Consider for Impact:
+   - Business metrics (revenue, conversion, retention)
+   - User satisfaction and experience
+   - Strategic alignment with product goals
+   - Current product stage priorities
+   - Target audience needs
+   
+   Consider for Confidence:
+   - User feedback or requests
+   - Market research or competitors
+   - Past similar implementations
+   - Data supporting the hypothesis
+   
+   Consider for Ease:
+   - Technical complexity
+   - Dependencies on other systems
+   - Team expertise
+   - Available resources
+
+4. Complexity:
    - easy: <4 hours, straightforward implementation
    - medium: 4-16 hours, some complexity or unknowns
    - hard: >16 hours, significant complexity or dependencies
 
-4. Implementation Specification:
+5. Implementation Specification:
    Create a detailed specification that a developer can follow, including:
    - Clear problem description
    - Proposed solution approach
@@ -86,7 +124,7 @@ Guidelines for analysis:
    
    Make the spec actionable and specific to the tech stack when known.
 
-5. Confidence Score (0-100):
+6. Confidence Score (0-100):
    Rate your confidence in the analysis based on:
    - Clarity of the task description
    - Availability of context
@@ -121,6 +159,23 @@ export function validateAnalysisResponse(response: any): TaskAnalysisResponse {
     throw new Error('Invalid or missing implementation_spec')
   }
   
+  // Validate ICE fields
+  if (typeof response.ice_impact !== 'number' || response.ice_impact < 1 || response.ice_impact > 10) {
+    throw new Error('Invalid or missing ice_impact (must be 1-10)')
+  }
+  
+  if (typeof response.ice_confidence !== 'number' || response.ice_confidence < 1 || response.ice_confidence > 10) {
+    throw new Error('Invalid or missing ice_confidence (must be 1-10)')
+  }
+  
+  if (typeof response.ice_ease !== 'number' || response.ice_ease < 1 || response.ice_ease > 10) {
+    throw new Error('Invalid or missing ice_ease (must be 1-10)')
+  }
+  
+  if (!response.ice_reasoning || typeof response.ice_reasoning !== 'object') {
+    throw new Error('Invalid or missing ice_reasoning')
+  }
+  
   return {
     category: response.category,
     priority: Math.round(response.priority),
@@ -128,6 +183,10 @@ export function validateAnalysisResponse(response: any): TaskAnalysisResponse {
     estimated_hours: response.estimated_hours,
     confidence_score: Math.round(response.confidence_score),
     implementation_spec: response.implementation_spec,
+    ice_impact: Math.round(response.ice_impact),
+    ice_confidence: Math.round(response.ice_confidence),
+    ice_ease: Math.round(response.ice_ease),
+    ice_reasoning: response.ice_reasoning,
     reasoning: response.reasoning
   }
 }

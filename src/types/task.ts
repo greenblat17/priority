@@ -15,15 +15,25 @@ export const TaskSource = {
 
 export type TaskSourceType = typeof TaskSource[keyof typeof TaskSource]
 
-// Task status enum
+// Task status enum - Linear style
 export const TaskStatus = {
-  PENDING: 'pending',
+  BACKLOG: 'backlog',
+  TODO: 'todo',
   IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  BLOCKED: 'blocked'
+  DONE: 'done',
+  CANCELED: 'canceled',
+  DUPLICATE: 'duplicate'
 } as const
 
 export type TaskStatusType = typeof TaskStatus[keyof typeof TaskStatus]
+
+// For backward compatibility and migration
+export const LegacyStatusMapping = {
+  'pending': TaskStatus.TODO,
+  'in_progress': TaskStatus.IN_PROGRESS,
+  'completed': TaskStatus.DONE,
+  'blocked': TaskStatus.CANCELED
+} as const
 
 // Form input schema
 export const taskInputSchema = z.object({
@@ -63,6 +73,13 @@ export interface Task {
   complexity?: string
 }
 
+// ICE reasoning type
+export interface ICEReasoning {
+  impact: string
+  confidence: string
+  ease: string
+}
+
 // Task with analysis (joined data)
 export interface TaskWithAnalysis extends Task {
   analysis?: {
@@ -79,6 +96,12 @@ export interface TaskWithAnalysis extends Task {
     duplicate_of: string | null
     similar_tasks: any | null
     analyzed_at: string
+    // ICE prioritization fields
+    ice_impact: number | null
+    ice_confidence: number | null
+    ice_ease: number | null
+    ice_score: number | null
+    ice_reasoning: ICEReasoning | null
   }
   group?: {
     id: string

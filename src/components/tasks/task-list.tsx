@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { TaskTableGrouped } from './task-table-grouped'
-import { TaskFilters } from './task-filters'
+import { TaskListGrouped } from './task-list-grouped'
+import { TaskListLinear } from './task-list-linear'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
@@ -22,32 +23,48 @@ import { useBulkSelection } from '@/hooks/use-bulk-selection'
 import { BulkActionsBar } from '@/components/tasks/bulk-actions-bar'
 import { useBulkUpdateTaskStatus, useBulkDeleteTasks } from '@/hooks/use-tasks'
 import { Button } from '@/components/ui/button'
-import { Users } from 'lucide-react'
 import { useQuickAddShortcut } from '@/hooks/use-keyboard-shortcuts'
 import { useFilterPersistence } from '@/hooks/use-filter-persistence'
 import { GroupManagementDialog } from '@/components/tasks/group-management-dialog'
 import { useCreateTaskGroup, useUpdateTaskGroup, useDeleteTaskGroup } from '@/hooks/use-task-groups'
 import { useTaskPolling } from '@/hooks/use-task-polling'
 import { TaskKanbanView } from './task-kanban-view'
-import { ViewToggle } from './view-toggle'
 import { useSearchParams } from 'next/navigation'
 import { DuplicateReviewDialog } from './duplicate-review-dialog'
 import type { TaskSimilarity } from '@/types/duplicate'
+import { TaskViewTabs } from './task-view-tabs'
+import { LinearFilterPanel } from './linear-filter-panel'
+import { LinearDisplaySettings } from './linear-display-settings'
+import type { DisplaySettings } from '@/types/display'
 
 export function TaskList() {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const searchParams = useSearchParams()
+  
+  // Get search query from URL
+  const searchQuery = searchParams.get('search') || ''
   
   // Filter states with persistence
   const { filters, updateFilter, resetFilters, isInitialized } = useFilterPersistence()
   const [currentPage, setCurrentPage] = useState(1)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [showGroupDialog, setShowGroupDialog] = useState(false)
+  const [activeView, setActiveView] = useState<'all' | 'active' | 'backlog'>('all')
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
+  const [showDisplaySettings, setShowDisplaySettings] = useState(false)
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>({
+    view: 'list',
+    grouping: 'status',
+    ordering: 'priority',
+    orderDirection: 'desc',
+    showCompletedByRecency: true,
+    completedIssues: 'all',
+    showEmptyGroups: false
+  })
   const itemsPerPage = 20
   
   // Duplicate review state
-  const searchParams = useSearchParams()
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const [duplicateReviewData, setDuplicateReviewData] = useState<{
     newTask: TaskWithAnalysis
@@ -138,6 +155,11 @@ export function TaskList() {
   
   const filteredAndSortedTasks = processedTasks
     ?.filter(task => {
+      // View filter (All, Active, Backlog)
+      if (activeView === 'active' && !['todo', 'in_progress'].includes(task.status)) return false
+      if (activeView === 'backlog' && task.status !== 'backlog') return false
+      
+      // Status filter
       if (filters.status !== 'all' && task.status !== filters.status) return false
       if (filters.category !== 'all' && task.analysis?.category !== filters.category) return false
       
@@ -157,26 +179,64 @@ export function TaskList() {
         }
       }
       
+      // Completed issues filter
+      if (displaySettings.completedIssues === 'hide' && task.status === 'done') return false
+      if (displaySettings.completedIssues === 'recent' && task.status === 'done') {
+        const completedDate = new Date(task.updated_at)
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+        if (completedDate < sevenDaysAgo) return false
+      }
+      
       return true
     })
     .sort((a, b) => {
       let comparison = 0
       
-      switch (filters.sortBy) {
+      // If ordering completed by recency and both are done, sort by update date
+      if (displaySettings.showCompletedByRecency && 
+          a.status === 'done' && b.status === 'done') {
+        comparison = new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        return comparison
+      }
+      
+      switch (displaySettings.ordering) {
         case 'priority':
-          comparison = (a.analysis?.priority || 0) - (b.analysis?.priority || 0)
+          // Use ICE score if available, fallback to priority
+          const aScore = a.analysis?.ice_score || (a.analysis?.priority || 0) * 10
+          const bScore = b.analysis?.ice_score || (b.analysis?.priority || 0) * 10
+          comparison = aScore - bScore
           break
         case 'date':
           comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           break
         case 'status':
-          const statusOrder = { pending: 0, in_progress: 1, completed: 2, blocked: 3 }
-          comparison = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
+          const statusOrder = { 
+            backlog: 0, 
+            todo: 1, 
+            in_progress: 2, 
+            done: 3, 
+            canceled: 4, 
+            duplicate: 5,
+            // Legacy mappings
+            pending: 1,
+            completed: 3,
+            blocked: 4
+          }
+          comparison = (statusOrder[a.status as keyof typeof statusOrder] || 999) - 
+                      (statusOrder[b.status as keyof typeof statusOrder] || 999)
           break
       }
       
-      return filters.sortOrder === 'asc' ? comparison : -comparison
+      return displaySettings.orderDirection === 'asc' ? comparison : -comparison
     })
+  
+  // Calculate counts for tabs
+  const taskCounts = {
+    all: processedTasks?.length || 0,
+    active: processedTasks?.filter(t => ['todo', 'in_progress'].includes(t.status)).length || 0,
+    backlog: processedTasks?.filter(t => t.status === 'backlog').length || 0
+  }
   
   // Calculate total pages (will be improved with server-side count)
   const totalPages = Math.ceil((filteredAndSortedTasks?.length || 0) / itemsPerPage)
@@ -264,65 +324,57 @@ export function TaskList() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="rounded-lg shadow-sm">
+        <div className="border-b">
+          {/* Task View Tabs */}
+          <TaskViewTabs
+            activeView={activeView}
+            onViewChange={setActiveView}
+            counts={taskCounts}
+          />
+        </div>
+        
+        <div className="px-4 py-3 border-b">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search tasks by description, category, priority, or status..."
-                className="h-9"
+            {/* Search and Actions */}
+            <div className="flex items-center gap-2 flex-1">
+              {/* Filter Button */}
+              <LinearFilterPanel
+                filters={filters}
+                onFiltersChange={(newFilters) => {
+                  Object.entries(newFilters).forEach(([key, value]) => {
+                    updateFilter(key as any, value)
+                  })
+                }}
+                isOpen={showFilterPanel}
+                onOpenChange={setShowFilterPanel}
+              />
+              
+              {/* Display Settings */}
+              <LinearDisplaySettings
+                settings={displaySettings}
+                onSettingsChange={setDisplaySettings}
+                isOpen={showDisplaySettings}
+                onOpenChange={setShowDisplaySettings}
               />
             </div>
+            
+            {/* Right side actions */}
             <div className="flex items-center gap-2">
-              <ViewToggle 
-                view={filters.view || 'table'} 
-                onViewChange={(view) => updateFilter('view', view)} 
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowGroupDialog(true)}
-                disabled={!tasks || tasks.length === 0}
-                className="h-9"
-              >
-                <Users className="h-4 w-4 mr-1" />
-                Groups
-              </Button>
-              <div className="text-sm text-muted-foreground whitespace-nowrap">
-                {filteredAndSortedTasks?.length || 0} tasks
-              </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <CardContent className="p-0">
           {error ? (
-            <ErrorState
-              title="Failed to load tasks"
-              message={error ? String(error) : 'An error occurred'}
-              onRetry={() => window.location.reload()}
-            />
+            <div className="p-6">
+              <ErrorState
+                title="Failed to load tasks"
+                message={error ? String(error) : 'An error occurred'}
+                onRetry={() => window.location.reload()}
+              />
+            </div>
           ) : (
             <>
-              {searchQuery && (
-                <p className="text-sm text-muted-foreground mb-4">
-                  Found {filteredAndSortedTasks?.length || 0} results for "{searchQuery}"
-                </p>
-              )}
-              
-              <TaskFilters
-                statusFilter={filters.status}
-                setStatusFilter={handleFilterChange('status')}
-                categoryFilter={filters.category}
-                setCategoryFilter={handleFilterChange('category')}
-                confidenceFilter={filters.confidence || 'all'}
-                setConfidenceFilter={handleFilterChange('confidence')}
-                sortBy={filters.sortBy}
-                setSortBy={(value) => updateFilter('sortBy', value)}
-                sortOrder={filters.sortOrder}
-                setSortOrder={(value) => updateFilter('sortOrder', value)}
-              />
               
               {/* Show empty state based on context */}
               {!isLoading && filteredAndSortedTasks?.length === 0 && (
@@ -344,30 +396,28 @@ export function TaskList() {
               
               {/* Show tasks table or kanban view when there are tasks */}
               {filteredAndSortedTasks && filteredAndSortedTasks.length > 0 && (
-                filters.view === 'kanban' ? (
-                  <TaskKanbanView
-                    tasks={filteredAndSortedTasks}
-                    onUpdateStatus={(taskId, status) => 
-                      updateStatusMutation.mutate({ taskId, status })
-                    }
-                    onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
-                    searchQuery={searchQuery}
-                  />
-                ) : (
-                  <TaskTableGrouped
-                    tasks={filteredAndSortedTasks}
-                    onUpdateStatus={(taskId, status) => 
-                      updateStatusMutation.mutate({ taskId, status })
-                    }
-                    onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
-                    searchQuery={searchQuery}
-                    selectedIds={selectedIds}
-                    onToggleSelection={toggleSelection}
-                    onToggleAll={toggleAll}
-                    isAllSelected={isAllSelected}
-                    isPartiallySelected={isPartiallySelected}
-                  />
-                )
+                <div>
+                  {displaySettings.view === 'board' ? (
+                    <TaskKanbanView
+                      tasks={filteredAndSortedTasks}
+                      onUpdateStatus={(taskId, status) => 
+                        updateStatusMutation.mutate({ taskId, status })
+                      }
+                      onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
+                      searchQuery={searchQuery}
+                    />
+                  ) : (
+                    <TaskListLinear
+                      tasks={filteredAndSortedTasks}
+                      displaySettings={displaySettings}
+                      onUpdateStatus={(taskId, status) => 
+                        updateStatusMutation.mutate({ taskId, status })
+                      }
+                      onDeleteTask={(taskId) => deleteTaskMutation.mutate(taskId)}
+                      searchQuery={searchQuery}
+                    />
+                  )}
+                </div>
               )}
               
               {/* Pagination */}

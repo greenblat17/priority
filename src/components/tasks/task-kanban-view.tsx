@@ -18,6 +18,7 @@ import {
 import { TaskDetailPanel } from './task-detail-panel'
 import { ConfidenceBadge } from './confidence-badge'
 import { TaskWithAnalysis, TaskStatusType, TaskStatus } from '@/types/task'
+import { TaskStatusDropdown } from './task-status-dropdown'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
 import { cn } from '@/lib/utils'
 import { getSourceLabel } from '@/lib/task-source-utils'
@@ -37,28 +38,28 @@ interface TaskKanbanViewProps {
 
 const statusColumns = [
   { 
-    id: TaskStatus.PENDING, 
-    label: 'Pending', 
-    color: 'bg-muted/20',
-    dotColor: 'bg-muted-foreground/60'
+    id: 'backlog' as TaskStatusType, 
+    label: 'Backlog', 
+    color: 'bg-gray-50',
+    dotColor: 'bg-gray-500'
   },
   { 
-    id: TaskStatus.IN_PROGRESS, 
+    id: 'todo' as TaskStatusType, 
+    label: 'Todo', 
+    color: 'bg-white',
+    dotColor: 'bg-gray-700'
+  },
+  { 
+    id: 'in_progress' as TaskStatusType, 
     label: 'In Progress', 
-    color: 'bg-primary/5',
-    dotColor: 'bg-primary'
+    color: 'bg-yellow-50',
+    dotColor: 'bg-yellow-600'
   },
   { 
-    id: TaskStatus.COMPLETED, 
-    label: 'Completed', 
-    color: 'bg-muted/20',
-    dotColor: 'bg-emerald-500'
-  },
-  { 
-    id: TaskStatus.BLOCKED, 
-    label: 'Blocked', 
-    color: 'bg-muted/20',
-    dotColor: 'bg-destructive'
+    id: 'done' as TaskStatusType, 
+    label: 'Done', 
+    color: 'bg-blue-50',
+    dotColor: 'bg-blue-600'
   },
 ] as const
 
@@ -179,6 +180,15 @@ export function TaskKanbanView({
                 <AlertCircle className="h-3 w-3 text-destructive" />
               )}
             </div>
+            
+            <div className="mt-2">
+              <TaskStatusDropdown
+                taskId={task.id}
+                currentStatus={task.status}
+                onStatusChange={(newStatus) => onUpdateStatus(task.id, newStatus)}
+                variant="compact"
+              />
+            </div>
           </div>
 
           <DropdownMenu>
@@ -203,20 +213,6 @@ export function TaskKanbanView({
                   Copy Spec
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-sm">Update Status</DropdownMenuLabel>
-              {statusColumns.map((status) => (
-                <DropdownMenuItem
-                  key={status.id}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onUpdateStatus(task.id, status.id)
-                  }}
-                  disabled={task.status === status.id}
-                >
-                  {status.label}
-                </DropdownMenuItem>
-              ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive"

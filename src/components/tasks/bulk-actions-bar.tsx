@@ -13,10 +13,11 @@ import {
   X, 
   MoreHorizontal, 
   Trash2, 
-  CheckCircle, 
+  CheckCircle2, 
   Circle, 
-  AlertCircle,
-  Clock,
+  CircleDot,
+  CircleCheck,
+  CircleX,
   ChevronDown,
   Download
 } from 'lucide-react'
@@ -69,21 +70,25 @@ export function BulkActionsBar({
           <DropdownMenuContent>
             <DropdownMenuLabel>Set status to:</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onUpdateStatus('pending')}>
-              <Circle className="h-4 w-4 mr-2" />
-              Pending
+            <DropdownMenuItem onClick={() => onUpdateStatus('backlog')}>
+              <Circle className="h-4 w-4 mr-2 text-gray-500" />
+              Backlog
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onUpdateStatus('todo')}>
+              <Circle className="h-4 w-4 mr-2 text-gray-700" />
+              Todo
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onUpdateStatus('in_progress')}>
-              <Clock className="h-4 w-4 mr-2" />
+              <CircleDot className="h-4 w-4 mr-2 text-yellow-600" />
               In Progress
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onUpdateStatus('completed')}>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Completed
+            <DropdownMenuItem onClick={() => onUpdateStatus('done')}>
+              <CircleCheck className="h-4 w-4 mr-2 text-blue-600" />
+              Done
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onUpdateStatus('blocked')}>
-              <AlertCircle className="h-4 w-4 mr-2" />
-              Blocked
+            <DropdownMenuItem onClick={() => onUpdateStatus('canceled')}>
+              <CircleX className="h-4 w-4 mr-2 text-gray-500" />
+              Canceled
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

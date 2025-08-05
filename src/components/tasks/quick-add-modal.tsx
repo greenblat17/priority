@@ -128,7 +128,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
           source: data.source,
           customer_info: data.customerInfo || null,
           user_id: user.id,
-          status: 'pending'
+          status: 'todo'
         })
         .select()
         .single()
@@ -219,7 +219,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
           description: params.data.description,
           source: params.data.source,
           customer_info: params.data.customerInfo || null,
-          status: 'pending',
+          status: 'todo',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           analysis: null,
