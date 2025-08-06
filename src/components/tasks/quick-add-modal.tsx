@@ -81,6 +81,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     resolver: zodResolver(taskInputSchema) as any,
     defaultValues: {
       source: TaskSource.INTERNAL,
+      title: '',
       description: '',
       customerInfo: ''
     }
@@ -124,7 +125,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       const { data: task, error } = await supabase
         .from('tasks')
         .insert({
-          description: data.description,
+          title: data.title,
+          description: data.description || null,
           source: data.source,
           customer_info: data.customerInfo || null,
           user_id: user.id,
@@ -176,7 +178,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           taskId: task.id,
-          description: task.description,
+          description: task.title,
           userId: user.id
         }),
         credentials: 'include'
@@ -216,7 +218,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         // Create optimistic task with temporary ID
         const optimisticTask = {
           id: 'temp-' + Date.now(),
-          description: params.data.description,
+          title: params.data.title,
+          description: params.data.description || null,
           source: params.data.source,
           customer_info: params.data.customerInfo || null,
           status: 'todo',
@@ -351,14 +354,31 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 pb-2">
             <FormField
               control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      placeholder="Task title"
+                      className="text-base border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 transition-all duration-200"
+                      autoFocus
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Textarea
-                      placeholder="What needs to be done?"
-                      className="min-h-[100px] text-base resize-none border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 transition-all duration-200"
-                      autoFocus
+                      placeholder="Add more details (optional)"
+                      className="min-h-[80px] text-base resize-none border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 transition-all duration-200"
                       {...field}
                     />
                   </FormControl>

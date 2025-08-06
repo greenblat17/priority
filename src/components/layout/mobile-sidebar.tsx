@@ -14,7 +14,8 @@ import {
   User,
   CreditCard,
   Bell,
-  Keyboard
+  Keyboard,
+  Plug
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { springs } from '@/lib/animations'
@@ -46,6 +47,18 @@ export function MobileSidebar() {
       href: '/tasks', 
       label: 'Tasks', 
       icon: LayoutList,
+    },
+    { 
+      id: 'notifications',
+      href: '/notifications', 
+      label: 'Notifications', 
+      icon: Bell,
+    },
+    { 
+      id: 'integrations',
+      href: '/integrations', 
+      label: 'Integrations', 
+      icon: Plug,
     },
     { 
       id: 'settings',

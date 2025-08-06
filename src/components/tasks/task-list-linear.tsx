@@ -323,7 +323,15 @@ export function TaskListLinear({
               className="mt-0.5 flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <div className="text-sm truncate">{searchQuery ? highlightSearchTerm(task.description, searchQuery) : task.description}</div>
+              <div className="flex items-center gap-2">
+                <div className="text-sm truncate flex-1">
+                  {task.title ? (
+                    searchQuery ? highlightSearchTerm(task.title, searchQuery) : task.title
+                  ) : (
+                    searchQuery ? highlightSearchTerm(task.description, searchQuery) : task.description
+                  )}
+                </div>
+              </div>
               {task.source && (
                 <div className="text-xs text-muted-foreground">
                   Source: {searchQuery ? highlightSearchTerm(getSourceLabel(task.source), searchQuery) : getSourceLabel(task.source)}

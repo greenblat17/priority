@@ -16,8 +16,10 @@ import {
   CreditCard,
   Bell,
   Keyboard,
-  SquarePen
+  SquarePen,
+  Plug
 } from 'lucide-react'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 import { motion, AnimatePresence } from 'framer-motion'
 import { springs } from '@/lib/animations'
 import {
@@ -74,6 +76,18 @@ export function Sidebar() {
       href: '/tasks', 
       label: 'Tasks', 
       icon: LayoutList,
+    },
+    { 
+      id: 'notifications',
+      href: '/notifications', 
+      label: 'Notifications', 
+      icon: Bell,
+    },
+    { 
+      id: 'integrations',
+      href: '/integrations', 
+      label: 'Integrations', 
+      icon: Plug,
     },
     { 
       id: 'settings',
@@ -236,8 +250,19 @@ export function Sidebar() {
           </div>
         </nav>
 
-        {/* User Section */}
-        <div className="border-t border-gray-100 p-4">
+        {/* Notification & User Section */}
+        <div className="border-t border-gray-100 p-4 space-y-3">
+          {/* Notification Bell */}
+          <div className={cn(
+            "flex items-center",
+            isCollapsed ? "justify-center" : "justify-between px-2"
+          )}>
+            {!isCollapsed && (
+              <span className="text-sm font-medium text-gray-700">Notifications</span>
+            )}
+            <NotificationBell />
+          </div>
+          
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -37,9 +37,12 @@ export const LegacyStatusMapping = {
 
 // Form input schema
 export const taskInputSchema = z.object({
+  title: z.string()
+    .min(1, 'Title is required')
+    .max(200, 'Title must be less than 200 characters'),
   description: z.string()
-    .min(1, 'Description is required')
-    .max(5000, 'Description must be less than 5000 characters'),
+    .max(5000, 'Description must be less than 5000 characters')
+    .optional(),
   source: z.enum([
     TaskSource.INTERNAL,
     TaskSource.MCP,
@@ -71,6 +74,11 @@ export interface Task {
   priority?: number
   category?: string
   complexity?: string
+  // Gmail integration fields
+  source_type?: 'manual' | 'gmail' | 'feedback'
+  original_email_id?: string | null
+  title?: string
+  metadata?: any
 }
 
 // ICE reasoning type

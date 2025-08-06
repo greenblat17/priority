@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     // Build the analysis prompt
     const prompt = buildAnalysisPrompt({
       task: {
-        description: task.description,
+        description: task.title ? `${task.title}\n\n${task.description || ''}` : task.description,
         source: task.source,
         customer_info: task.customer_info
       },

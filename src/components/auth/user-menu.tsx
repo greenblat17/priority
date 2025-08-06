@@ -28,10 +28,16 @@ export function UserMenu() {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       
+      // Clear any local storage or session storage if needed
+      localStorage.clear()
+      sessionStorage.clear()
+      
       toast.success('Signed out successfully')
-      router.push('/')
-      router.refresh()
+      
+      // Force a hard refresh to clear all state
+      window.location.href = '/'
     } catch (error: any) {
+      console.error('Sign out error:', error)
       toast.error(error.message || 'Error signing out')
     } finally {
       setIsLoading(false)

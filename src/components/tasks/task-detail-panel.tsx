@@ -12,6 +12,10 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TaskStatusDropdown } from './task-status-dropdown'
+import { EmailPreview } from './email-preview'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { ProcessedEmail } from '@/types/gmail'
 
 interface TaskDetailPanelProps {
   task: TaskWithAnalysis
@@ -26,6 +30,36 @@ export function TaskDetailPanel({
   onOpenChange,
   onUpdateStatus,
 }: TaskDetailPanelProps) {
+  const [emailData, setEmailData] = useState<ProcessedEmail | null>(null)
+  const [loadingEmail, setLoadingEmail] = useState(false)
+  const supabase = createClient()
+
+  // Fetch email data if this task came from Gmail
+  useEffect(() => {
+    const fetchEmailData = async () => {
+      if (task.source_type === 'gmail' && task.original_email_id && open) {
+        setLoadingEmail(true)
+        try {
+          const { data, error } = await supabase
+            .from('processed_emails')
+            .select('*')
+            .eq('id', task.original_email_id)
+            .single()
+
+          if (!error && data) {
+            setEmailData(data)
+          }
+        } catch (error) {
+          console.error('Error fetching email data:', error)
+        } finally {
+          setLoadingEmail(false)
+        }
+      }
+    }
+
+    fetchEmailData()
+  }, [task.source_type, task.original_email_id, open, supabase])
+
   const copySpec = () => {
     if (task.analysis?.implementation_spec) {
       navigator.clipboard.writeText(task.analysis.implementation_spec)
@@ -116,7 +150,10 @@ export function TaskDetailPanel({
                 }
               }}
             >
-          <h3 className="text-xl font-semibold mb-2">{task.description}</h3>
+          <h3 className="text-xl font-semibold mb-2">{task.title || task.description}</h3>
+          {task.title && task.description && (
+            <p className="text-base text-gray-600 mb-3">{task.description}</p>
+          )}
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <motion.div 
               className="flex items-center gap-1"
@@ -345,8 +382,8 @@ export function TaskDetailPanel({
           </>
         )}
 
-        {/* Task Group */}
-        {task.group && (
+        {/* Email Preview for Gmail-sourced tasks */}
+        {task.source_type === 'gmail' && emailData && (
           <>
             <motion.div
               initial={{ opacity: 0, scaleX: 0 }}
@@ -358,10 +395,36 @@ export function TaskDetailPanel({
               <Separator />
             </motion.div>
             <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ delay: 1.1, duration: 0.4 }}
+            >
+              <EmailPreview 
+                email={emailData} 
+                confidenceScore={emailData.confidence_score}
+              />
+            </motion.div>
+          </>
+        )}
+
+        {/* Task Group */}
+        {task.group && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              exit={{ opacity: 0, scaleX: 0 }}
+              transition={{ delay: 1.15, duration: 0.3 }}
+              style={{ transformOrigin: 'left' }}
+            >
+              <Separator />
+            </motion.div>
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              transition={{ delay: 1.1, duration: 0.3 }}
+              transition={{ delay: 1.2, duration: 0.3 }}
             >
               <div className="flex items-center gap-2 mb-1">
                 <Tag className="h-4 w-4 text-muted-foreground" />
@@ -377,7 +440,7 @@ export function TaskDetailPanel({
           initial={{ opacity: 0, scaleX: 0 }}
           animate={{ opacity: 1, scaleX: 1 }}
           exit={{ opacity: 0, scaleX: 0 }}
-          transition={{ delay: 1.1, duration: 0.3 }}
+          transition={{ delay: 1.25, duration: 0.3 }}
           style={{ transformOrigin: 'left' }}
         >
           <Separator />
@@ -387,7 +450,7 @@ export function TaskDetailPanel({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ delay: 1.2, duration: 0.4 }}
+          transition={{ delay: 1.3, duration: 0.4 }}
         >
           <div className="flex items-center gap-2">
             <User className="h-3.5 w-3.5" />

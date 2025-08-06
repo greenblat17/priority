@@ -42,7 +42,8 @@ export function TaskEditDialog({
   const supabase = createClient()
   
   // Form state
-  const [description, setDescription] = useState(task.description)
+  const [title, setTitle] = useState(task.title || '')
+  const [description, setDescription] = useState(task.description || '')
   const [status, setStatus] = useState<TaskStatusType>(task.status)
   const [source, setSource] = useState(task.source || '')
   const [customerInfo, setCustomerInfo] = useState(task.customer_info || '')
@@ -52,7 +53,8 @@ export function TaskEditDialog({
   
   // Reset form when task changes
   useEffect(() => {
-    setDescription(task.description)
+    setTitle(task.title || '')
+    setDescription(task.description || '')
     setStatus(task.status)
     setSource(task.source || '')
     setCustomerInfo(task.customer_info || '')
@@ -62,8 +64,8 @@ export function TaskEditDialog({
   }, [task])
   
   const handleSave = async () => {
-    if (!description.trim()) {
-      toast.error('Description is required')
+    if (!title.trim()) {
+      toast.error('Title is required')
       return
     }
     
@@ -74,7 +76,8 @@ export function TaskEditDialog({
       const { error: taskError } = await supabase
         .from('tasks')
         .update({
-          description: description.trim(),
+          title: title.trim(),
+          description: description.trim() || null,
           status,
           source: source || null,
           customer_info: customerInfo || null,
@@ -151,12 +154,23 @@ export function TaskEditDialog({
         
         <div className="space-y-4 py-4">
           <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter task title..."
+              disabled={isLoading}
+            />
+          </div>
+          
+          <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter task description..."
+              placeholder="Enter task description (optional)..."
               className="min-h-[100px]"
               disabled={isLoading}
             />

@@ -12,6 +12,9 @@ interface KeyboardShortcut {
 export function useKeyboardShortcut(shortcut: KeyboardShortcut) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if event.key exists
+      if (!event.key || !shortcut.key) return
+      
       // Check if the key matches
       if (event.key.toLowerCase() !== shortcut.key.toLowerCase()) return
 
@@ -65,7 +68,7 @@ export function useGlobalKeyboardShortcuts() {
       }
 
       // Show help with '?'
-      if (event.key === '?' && !event.ctrlKey && !event.metaKey) {
+      if (event.key && event.key === '?' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault()
         // This will be implemented with the shortcut discovery UI
         const customEvent = new CustomEvent('show-keyboard-shortcuts')
@@ -96,6 +99,8 @@ export function useTaskListNavigation(
         return
       }
 
+      if (!event.key) return
+      
       switch (event.key) {
         case 'j':
         case 'ArrowDown':
@@ -131,7 +136,7 @@ export function useEscapeKey(onEscape: () => void, isActive: boolean = true) {
     if (!isActive) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key && event.key === 'Escape') {
         event.preventDefault()
         onEscape()
       }
@@ -155,7 +160,7 @@ export function useKeyboardShortcutsDialog() {
         return
       }
 
-      if (event.key === '?' && !event.ctrlKey && !event.metaKey) {
+      if (event.key && event.key === '?' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault()
         setIsOpen(true)
       }

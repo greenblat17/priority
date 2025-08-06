@@ -39,6 +39,7 @@ import {
 import { toast } from 'sonner'
 import { Loader2, Plus, X, Globe } from 'lucide-react'
 import type { GTMManifest } from '@/types/gtm'
+import { ImportLoadingDialog } from './import-loading-dialog'
 
 // Validation schema
 const gtmManifestSchema = z.object({
@@ -70,6 +71,7 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
   const [importUrl, setImportUrl] = useState('')
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [showImportLoading, setShowImportLoading] = useState(false)
   const [techStackInput, setTechStackInput] = useState({
     frontend: '',
     backend: '',
@@ -184,7 +186,11 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
       return
     }
 
+    // Close the import dialog and show loading screen
+    setShowImportDialog(false)
+    setShowImportLoading(true)
     setImporting(true)
+    
     try {
       const response = await fetch('/api/gtm-manifest/import', {
         method: 'POST',
@@ -213,14 +219,17 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
         }
       }
 
+      // Add a small delay to ensure the loading animation completes
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       toast.success('Successfully imported data from landing page!')
-      setShowImportDialog(false)
       setImportUrl('')
     } catch (error) {
       console.error('Import error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to import from URL')
     } finally {
       setImporting(false)
+      setShowImportLoading(false)
     }
   }
 
@@ -522,6 +531,13 @@ export function GTMManifestForm({ mode, initialData }: GTMManifestFormProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import Loading Dialog */}
+      <ImportLoadingDialog 
+        isOpen={showImportLoading} 
+        onClose={() => setShowImportLoading(false)}
+        url={importUrl}
+      />
     </Form>
   )
 }
