@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { TaskTableGrouped } from './task-table-grouped'
@@ -17,7 +17,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { TaskWithAnalysis } from '@/types/task'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
-import { useTasks, useUpdateTaskStatus, useDeleteTask } from '@/hooks/use-tasks'
+import {
+  useTasks,
+  useTasksInfinite,
+  useUpdateTaskStatus,
+  useDeleteTask,
+} from '@/hooks/use-tasks'
 import { SkeletonTaskTable } from '@/components/ui/skeleton-task-table'
 import { Pagination } from '@/components/ui/pagination'
 import {
@@ -152,18 +157,22 @@ export function TaskList() {
     }
   }, [searchParams])
 
-  // Use optimized task hooks
+  // Infinite tasks from API with cursor pagination
   const {
-    data: tasks,
-    isLoading,
+    data: infiniteData,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    status: infiniteStatus,
     error,
-  } = useTasks({
+  } = useTasksInfinite({
     status: filters.status !== 'all' ? filters.status : undefined,
     category: filters.category !== 'all' ? filters.category : undefined,
-    sortBy: filters.sortBy === 'date' ? 'date' : 'priority',
-    page: currentPage,
+    q: searchQuery || undefined,
     limit: itemsPerPage,
   })
+  const tasks = infiniteData?.pages.flatMap((p) => p.tasks) || []
+  const isLoading = infiniteStatus === 'pending'
 
   const updateStatusMutation = useUpdateTaskStatus()
   const bulkUpdateStatusMutation = useBulkUpdateTaskStatus()
@@ -311,10 +320,24 @@ export function TaskList() {
     backlog: processedTasks?.filter((t) => t.status === 'backlog').length || 0,
   }
 
-  // Calculate total pages (will be improved with server-side count)
-  const totalPages = Math.ceil(
-    (filteredAndSortedTasks?.length || 0) / itemsPerPage
-  )
+  // Infinite load sentinel
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return
+    const el = loadMoreRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting) {
+          fetchNextPage()
+        }
+      },
+      { rootMargin: '200px' }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   // Extract unique groups from tasks based on group ID
   const taskGroups = tasks
@@ -518,14 +541,8 @@ export function TaskList() {
                 </div>
               )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
-              )}
+              {/* Infinite load sentinel */}
+              <div ref={loadMoreRef} className="h-8" />
             </>
           )}
         </CardContent>
