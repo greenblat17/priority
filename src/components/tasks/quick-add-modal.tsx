@@ -383,9 +383,10 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-1 -mx-1">
+          <div className="flex-1 overflow-y-auto px-6">
             <Form {...form}>
               <form
+                id="quick-add-form"
                 onSubmit={form.handleSubmit(handleSubmit)}
                 className="space-y-6 pb-2"
               >
@@ -393,8 +394,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Issue title (optional)"
-                  className="text-lg"
+                  placeholder="Title (optional)"
+                  className="text-lg border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 transition-all duration-200"
                 />
                 <FormField
                   control={form.control}
@@ -409,6 +410,10 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription className="text-xs text-gray-500">
+                        Shift+Enter for new line · {isMac ? '⌘' : 'Ctrl'}+Enter
+                        to add
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -524,45 +529,36 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                     </p>
                   </motion.div>
                 </details>
-
-                <div className="flex justify-end gap-4">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={springs.snappy}
-                    onClick={onClose}
-                    disabled={createTaskMutation.isPending}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    type="submit"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={springs.snappy}
-                    disabled={createTaskMutation.isPending}
-                    className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
-                    title="Add Task (⌘↵)"
-                  >
-                    {createTaskMutation.isPending ? (
-                      'Adding...'
-                    ) : (
-                      <>
-                        Add Task
-                        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-white/20 rounded">
-                          <span className="text-xs">
-                            {isMac ? '⌘' : 'Ctrl'}
-                          </span>
-                          <span className="text-xs">↵</span>
-                        </kbd>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
               </form>
             </Form>
+          </div>
+          <div className="flex-shrink-0 border-t border-gray-200 px-6 py-3 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              disabled={createTaskMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="quick-add-form"
+              disabled={createTaskMutation.isPending}
+              title={`Add Task (${isMac ? '⌘' : 'Ctrl'} + Enter)`}
+            >
+              {createTaskMutation.isPending ? (
+                'Adding...'
+              ) : (
+                <>
+                  Add Task
+                  <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-black/5 rounded ml-1">
+                    <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>
+                    <span className="text-xs">↵</span>
+                  </kbd>
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
