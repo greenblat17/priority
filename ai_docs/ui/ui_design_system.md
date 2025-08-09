@@ -123,7 +123,6 @@ export const colors = {
 
 ```tsx
 import { Button } from '@/components/ui/button'
-
 ;<Button>Primary</Button>
 ```
 
