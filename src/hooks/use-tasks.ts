@@ -1,6 +1,11 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
@@ -17,6 +22,7 @@ export const taskKeys = {
   detail: (id: string) => [...taskKeys.details(), id] as const,
   attachments: (taskId: string) =>
     [...taskKeys.detail(taskId), 'attachments'] as const,
+  infinite: (params?: any) => [...taskKeys.all, 'infinite', params] as const,
 }
 
 // Fetch tasks with optional filters
@@ -471,6 +477,46 @@ export function usePrefetchTasksPage() {
       staleTime: 60 * 1000,
     })
   }
+}
+
+// Infinite tasks list using API with cursor pagination
+export function useTasksInfinite(params?: {
+  status?: string
+  category?: string
+  sortBy?: 'priority' | 'date'
+  q?: string
+  limit?: number
+}) {
+  const searchParams = (cursor?: string) => {
+    const sp = new URLSearchParams()
+    if (params?.status) sp.set('status', params.status)
+    if (params?.category) sp.set('category', params.category)
+    if (params?.q) sp.set('q', params.q)
+    if (params?.limit) sp.set('limit', String(params.limit))
+    if (cursor) sp.set('cursor', cursor)
+    return sp.toString()
+  }
+
+  const query = useInfiniteQuery({
+    queryKey: taskKeys.infinite(params),
+    queryFn: async ({ pageParam }) => {
+      const qs = searchParams(pageParam as string | undefined)
+      const res = await fetch(`/api/v1/tasks${qs ? `?${qs}` : ''}`, {
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Failed to fetch tasks')
+      return (await res.json()) as {
+        tasks: (TaskWithAnalysis & { group: TaskGroup | null })[]
+        nextCursor?: string | null
+      }
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    initialPageParam: undefined,
+  })
+
+  return query
 }
 
 // Delete task with optimistic update and undo
