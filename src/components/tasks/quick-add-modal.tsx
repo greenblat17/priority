@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { useCreateTask, taskKeys } from '@/hooks/use-tasks'
+import { taskKeys } from '@/hooks/use-tasks'
 import { useEscapeKey } from '@/hooks/use-keyboard-shortcuts'
 import {
   Building,
@@ -18,15 +18,10 @@ import {
   Twitter,
   Smartphone,
   Play,
+  Paperclip,
 } from 'lucide-react'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/animated-dialog'
+import { Dialog, DialogContent } from '@/components/ui/animated-dialog'
 import { motion } from 'framer-motion'
 import { springs } from '@/lib/animations'
 import {
@@ -48,7 +43,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
 
 import { TaskInput, taskInputSchema, TaskSource } from '@/types/task'
 import { DuplicateReviewDialog } from './duplicate-review-dialog'
@@ -91,7 +85,6 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     },
   })
 
-  const [showAdvanced, setShowAdvanced] = useState(false)
   const [title, setTitle] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
 
@@ -302,27 +295,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     },
   })
 
-  // Check for duplicates before creating task
-  const checkDuplicatesMutation = useMutation({
-    mutationFn: async (description: string) => {
-      const response = await fetch('/api/check-duplicates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description }),
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        // If duplicate check fails, proceed with task creation
-        return {
-          potentialDuplicates: [],
-          embedding: [],
-        } as DuplicateCheckResponse
-      }
-
-      return response.json() as Promise<DuplicateCheckResponse>
-    },
-  })
+  // Duplicate check handled asynchronously in background on creation
 
   const handleSubmit = async (data: TaskInput) => {
     const combinedDescription = (data.description || '').trim()
@@ -394,30 +367,36 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-lg max-h-[90vh] bg-white rounded-2xl flex flex-col overflow-hidden">
-          <DialogHeader className="space-y-2 flex-shrink-0">
-            <DialogTitle className="text-xl font-semibold text-black">
-              Add New Task
-            </DialogTitle>
-            <DialogDescription className="text-gray-600">
-              Describe your task and our AI will analyze it for you
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] bg-white rounded-2xl flex flex-col overflow-hidden p-0">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 pb-4">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span>Tasks</span>
+              <span>/</span>
+              <span className="text-gray-700">Add Task</span>
+            </div>
+            <div className="text-[11px] text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+              {isMac ? '⌘' : 'Ctrl'}↵
+            </div>
+          </div>
 
-          <div className="flex-1 overflow-y-auto px-6">
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto">
             <Form {...form}>
               <form
                 id="quick-add-form"
                 onSubmit={form.handleSubmit(handleSubmit)}
-                className="space-y-6 pb-2"
+                className="flex flex-col gap-4 px-6 pb-2"
               >
-                {/* Short title (optional) */}
+                {/* Title (optional) */}
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Title (optional)"
-                  className="text-lg border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 transition-all duration-200"
+                  placeholder="Task title (optional)"
+                  className="text-base font-medium border-0 px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
+
+                {/* Description */}
                 <FormField
                   control={form.control}
                   name="description"
@@ -425,22 +404,18 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                     <FormItem>
                       <FormControl>
                         <Textarea
-                          placeholder="What needs to be done?"
-                          className="min-h-[100px] text-base resize-none border-gray-200 focus:border-black focus:ring-2 focus:ring-black/5 transition-all duration-200"
+                          placeholder="Describe your task..."
+                          className="min-h-[120px] text-base resize-none border-0 px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           autoFocus
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription className="text-xs text-gray-500">
-                        Shift+Enter for new line · {isMac ? '⌘' : 'Ctrl'}+Enter
-                        to add
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Source and Customer Info fields */}
+                {/* Source and Customer Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -532,7 +507,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   />
                 </div>
 
-                {/* Collapsible advanced options */}
+                {/* Advanced options */}
                 <details className="group">
                   <summary className="cursor-pointer text-sm text-gray-600 hover:text-black transition-colors">
                     Advanced options
@@ -553,13 +528,23 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               </form>
             </Form>
           </div>
-          <div className="flex-shrink-0 border-t border-gray-200 px-6 py-3 flex items-center justify-between gap-3">
+
+          {/* Help row */}
+          <div className="px-6 py-2">
+            <p className="text-xs text-gray-500">
+              Use markdown formatting. Press {isMac ? '⌘' : 'Ctrl'}+Enter to
+              add.
+            </p>
+          </div>
+
+          {/* Sticky footer */}
+          <div className="sticky bottom-0 flex items-center justify-between gap-3 p-6 pt-4 bg-white border-t border-gray-200 mt-auto">
             <form
               id="attach-form"
               className="flex items-center gap-2"
               onSubmit={(e) => e.preventDefault()}
             >
-              <label className="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   id="file-input"
                   name="file"
@@ -567,7 +552,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   className="hidden"
                   onChange={(e) => setAttachment(e.target.files?.[0] || null)}
                 />
-                <span className="inline-flex items-center rounded border border-gray-200 px-2 py-1">
+                <span className="inline-flex items-center gap-2 rounded border border-gray-200 px-2 py-1">
+                  <Paperclip className="h-4 w-4" />
                   {attachment ? `Attached: ${attachment.name}` : 'Attach'}
                 </span>
               </label>
