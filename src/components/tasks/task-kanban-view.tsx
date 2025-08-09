@@ -18,6 +18,7 @@ import {
 import { TaskDetailPanel } from './task-detail-panel'
 import { ConfidenceBadge } from './confidence-badge'
 import { TaskWithAnalysis, TaskStatusType, TaskStatus } from '@/types/task'
+import { TaskStatusDropdown } from './task-status-dropdown'
 import { TaskGroup as TaskGroupType } from '@/types/task-group'
 import { cn } from '@/lib/utils'
 import { getSourceLabel } from '@/lib/task-source-utils'
@@ -36,41 +37,45 @@ interface TaskKanbanViewProps {
 }
 
 const statusColumns = [
-  { 
-    id: TaskStatus.PENDING, 
-    label: 'Pending', 
-    color: 'bg-muted/20',
-    dotColor: 'bg-muted-foreground/60'
+  {
+    id: 'backlog' as TaskStatusType,
+    label: 'Backlog',
+    color: 'bg-gray-50',
+    dotColor: 'bg-gray-500',
   },
-  { 
-    id: TaskStatus.IN_PROGRESS, 
-    label: 'In Progress', 
-    color: 'bg-primary/5',
-    dotColor: 'bg-primary'
+  {
+    id: 'todo' as TaskStatusType,
+    label: 'Todo',
+    color: 'bg-white',
+    dotColor: 'bg-gray-700',
   },
-  { 
-    id: TaskStatus.COMPLETED, 
-    label: 'Completed', 
-    color: 'bg-muted/20',
-    dotColor: 'bg-emerald-500'
+  {
+    id: 'in_progress' as TaskStatusType,
+    label: 'In Progress',
+    color: 'bg-yellow-50',
+    dotColor: 'bg-yellow-600',
   },
-  { 
-    id: TaskStatus.BLOCKED, 
-    label: 'Blocked', 
-    color: 'bg-muted/20',
-    dotColor: 'bg-destructive'
+  {
+    id: 'done' as TaskStatusType,
+    label: 'Done',
+    color: 'bg-blue-50',
+    dotColor: 'bg-blue-600',
   },
 ] as const
 
-export function TaskKanbanView({ 
-  tasks, 
-  onUpdateStatus, 
+export function TaskKanbanView({
+  tasks,
+  onUpdateStatus,
   onDeleteTask,
-  searchQuery = ''
+  searchQuery = '',
 }: TaskKanbanViewProps) {
-  const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
+  const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(
+    null
+  )
   const [draggedTask, setDraggedTask] = useState<TaskWithGroup | null>(null)
-  const [dragOverStatus, setDragOverStatus] = useState<TaskStatusType | null>(null)
+  const [dragOverStatus, setDragOverStatus] = useState<TaskStatusType | null>(
+    null
+  )
 
   const copySpec = (spec: string) => {
     navigator.clipboard.writeText(spec)
@@ -114,13 +119,16 @@ export function TaskKanbanView({
   }
 
   // Group tasks by status
-  const tasksByStatus = tasks.reduce((acc, task) => {
-    if (!acc[task.status]) {
-      acc[task.status] = []
-    }
-    acc[task.status].push(task)
-    return acc
-  }, {} as Record<TaskStatusType, TaskWithGroup[]>)
+  const tasksByStatus = tasks.reduce(
+    (acc, task) => {
+      if (!acc[task.status]) {
+        acc[task.status] = []
+      }
+      acc[task.status].push(task)
+      return acc
+    },
+    {} as Record<TaskStatusType, TaskWithGroup[]>
+  )
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, task: TaskWithGroup) => {
@@ -144,20 +152,23 @@ export function TaskKanbanView({
   const handleDrop = (e: React.DragEvent, status: TaskStatusType) => {
     e.preventDefault()
     setDragOverStatus(null)
-    
+
     if (draggedTask && draggedTask.status !== status) {
       onUpdateStatus(draggedTask.id, status)
     }
-    
+
     setDraggedTask(null)
   }
 
   const renderTask = (task: TaskWithGroup) => (
     <Card
       className={cn(
-        "group cursor-move hover:shadow-sm hover:scale-[1.02] transition-all duration-200 bg-background/95 border-0 shadow-sm",
-        task.analysis?.confidence_score && task.analysis.confidence_score < 50 && "ring-1 ring-destructive/20",
-        draggedTask?.id === task.id && "opacity-50 scale-95"
+        'group cursor-move hover:shadow-sm hover:scale-[1.02] transition-all duration-200 bg-background/95 border-0 shadow-sm',
+        task.analysis?.confidence_score !== undefined &&
+          task.analysis?.confidence_score !== null &&
+          task.analysis.confidence_score < 50 &&
+          'bg-red-50',
+        draggedTask?.id === task.id && 'opacity-50 scale-95'
       )}
       draggable
       onDragStart={(e) => handleDragStart(e, task)}
@@ -166,57 +177,66 @@ export function TaskKanbanView({
       <CardContent className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium leading-5 mb-1">{task.description}</p>
-            
+            <p className="text-sm font-medium leading-5 mb-1">
+              {task.description}
+            </p>
+
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <PriorityDot priority={task.analysis?.priority} />
-              
+
               {task.analysis?.estimated_hours && (
                 <span>{task.analysis.estimated_hours}h</span>
               )}
 
-              {task.analysis?.confidence_score !== undefined && task.analysis?.confidence_score !== null && task.analysis.confidence_score < 50 && (
-                <AlertCircle className="h-3 w-3 text-destructive" />
-              )}
+              {task.analysis?.confidence_score !== undefined &&
+                task.analysis?.confidence_score !== null &&
+                task.analysis.confidence_score < 50 && (
+                  <AlertCircle className="h-3 w-3 text-destructive" />
+                )}
+            </div>
+
+            <div className="mt-2">
+              <TaskStatusDropdown
+                taskId={task.id}
+                currentStatus={task.status}
+                onStatusChange={(newStatus) =>
+                  onUpdateStatus(task.id, newStatus)
+                }
+                variant="compact"
+              />
             </div>
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200"
+              >
                 <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation()
-                setSelectedTask(task)
-              }}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedTask(task)
+                }}
+              >
                 View Details
               </DropdownMenuItem>
               {task.analysis?.implementation_spec && (
-                <DropdownMenuItem onClick={(e) => {
-                  e.stopPropagation()
-                  copySpec(task.analysis?.implementation_spec || '')
-                }}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    copySpec(task.analysis?.implementation_spec || '')
+                  }}
+                >
                   Copy Spec
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-sm">Update Status</DropdownMenuLabel>
-              {statusColumns.map((status) => (
-                <DropdownMenuItem
-                  key={status.id}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onUpdateStatus(task.id, status.id)
-                  }}
-                  disabled={task.status === status.id}
-                >
-                  {status.label}
-                </DropdownMenuItem>
-              ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive"
@@ -237,7 +257,9 @@ export function TaskKanbanView({
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No tasks found. Create your first task to get started!</p>
+        <p className="text-muted-foreground">
+          No tasks found. Create your first task to get started!
+        </p>
       </div>
     )
   }
@@ -248,14 +270,14 @@ export function TaskKanbanView({
         {statusColumns.map((column) => {
           const columnTasks = tasksByStatus[column.id] || []
           const isDropTarget = dragOverStatus === column.id
-          
+
           return (
             <div
               key={column.id}
               className={cn(
-                "rounded-2xl p-4 min-h-[600px] transition-all duration-300",
+                'rounded-2xl p-4 min-h-[600px] transition-all duration-300',
                 column.color,
-                isDropTarget && "ring-1 ring-primary/50 scale-[1.01]"
+                isDropTarget && 'ring-1 ring-primary/50 scale-[1.01]'
               )}
               onDragOver={handleDragOver}
               onDragEnter={() => handleDragEnter(column.id)}
@@ -264,33 +286,47 @@ export function TaskKanbanView({
             >
               <div className="flex items-center justify-between mb-6 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className={cn("w-2 h-2 rounded-full transition-colors duration-200", column.dotColor)} />
-                  <h3 className="font-medium text-sm text-foreground/90">{column.label}</h3>
+                  <div
+                    className={cn(
+                      'w-2 h-2 rounded-full transition-colors duration-200',
+                      column.dotColor
+                    )}
+                  />
+                  <h3 className="font-medium text-sm text-foreground/90">
+                    {column.label}
+                  </h3>
                 </div>
                 <span className="text-xs text-muted-foreground/80 font-medium px-1.5 py-0.5 rounded-full bg-muted/50">
                   {columnTasks.length}
                 </span>
               </div>
-              
+
               <ScrollArea className="h-[calc(100vh-300px)]">
                 <div className="pr-3 space-y-2">
                   {columnTasks.map((task, index) => (
                     <div
                       key={task.id}
                       style={{
-                        animationDelay: `${index * 50}ms`
+                        animationDelay: `${index * 50}ms`,
                       }}
                       className="animate-in slide-in-from-top-2 duration-300"
                     >
                       {renderTask(task)}
                     </div>
                   ))}
-                  
+
                   {columnTasks.length === 0 && (
                     <div className="flex items-center justify-center h-32 group-hover:h-40 transition-all duration-300">
                       <div className="text-center">
-                        <div className={cn("w-3 h-3 rounded-full mx-auto mb-2 opacity-30", column.dotColor)} />
-                        <p className="text-xs text-muted-foreground/60">Drop tasks here</p>
+                        <div
+                          className={cn(
+                            'w-3 h-3 rounded-full mx-auto mb-2 opacity-30',
+                            column.dotColor
+                          )}
+                        />
+                        <p className="text-xs text-muted-foreground/60">
+                          Drop tasks here
+                        </p>
                       </div>
                     </div>
                   )}

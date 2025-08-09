@@ -3,14 +3,31 @@
 import { SlidePanel } from '@/components/ui/slide-panel'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Copy, Clock, Calendar, User, Tag, AlertCircle, CheckCircle2, Circle, Loader2 } from 'lucide-react'
+import {
+  Copy,
+  Clock,
+  Calendar,
+  User,
+  Tag,
+  AlertCircle,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  TrendingUp,
+  Target,
+  Gauge,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
+import { useTaskAttachments, taskKeys } from '@/hooks/use-tasks'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import { PriorityDot } from './priority-dot'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { TaskStatusDropdown } from './task-status-dropdown'
 
 interface TaskDetailPanelProps {
   task: TaskWithAnalysis
@@ -25,6 +42,29 @@ export function TaskDetailPanel({
   onOpenChange,
   onUpdateStatus,
 }: TaskDetailPanelProps) {
+  const queryClient = useQueryClient()
+  const lastPrefetchedIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!open) return
+    if (lastPrefetchedIdRef.current === task.id) return
+    lastPrefetchedIdRef.current = task.id
+    queryClient.prefetchQuery({
+      queryKey: taskKeys.attachments(task.id),
+      queryFn: async () => {
+        const res = await fetch(`/api/tasks/${task.id}/attachments`, {
+          credentials: 'include',
+        })
+        if (!res.ok) throw new Error('Failed to load attachments')
+        return await res.json()
+      },
+    })
+  }, [open, task.id, queryClient])
+
+  const {
+    data: attachments = [],
+    isLoading: attachmentsLoading,
+    refetch: refetchAttachments,
+  } = useTaskAttachments(open ? task.id : null, false)
   const copySpec = () => {
     if (task.analysis?.implementation_spec) {
       navigator.clipboard.writeText(task.analysis.implementation_spec)
@@ -38,14 +78,14 @@ export function TaskDetailPanel({
     visible: {
       opacity: 1,
       transition: {
-        when: "beforeChildren",
+        when: 'beforeChildren',
         staggerChildren: 0.05,
       },
     },
     exit: {
       opacity: 0,
       transition: {
-        when: "afterChildren",
+        when: 'afterChildren',
         staggerChildren: 0.02,
         staggerDirection: -1,
       },
@@ -58,52 +98,24 @@ export function TaskDetailPanel({
     exit: { opacity: 0, y: -10 },
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle2 className="h-4 w-4" />
-      case 'in_progress':
-        return <Loader2 className="h-4 w-4 animate-spin" />
-      case 'blocked':
-        return <AlertCircle className="h-4 w-4" />
-      default:
-        return <Circle className="h-4 w-4" />
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-600'
-      case 'in_progress':
-        return 'text-blue-600'
-      case 'blocked':
-        return 'text-red-600'
-      default:
-        return 'text-gray-600'
-    }
-  }
+  // Status icons and colors are now handled by TaskStatusDropdown component
 
   const getCategoryVariant = (category?: string | null) => {
     if (!category) return 'outline'
-    
-    const categoryMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      'feature': 'default',
-      'bug': 'destructive',
-      'improvement': 'secondary',
-      'chore': 'outline',
-      'research': 'outline',
+
+    const categoryMap: Record<
+      string,
+      'default' | 'secondary' | 'destructive' | 'outline'
+    > = {
+      feature: 'default',
+      bug: 'destructive',
+      improvement: 'secondary',
+      chore: 'outline',
+      research: 'outline',
     }
-    
+
     return categoryMap[category.toLowerCase()] || 'outline'
   }
-
-  const statusOptions: { value: TaskStatusType; label: string }[] = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'blocked', label: 'Blocked' },
-  ]
 
   return (
     <SlidePanel
@@ -112,18 +124,17 @@ export function TaskDetailPanel({
       width="lg"
       title={
         <div className="flex items-center gap-3">
-          <div className={cn('flex items-center gap-2', getStatusColor(task.status))}>
-            {getStatusIcon(task.status)}
-            <span className="text-sm font-medium capitalize">
-              {task.status.replace('_', ' ')}
-            </span>
-          </div>
+          <TaskStatusDropdown
+            taskId={task.id}
+            currentStatus={task.status}
+            onStatusChange={(newStatus) => onUpdateStatus(task.id, newStatus)}
+          />
         </div>
       }
     >
       <AnimatePresence mode="wait">
         {open && (
-          <motion.div 
+          <motion.div
             className="px-6 py-4 space-y-6"
             variants={containerVariants}
             initial="hidden"
@@ -134,302 +145,388 @@ export function TaskDetailPanel({
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
-                visible: { 
-                  opacity: 1, 
+                visible: {
+                  opacity: 1,
                   y: 0,
-                  transition: { delay: 0.1, duration: 0.4 }
+                  transition: { delay: 0.1, duration: 0.4 },
                 },
-                exit: { 
-                  opacity: 0, 
+                exit: {
+                  opacity: 0,
                   y: -10,
-                  transition: { duration: 0.2 }
-                }
+                  transition: { duration: 0.2 },
+                },
               }}
             >
-          <h3 className="text-xl font-semibold mb-2">{task.description}</h3>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <motion.div 
-              className="flex items-center gap-1"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-            >
-              <Calendar className="h-3.5 w-3.5" />
-              {format(new Date(task.created_at), 'MMM d, yyyy')}
-            </motion.div>
-            {task.analysis?.time_estimate && (
-              <motion.div 
-                className="flex items-center gap-1"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25, duration: 0.3 }}
-              >
-                <Clock className="h-3.5 w-3.5" />
-                {task.analysis.time_estimate}
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          exit={{ opacity: 0, scaleX: 0 }}
-          transition={{ delay: 0.3, duration: 0.3 }}
-          style={{ transformOrigin: 'left' }}
-        >
-          <Separator />
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ delay: 0.35, duration: 0.4 }}
-        >
-          <h4 className="text-sm font-medium mb-3">Status</h4>
-          <div className="flex flex-wrap gap-2">
-            {statusOptions.map((option, index) => (
-              <motion.div
-                key={option.value}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ 
-                  delay: 0.4 + index * 0.05,
-                  duration: 0.2,
-                  type: 'spring',
-                  stiffness: 500,
-                  damping: 25
-                }}
-              >
-                <Button
-                  variant={task.status === option.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => {
-                    onUpdateStatus(task.id, option.value)
-                    toast.success(`Status updated to ${option.label}`)
-                  }}
-                  className="gap-2 transition-all hover:scale-105"
-                >
-                  {option.value === 'completed' && <CheckCircle2 className="h-3 w-3" />}
-                  {option.value === 'in_progress' && <Clock className="h-3 w-3" />}
-                  {option.value === 'blocked' && <AlertCircle className="h-3 w-3" />}
-                  {option.value === 'pending' && <Circle className="h-3 w-3" />}
-                  {option.label}
-                </Button>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          exit={{ opacity: 0, scaleX: 0 }}
-          transition={{ delay: 0.6, duration: 0.3 }}
-          style={{ transformOrigin: 'left' }}
-        >
-          <Separator />
-        </motion.div>
-
-        {/* Task Analysis */}
-        {task.analysis && (
-          <motion.div 
-            className="space-y-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ delay: 0.65, duration: 0.4 }}
-          >
-            <h4 className="text-sm font-medium">Analysis</h4>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.3 }}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Priority</p>
-                <div className="flex items-center gap-2">
-                  <PriorityDot priority={task.analysis.priority || 5} />
-                  <motion.span 
-                    className="font-medium"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.75, duration: 0.2 }}
-                  >
-                    {task.analysis.priority || 'N/A'}/10
-                  </motion.span>
-                </div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.75, duration: 0.3 }}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Category</p>
-                <Badge variant={getCategoryVariant(task.analysis.category)}>
-                  {task.analysis.category || 'Uncategorized'}
-                </Badge>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8, duration: 0.3 }}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Confidence</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <motion.div 
-                      className="h-full bg-blue-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${task.analysis.confidence_score || 0}%` }}
-                      transition={{ delay: 0.85, duration: 0.6, ease: "easeOut" }}
-                    />
-                  </div>
-                  <motion.span 
-                    className="text-sm font-medium"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.9, duration: 0.2 }}
-                  >
-                    {task.analysis.confidence_score || 0}%
-                  </motion.span>
-                </div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.85, duration: 0.3 }}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Complexity</p>
-                <Badge variant="outline">
-                  {task.analysis.complexity || 'Unknown'}
-                </Badge>
-              </motion.div>
-            </div>
-
-            {task.analysis?.reasoning && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.9, duration: 0.3 }}
-              >
-                <p className="text-sm text-muted-foreground mb-1">Reasoning</p>
-                <p className="text-sm">{task.analysis.reasoning}</p>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-
-        {task.analysis?.implementation_spec && (
-          <>
-            <motion.div
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              exit={{ opacity: 0, scaleX: 0 }}
-              transition={{ delay: 0.95, duration: 0.3 }}
-              style={{ transformOrigin: 'left' }}
-            >
-              <Separator />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ delay: 1, duration: 0.4 }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium">Implementation Spec</h4>
+              <h3 className="text-xl font-semibold mb-2">{task.description}</h3>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-1"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2, duration: 0.3 }}
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={copySpec}
-                    className="gap-2"
-                  >
-                    <Copy className="h-3 w-3" />
-                    Copy
-                  </Button>
+                  <Calendar className="h-3.5 w-3.5" />
+                  {format(new Date(task.created_at), 'MMM d, yyyy')}
                 </motion.div>
+                {task.analysis?.time_estimate && (
+                  <motion.div
+                    className="flex items-center gap-1"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.25, duration: 0.3 }}
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    {task.analysis.time_estimate}
+                  </motion.div>
+                )}
               </div>
-              <motion.div 
-                className="bg-muted rounded-lg p-4"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.05, duration: 0.3 }}
-              >
-                <pre className="text-sm whitespace-pre-wrap font-mono">
-                  {task.analysis.implementation_spec}
-                </pre>
-              </motion.div>
             </motion.div>
-          </>
-        )}
 
-        {/* Task Group */}
-        {task.group && (
-          <>
             <motion.div
               initial={{ opacity: 0, scaleX: 0 }}
               animate={{ opacity: 1, scaleX: 1 }}
               exit={{ opacity: 0, scaleX: 0 }}
-              transition={{ delay: 1.05, duration: 0.3 }}
+              transition={{ delay: 0.3, duration: 0.3 }}
               style={{ transformOrigin: 'left' }}
             >
               <Separator />
             </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              exit={{ opacity: 0, scaleX: 0 }}
+              transition={{ delay: 0.35, duration: 0.3 }}
+              style={{ transformOrigin: 'left' }}
+            >
+              <Separator />
+            </motion.div>
+
+            {/* Attachments */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              transition={{ delay: 1.1, duration: 0.3 }}
+              transition={{ delay: 0.55, duration: 0.3 }}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                <h4 className="text-sm font-medium">Group</h4>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium">
+                  Attachments{' '}
+                  {attachments.length ? `(${attachments.length})` : ''}
+                </h4>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => refetchAttachments()}
+                >
+                  Refresh
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">{task.group?.name}</p>
+              {attachmentsLoading ? (
+                <div className="text-xs text-muted-foreground">Loading…</div>
+              ) : attachments.length === 0 ? (
+                <div className="text-xs text-muted-foreground">
+                  No attachments
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {attachments.map((a) => (
+                    <li
+                      key={a.id}
+                      className="flex items-center justify-between rounded border border-border/50 px-3 py-2 text-sm"
+                    >
+                      <span className="truncate mr-3">{a.file_name}</span>
+                      {(a as any).url ? (
+                        <a
+                          className="text-blue-600 hover:underline"
+                          href={(a as any).url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open
+                        </a>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          No link
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </motion.div>
-          </>
-        )}
 
-        {/* Metadata */}
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          exit={{ opacity: 0, scaleX: 0 }}
-          transition={{ delay: 1.1, duration: 0.3 }}
-          style={{ transformOrigin: 'left' }}
-        >
-          <Separator />
-        </motion.div>
-        <motion.div 
-          className="space-y-2 text-sm text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ delay: 1.2, duration: 0.4 }}
-        >
-          <div className="flex items-center gap-2">
-            <User className="h-3.5 w-3.5" />
-            <span>Created {format(new Date(task.created_at), 'PPP')}</span>
-          </div>
-          {task.updated_at !== task.created_at && (
-            <div className="flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5" />
-              <span>Updated {format(new Date(task.updated_at), 'PPP')}</span>
-            </div>
-          )}
-        </motion.div>
+            {/* Task Analysis */}
+            {task.analysis && (
+              <motion.div
+                className="space-y-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ delay: 0.65, duration: 0.4 }}
+              >
+                <h4 className="text-sm font-medium">Analysis</h4>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7, duration: 0.3 }}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">
+                      ICE Score
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {task.analysis.ice_score ? (
+                        <>
+                          <div className="text-lg font-semibold">
+                            {task.analysis.ice_score}
+                          </div>
+                          <div className="space-y-0.5 text-xs">
+                            <div className="flex items-center gap-1">
+                              <TrendingUp className="h-3 w-3" />
+                              <span>Impact: {task.analysis.ice_impact}/10</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Target className="h-3 w-3" />
+                              <span>
+                                Confidence: {task.analysis.ice_confidence}/10
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Gauge className="h-3 w-3" />
+                              <span>Ease: {task.analysis.ice_ease}/10</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <PriorityDot priority={task.analysis.priority || 5} />
+                          <span className="text-sm">
+                            Priority: {task.analysis.priority || 'N/A'}/10
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.75, duration: 0.3 }}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Category
+                    </p>
+                    <Badge variant={getCategoryVariant(task.analysis.category)}>
+                      {task.analysis.category || 'Uncategorized'}
+                    </Badge>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8, duration: 0.3 }}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Confidence
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-blue-500"
+                          initial={{ width: 0 }}
+                          animate={{
+                            width: `${task.analysis.confidence_score || 0}%`,
+                          }}
+                          transition={{
+                            delay: 0.85,
+                            duration: 0.6,
+                            ease: 'easeOut',
+                          }}
+                        />
+                      </div>
+                      <motion.span
+                        className="text-sm font-medium"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.9, duration: 0.2 }}
+                      >
+                        {task.analysis.confidence_score || 0}%
+                      </motion.span>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.85, duration: 0.3 }}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Complexity
+                    </p>
+                    <Badge variant="outline">
+                      {task.analysis.complexity || 'Unknown'}
+                    </Badge>
+                  </motion.div>
+                </div>
+
+                {task.analysis?.reasoning && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9, duration: 0.3 }}
+                  >
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Reasoning
+                    </p>
+                    <p className="text-sm">{task.analysis.reasoning}</p>
+                  </motion.div>
+                )}
+
+                {task.analysis?.ice_reasoning && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.95, duration: 0.3 }}
+                    className="mt-4"
+                  >
+                    <p className="text-sm text-muted-foreground mb-2">
+                      ICE Analysis
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      {task.analysis.ice_reasoning.impact && (
+                        <div>
+                          <span className="font-medium">Impact:</span>{' '}
+                          {task.analysis.ice_reasoning.impact}
+                        </div>
+                      )}
+                      {task.analysis.ice_reasoning.confidence && (
+                        <div>
+                          <span className="font-medium">Confidence:</span>{' '}
+                          {task.analysis.ice_reasoning.confidence}
+                        </div>
+                      )}
+                      {task.analysis.ice_reasoning.ease && (
+                        <div>
+                          <span className="font-medium">Ease:</span>{' '}
+                          {task.analysis.ice_reasoning.ease}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {task.analysis?.implementation_spec && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  exit={{ opacity: 0, scaleX: 0 }}
+                  transition={{ delay: 0.95, duration: 0.3 }}
+                  style={{ transformOrigin: 'left' }}
+                >
+                  <Separator />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ delay: 1, duration: 0.4 }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium">Implementation Spec</h4>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copySpec}
+                        className="gap-2"
+                      >
+                        <Copy className="h-3 w-3" />
+                        Copy
+                      </Button>
+                    </motion.div>
+                  </div>
+                  <motion.div
+                    className="bg-muted rounded-lg p-4"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 1.05, duration: 0.3 }}
+                  >
+                    <pre className="text-sm whitespace-pre-wrap font-mono">
+                      {task.analysis.implementation_spec}
+                    </pre>
+                  </motion.div>
+                </motion.div>
+              </>
+            )}
+
+            {/* Task Group */}
+            {task.group && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  exit={{ opacity: 0, scaleX: 0 }}
+                  transition={{ delay: 1.05, duration: 0.3 }}
+                  style={{ transformOrigin: 'left' }}
+                >
+                  <Separator />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ delay: 1.1, duration: 0.3 }}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="text-sm font-medium">Group</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {task.group?.name}
+                  </p>
+                </motion.div>
+              </>
+            )}
+
+            {/* Metadata */}
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              exit={{ opacity: 0, scaleX: 0 }}
+              transition={{ delay: 1.1, duration: 0.3 }}
+              style={{ transformOrigin: 'left' }}
+            >
+              <Separator />
+            </motion.div>
+            <motion.div
+              className="space-y-2 text-sm text-muted-foreground"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 1.2, duration: 0.4 }}
+            >
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5" />
+                <span>Created {format(new Date(task.created_at), 'PPP')}</span>
+              </div>
+              {task.updated_at !== task.created_at && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>
+                    Updated {format(new Date(task.updated_at), 'PPP')}
+                  </span>
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

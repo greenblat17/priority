@@ -165,7 +165,12 @@ export async function POST(request: NextRequest) {
       complexity: validatedAnalysis.complexity,
       estimated_hours: validatedAnalysis.estimated_hours,
       confidence_score: validatedAnalysis.confidence_score,
-      implementation_spec: validatedAnalysis.implementation_spec
+      implementation_spec: validatedAnalysis.implementation_spec,
+      // ICE fields
+      ice_impact: validatedAnalysis.ice_impact,
+      ice_confidence: validatedAnalysis.ice_confidence,
+      ice_ease: validatedAnalysis.ice_ease,
+      ice_reasoning: validatedAnalysis.ice_reasoning
     }
 
     const { data: savedAnalysis, error: saveError } = await dbClient

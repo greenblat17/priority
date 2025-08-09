@@ -11,6 +11,15 @@ export interface TaskAnalysisResponse {
   estimated_hours: number
   confidence_score: number // 0-100
   implementation_spec: string
+  // ICE prioritization fields
+  ice_impact: number // 1-10
+  ice_confidence: number // 1-10
+  ice_ease: number // 1-10
+  ice_reasoning: {
+    impact: string
+    confidence: string
+    ease: string
+  }
   reasoning?: {
     category_reasoning?: string
     priority_reasoning?: string
@@ -52,6 +61,11 @@ export interface TaskAnalysisRecord {
   estimated_hours: number
   confidence_score: number
   implementation_spec: string
+  // ICE fields
+  ice_impact?: number
+  ice_confidence?: number
+  ice_ease?: number
+  ice_reasoning?: any
   duplicate_of?: string | null
   similar_tasks?: any | null
   analyzed_at?: string

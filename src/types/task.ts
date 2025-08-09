@@ -10,38 +10,55 @@ export const TaskSource = {
   YOUTUBE: 'youtube',
   TWITTER: 'twitter',
   APP_STORE: 'app_store',
-  GOOGLE_PLAY: 'google_play'
+  GOOGLE_PLAY: 'google_play',
 } as const
 
-export type TaskSourceType = typeof TaskSource[keyof typeof TaskSource]
+export type TaskSourceType = (typeof TaskSource)[keyof typeof TaskSource]
 
-// Task status enum
+// Task status enum - Linear style
 export const TaskStatus = {
-  PENDING: 'pending',
+  BACKLOG: 'backlog',
+  TODO: 'todo',
   IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  BLOCKED: 'blocked'
+  DONE: 'done',
+  CANCELED: 'canceled',
+  DUPLICATE: 'duplicate',
 } as const
 
-export type TaskStatusType = typeof TaskStatus[keyof typeof TaskStatus]
+export type TaskStatusType = (typeof TaskStatus)[keyof typeof TaskStatus]
+
+// For backward compatibility and migration
+export const LegacyStatusMapping = {
+  pending: TaskStatus.TODO,
+  in_progress: TaskStatus.IN_PROGRESS,
+  completed: TaskStatus.DONE,
+  blocked: TaskStatus.CANCELED,
+} as const
 
 // Form input schema
 export const taskInputSchema = z.object({
-  description: z.string()
+  title: z
+    .string()
+    .max(200, 'Title must be less than 200 characters')
+    .optional(),
+  description: z
+    .string()
     .min(1, 'Description is required')
     .max(5000, 'Description must be less than 5000 characters'),
-  source: z.enum([
-    TaskSource.INTERNAL,
-    TaskSource.MCP,
-    TaskSource.TELEGRAM,
-    TaskSource.REDDIT,
-    TaskSource.MAIL,
-    TaskSource.YOUTUBE,
-    TaskSource.TWITTER,
-    TaskSource.APP_STORE,
-    TaskSource.GOOGLE_PLAY
-  ]).default(TaskSource.INTERNAL),
-  customerInfo: z.string().optional()
+  source: z
+    .enum([
+      TaskSource.INTERNAL,
+      TaskSource.MCP,
+      TaskSource.TELEGRAM,
+      TaskSource.REDDIT,
+      TaskSource.MAIL,
+      TaskSource.YOUTUBE,
+      TaskSource.TWITTER,
+      TaskSource.APP_STORE,
+      TaskSource.GOOGLE_PLAY,
+    ])
+    .default(TaskSource.INTERNAL),
+  customerInfo: z.string().optional(),
 })
 
 export type TaskInput = z.infer<typeof taskInputSchema>
@@ -50,6 +67,7 @@ export type TaskInput = z.infer<typeof taskInputSchema>
 export interface Task {
   id: string
   user_id: string
+  title?: string | null
   description: string
   source: string | null
   customer_info: string | null
@@ -61,6 +79,24 @@ export interface Task {
   priority?: number
   category?: string
   complexity?: string
+}
+
+export interface TaskAttachment {
+  id: string
+  task_id: string
+  user_id: string
+  file_name: string
+  content_type: string | null
+  size_bytes: number | null
+  storage_path: string
+  created_at: string
+}
+
+// ICE reasoning type
+export interface ICEReasoning {
+  impact: string
+  confidence: string
+  ease: string
 }
 
 // Task with analysis (joined data)
@@ -79,6 +115,12 @@ export interface TaskWithAnalysis extends Task {
     duplicate_of: string | null
     similar_tasks: any | null
     analyzed_at: string
+    // ICE prioritization fields
+    ice_impact: number | null
+    ice_confidence: number | null
+    ice_ease: number | null
+    ice_score: number | null
+    ice_reasoning: ICEReasoning | null
   }
   group?: {
     id: string
