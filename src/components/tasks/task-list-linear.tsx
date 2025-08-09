@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { DisplaySettings } from '@/types/display'
 import {
@@ -47,6 +47,7 @@ const TaskEditDialog = dynamic(
   { ssr: false, loading: () => null }
 )
 import { toast } from 'sonner'
+import { useVirtualList } from '@/hooks/use-virtual-list'
 
 interface TaskListLinearProps {
   tasks: TaskWithAnalysis[]
@@ -459,25 +460,55 @@ export function TaskListLinear({
     (a, b) => a[1].order - b[1].order
   )
 
+  // Shared scroll container ref for virtualization
+  const containerRef = useRef<HTMLDivElement>(null)
+
   if (displaySettings.grouping === 'none') {
+    // Simple virtualized table for flat list
+    const rowHeight = 40 // px, matches h-10
+    const itemCount = tasks.length
+    const range = useVirtualList(containerRef, {
+      itemCount,
+      itemHeight: rowHeight,
+      overscan: 8,
+    })
+    const visible = useMemo(
+      () => tasks.slice(range.startIndex, range.endIndex + 1),
+      [tasks, range]
+    )
+
     return (
       <>
-        <Table>
-          <TableHeader>
-            <TableRow className="border-0">
-              <TableHead className="w-[40px] h-8 pr-0">Status</TableHead>
-              <TableHead className="h-8 pl-2">Task</TableHead>
-              <TableHead className="w-[120px] h-8">Category</TableHead>
-              <TableHead className="w-[100px] h-8">ICE</TableHead>
-              <TableHead className="w-[120px] h-8">Complexity</TableHead>
-              <TableHead className="w-[100px] h-8">Confidence</TableHead>
-              <TableHead className="w-[80px] text-right h-8">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tasks.map((task, idx) => renderTaskRow(task, idx === 0))}
-          </TableBody>
-        </Table>
+        <div ref={containerRef} className="max-h-[70vh] overflow-auto">
+          <Table className="min-w-full">
+            <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <TableRow className="border-0">
+                <TableHead className="w-[40px] h-8 pr-0">Status</TableHead>
+                <TableHead className="h-8 pl-2">Task</TableHead>
+                <TableHead className="w-[120px] h-8">Category</TableHead>
+                <TableHead className="w-[100px] h-8">ICE</TableHead>
+                <TableHead className="w-[120px] h-8">Complexity</TableHead>
+                <TableHead className="w-[100px] h-8">Confidence</TableHead>
+                <TableHead className="w-[80px] text-right h-8">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {/* top padding row */}
+              {range.paddingTop > 0 && (
+                <TableRow style={{ height: range.paddingTop }} aria-hidden />
+              )}
+              {visible.map((task, idx) =>
+                renderTaskRow(task, idx === 0 && range.startIndex === 0)
+              )}
+              {/* bottom padding row */}
+              {range.paddingBottom > 0 && (
+                <TableRow style={{ height: range.paddingBottom }} aria-hidden />
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
         {selectedTask && (
           <TaskDetailPanel
@@ -501,78 +532,83 @@ export function TaskListLinear({
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow className="border-0">
-            <TableHead className="w-[40px] h-8 text-xs font-normal text-muted-foreground pr-0">
-              Status
-            </TableHead>
-            <TableHead className="h-8 text-xs font-normal text-muted-foreground pl-2">
-              Task
-            </TableHead>
-            <TableHead className="w-[120px] h-8 text-xs font-normal text-muted-foreground">
-              Category
-            </TableHead>
-            <TableHead className="w-[100px] h-8 text-xs font-normal text-muted-foreground">
-              ICE
-            </TableHead>
-            <TableHead className="w-[120px] h-8 text-xs font-normal text-muted-foreground">
-              Complexity
-            </TableHead>
-            <TableHead className="w-[100px] h-8 text-xs font-normal text-muted-foreground">
-              Confidence
-            </TableHead>
-            <TableHead className="w-[80px] text-right h-8 text-xs font-normal text-muted-foreground">
-              Actions
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedGroups.map(([groupKey, group]) => {
-            const isCollapsed = collapsedGroups.has(groupKey)
-            const taskCount = group.tasks.length
+      <div className="max-h-[70vh] overflow-auto" ref={containerRef as any}>
+        <Table>
+          <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <TableRow className="border-0">
+              <TableHead className="w-[40px] h-8 text-xs font-normal text-muted-foreground pr-0">
+                Status
+              </TableHead>
+              <TableHead className="h-8 text-xs font-normal text-muted-foreground pl-2">
+                Task
+              </TableHead>
+              <TableHead className="w-[120px] h-8 text-xs font-normal text-muted-foreground">
+                Category
+              </TableHead>
+              <TableHead className="w-[100px] h-8 text-xs font-normal text-muted-foreground">
+                ICE
+              </TableHead>
+              <TableHead className="w-[120px] h-8 text-xs font-normal text-muted-foreground">
+                Complexity
+              </TableHead>
+              <TableHead className="w-[100px] h-8 text-xs font-normal text-muted-foreground">
+                Confidence
+              </TableHead>
+              <TableHead className="w-[80px] text-right h-8 text-xs font-normal text-muted-foreground">
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedGroups.map(([groupKey, group]) => {
+              const isCollapsed = collapsedGroups.has(groupKey)
+              const taskCount = group.tasks.length
 
-            return (
-              <React.Fragment key={`group-${groupKey}`}>
-                <TableRow className="h-10 bg-gray-50 border-t border-gray-200">
-                  <TableCell colSpan={7} className="p-0">
-                    <button
-                      onClick={() => toggleGroup(groupKey)}
-                      className="w-full flex items-center h-10 px-3 py-2 text-sm font-medium hover:bg-gray-100 transition-colors cursor-pointer"
-                    >
-                      {displaySettings.grouping === 'status' &&
-                        (() => {
-                          const statusInfo = getStatusIcon(groupKey)
-                          const StatusIcon = statusInfo.icon
-                          return (
-                            <>
-                              <StatusIcon
-                                className={cn('h-5 w-5 mr-2', statusInfo.color)}
-                              />
-                              <span className="text-gray-900">
-                                {group.label}
-                              </span>
-                            </>
-                          )
-                        })()}
-                      {displaySettings.grouping !== 'status' && (
-                        <span>{group.label}</span>
-                      )}
-                      <span className="ml-auto mr-2 text-xs text-gray-500">
-                        {taskCount}
-                      </span>
-                    </button>
-                  </TableCell>
-                </TableRow>
-                {!isCollapsed &&
-                  group.tasks.map((task, idx) =>
-                    renderTaskRow(task, idx === 0)
-                  )}
-              </React.Fragment>
-            )
-          })}
-        </TableBody>
-      </Table>
+              return (
+                <React.Fragment key={`group-${groupKey}`}>
+                  <TableRow className="h-10 bg-gray-50 border-t border-gray-200">
+                    <TableCell colSpan={7} className="p-0">
+                      <button
+                        onClick={() => toggleGroup(groupKey)}
+                        className="w-full flex items-center h-10 px-3 py-2 text-sm font-medium hover:bg-gray-100 transition-colors cursor-pointer"
+                      >
+                        {displaySettings.grouping === 'status' &&
+                          (() => {
+                            const statusInfo = getStatusIcon(groupKey)
+                            const StatusIcon = statusInfo.icon
+                            return (
+                              <>
+                                <StatusIcon
+                                  className={cn(
+                                    'h-5 w-5 mr-2',
+                                    statusInfo.color
+                                  )}
+                                />
+                                <span className="text-gray-900">
+                                  {group.label}
+                                </span>
+                              </>
+                            )
+                          })()}
+                        {displaySettings.grouping !== 'status' && (
+                          <span>{group.label}</span>
+                        )}
+                        <span className="ml-auto mr-2 text-xs text-gray-500">
+                          {taskCount}
+                        </span>
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                  {!isCollapsed &&
+                    group.tasks.map((task, idx) =>
+                      renderTaskRow(task, idx === 0)
+                    )}
+                </React.Fragment>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
 
       {selectedTask && (
         <TaskDetailPanel

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import {
   Table,
   TableBody,
@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils'
 import { getSourceLabel } from '@/lib/task-source-utils'
 import { useBulkUpdateTaskStatus, useBulkDeleteTasks } from '@/hooks/use-tasks'
 import { useTaskListNavigation } from '@/hooks/use-keyboard-shortcuts'
+import { useVirtualList } from '@/hooks/use-virtual-list'
 
 // Use TaskWithAnalysis directly since it now includes group
 type TaskWithGroup = TaskWithAnalysis & {
@@ -429,67 +430,93 @@ export function TaskTableGrouped({
     )
   }
 
+  // Container for virtualization
+  const containerRef = useRef<HTMLDivElement>(null)
+  const rowHeight = 40 // px; matches h-10
+
   return (
     <>
-      <Table>
-        {!hideHeader && (
-          <TableHeader>
-            <TableRow className="border-0">
-              {onToggleAll && (
-                <TableHead className="w-[30px] px-1">
-                  <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={onToggleAll}
-                    data-state={
-                      isPartiallySelected && !isAllSelected
-                        ? 'indeterminate'
-                        : undefined
-                    }
-                    className="h-4 w-4"
-                  />
-                </TableHead>
-              )}
-              <TableHead>Task</TableHead>
-              <TableHead className="w-[120px]">Category</TableHead>
-              <TableHead className="w-[100px]">ICE Score</TableHead>
-              <TableHead className="w-[120px]">Complexity</TableHead>
-              <TableHead className="w-[100px]">Confidence</TableHead>
-              <TableHead className="w-[120px]">Status</TableHead>
-              <TableHead className="w-[80px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-        )}
-        <TableBody>
-          {/* First render ungrouped tasks */}
-          {groupedTasks.ungrouped &&
-            groupedTasks.ungrouped.tasks.map((task, idx) => {
-              const index = allTasks.findIndex((t) => t.id === task.id)
-              return renderTaskRow(task, index)
-            })}
+      <div className="max-h-[70vh] overflow-auto" ref={containerRef}>
+        <Table>
+          {!hideHeader && (
+            <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <TableRow className="border-0">
+                {onToggleAll && (
+                  <TableHead className="w-[30px] px-1">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={onToggleAll}
+                      data-state={
+                        isPartiallySelected && !isAllSelected
+                          ? 'indeterminate'
+                          : undefined
+                      }
+                      className="h-4 w-4"
+                    />
+                  </TableHead>
+                )}
+                <TableHead>Task</TableHead>
+                <TableHead className="w-[120px]">Category</TableHead>
+                <TableHead className="w-[100px]">ICE Score</TableHead>
+                <TableHead className="w-[120px]">Complexity</TableHead>
+                <TableHead className="w-[100px]">Confidence</TableHead>
+                <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead className="w-[80px] text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+          )}
+          <TableBody>
+            {/* First render ungrouped tasks with virtualization */}
+            {groupedTasks.ungrouped &&
+              (() => {
+                const ungrouped = groupedTasks.ungrouped.tasks
+                const sectionRef = useRef<HTMLTableSectionElement>(null)
+                const vr = useVirtualList(sectionRef as any, {
+                  itemCount: ungrouped.length,
+                  itemHeight: rowHeight,
+                  overscan: 8,
+                })
+                const visible = ungrouped.slice(vr.startIndex, vr.endIndex + 1)
+                return (
+                  <tbody ref={sectionRef as any}>
+                    {vr.paddingTop > 0 && (
+                      <tr style={{ height: vr.paddingTop }} aria-hidden />
+                    )}
+                    {visible.map((task) => {
+                      const index = allTasks.findIndex((t) => t.id === task.id)
+                      return renderTaskRow(task, index)
+                    })}
+                    {vr.paddingBottom > 0 && (
+                      <tr style={{ height: vr.paddingBottom }} aria-hidden />
+                    )}
+                  </tbody>
+                )
+              })()}
 
-          {/* Then render grouped tasks */}
-          {Object.entries(groupedTasks)
-            .filter(([key]) => key !== 'ungrouped')
-            .map(([groupId, { group, tasks }]) => (
-              <TaskGroup
-                key={groupId}
-                group={group!}
-                tasks={tasks}
-                renderTask={(task) => {
-                  const index = allTasks.findIndex((t) => t.id === task.id)
-                  return renderTaskRow(task, index)
-                }}
-                hasCheckboxes={!!onToggleSelection}
-                onBulkUpdateStatus={(taskIds, status) => {
-                  bulkUpdateStatus.mutate({ taskIds, status })
-                }}
-                onBulkDelete={(taskIds) => {
-                  bulkDelete.mutate(taskIds)
-                }}
-              />
-            ))}
-        </TableBody>
-      </Table>
+            {/* Then render grouped tasks with per-group virtualization */}
+            {Object.entries(groupedTasks)
+              .filter(([key]) => key !== 'ungrouped')
+              .map(([groupId, { group, tasks }]) => (
+                <TaskGroup
+                  key={groupId}
+                  group={group!}
+                  tasks={tasks}
+                  renderTask={(task) => {
+                    const index = allTasks.findIndex((t) => t.id === task.id)
+                    return renderTaskRow(task, index)
+                  }}
+                  hasCheckboxes={!!onToggleSelection}
+                  onBulkUpdateStatus={(taskIds, status) => {
+                    bulkUpdateStatus.mutate({ taskIds, status })
+                  }}
+                  onBulkDelete={(taskIds) => {
+                    bulkDelete.mutate(taskIds)
+                  }}
+                />
+              ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {selectedTask && (
         <TaskDetailPanel

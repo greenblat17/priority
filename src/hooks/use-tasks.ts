@@ -406,6 +406,73 @@ export function usePrefetchTasks() {
   }
 }
 
+// Prefetch a specific tasks page with filters (for smoother pagination)
+export function usePrefetchTasksPage() {
+  const queryClient = useQueryClient()
+  const supabase = createClient()
+
+  return async (filters?: {
+    status?: string
+    category?: string
+    sortBy?: 'priority' | 'date'
+    page?: number
+    limit?: number
+  }) => {
+    const key = taskKeys.list(filters)
+    await queryClient.prefetchQuery({
+      queryKey: key,
+      queryFn: async () => {
+        let query = supabase
+          .from('tasks')
+          .select(
+            `
+            id, user_id, description, source, customer_info, status, group_id, created_at, updated_at,
+            task_analyses:task_analyses!task_id (
+              category, priority, complexity, estimated_hours, confidence_score,
+              ice_impact, ice_confidence, ice_ease, ice_score
+            ),
+            group:task_groups!group_id (
+              id,
+              name
+            )
+          `
+          )
+          .order('created_at', { ascending: false })
+
+        if (filters?.status) {
+          query = query.eq('status', filters.status)
+        }
+        if (filters?.category) {
+          query = query.eq('task_analyses.category', filters.category)
+        }
+        if (filters?.sortBy === 'priority') {
+          query = query
+            .order('ice_score', {
+              ascending: false,
+              foreignTable: 'task_analyses',
+            })
+            .order('created_at', { ascending: false })
+        }
+
+        const page = filters?.page || 1
+        const limit = filters?.limit || 50
+        const from = (page - 1) * limit
+        const to = from + limit - 1
+        query = query.range(from, to)
+
+        const { data, error } = await query
+        if (error) throw error
+        return data?.map((task: any) => ({
+          ...task,
+          analysis: task.task_analyses || null,
+          group: task.group || null,
+        })) as Array<TaskWithAnalysis & { group: TaskGroup | null }>
+      },
+      staleTime: 60 * 1000,
+    })
+  }
+}
+
 // Delete task with optimistic update and undo
 export function useDeleteTask() {
   const queryClient = useQueryClient()
