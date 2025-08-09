@@ -81,6 +81,17 @@ export interface Task {
   complexity?: string
 }
 
+export interface TaskAttachment {
+  id: string
+  task_id: string
+  user_id: string
+  file_name: string
+  content_type: string | null
+  size_bytes: number | null
+  storage_path: string
+  created_at: string
+}
+
 // ICE reasoning type
 export interface ICEReasoning {
   impact: string

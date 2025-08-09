@@ -93,6 +93,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
 
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [title, setTitle] = useState('')
+  const [attachment, setAttachment] = useState<File | null>(null)
 
   // Close on escape key
   useEscapeKey(onClose, isOpen)
@@ -268,10 +269,30 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         description: error.message || 'Please try again',
       })
     },
-    onSuccess: () => {
+    onSuccess: async (created) => {
       toast.success('Task added successfully', {
         description: 'AI is analyzing your task...',
       })
+      // If an attachment is selected, upload it now
+      const file = attachment
+      if (file && created?.id) {
+        const formData = new FormData()
+        formData.append('file', file)
+        try {
+          await fetch(`/api/tasks/${created.id}/attachments`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+          })
+        } catch (e) {
+          console.error('Attachment upload failed', e)
+        }
+        const el = document.getElementById(
+          'file-input'
+        ) as HTMLInputElement | null
+        if (el) el.value = ''
+        setAttachment(null)
+      }
       form.reset()
       onClose()
     },
@@ -532,7 +553,25 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               </form>
             </Form>
           </div>
-          <div className="flex-shrink-0 border-t border-gray-200 px-6 py-3 flex justify-end gap-3">
+          <div className="flex-shrink-0 border-t border-gray-200 px-6 py-3 flex items-center justify-between gap-3">
+            <form
+              id="attach-form"
+              className="flex items-center gap-2"
+              onSubmit={(e) => e.preventDefault()}
+            >
+              <label className="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input
+                  id="file-input"
+                  name="file"
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                />
+                <span className="inline-flex items-center rounded border border-gray-200 px-2 py-1">
+                  {attachment ? `Attached: ${attachment.name}` : 'Attach'}
+                </span>
+              </label>
+            </form>
             <Button
               type="button"
               variant="ghost"

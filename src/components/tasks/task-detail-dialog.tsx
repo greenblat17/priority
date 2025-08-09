@@ -1,15 +1,15 @@
 'use client'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Copy, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
+import { useTaskAttachments } from '@/hooks/use-tasks'
+import { useQueryClient } from '@tanstack/react-query'
+import { taskKeys } from '@/hooks/use-tasks'
+import { useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import { PriorityDot } from './priority-dot'
 import { DialogTitle } from '@/components/ui/dialog'
@@ -27,6 +27,29 @@ export function TaskDetailDialog({
   onOpenChange,
   onUpdateStatus,
 }: TaskDetailDialogProps) {
+  const queryClient = useQueryClient()
+  const lastPrefetchedIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!open) return
+    if (lastPrefetchedIdRef.current === task.id) return
+    lastPrefetchedIdRef.current = task.id
+    queryClient.prefetchQuery({
+      queryKey: taskKeys.attachments(task.id),
+      queryFn: async () => {
+        const res = await fetch(`/api/tasks/${task.id}/attachments`, {
+          credentials: 'include',
+        })
+        if (!res.ok) throw new Error('Failed to load attachments')
+        return await res.json()
+      },
+    })
+  }, [open, task.id, queryClient])
+
+  const {
+    data: attachments = [],
+    isLoading: attachmentsLoading,
+    refetch: refetchAttachments,
+  } = useTaskAttachments(open ? task.id : null, false)
   const copySpec = () => {
     if (task.analysis?.implementation_spec) {
       navigator.clipboard.writeText(task.analysis.implementation_spec)
@@ -77,13 +100,64 @@ export function TaskDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
-          <DialogTitle className="text-base font-medium text-muted-foreground">Task Details</DialogTitle>
+          <DialogTitle className="text-base font-medium text-muted-foreground">
+            Task Details
+          </DialogTitle>
           <div className="text-2xl font-semibold leading-relaxed mt-3">
             {task.description}
           </div>
         </DialogHeader>
 
         <div className="space-y-6 mt-6">
+          {/* Attachments */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Attachments{' '}
+                {attachments.length ? `(${attachments.length})` : ''}
+              </h3>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-xs"
+                onClick={() => refetchAttachments()}
+              >
+                Refresh
+              </Button>
+            </div>
+            {attachmentsLoading ? (
+              <div className="text-xs text-muted-foreground">Loading…</div>
+            ) : attachments.length === 0 ? (
+              <div className="text-xs text-muted-foreground">
+                No attachments
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {attachments.map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-center justify-between rounded border border-border/50 px-3 py-2 text-sm"
+                  >
+                    <span className="truncate mr-3">{a.file_name}</span>
+                    {(a as any).url ? (
+                      <a
+                        className="text-blue-600 hover:underline"
+                        href={(a as any).url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        No link
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           {/* Task Information */}
           <div className="space-y-4">
             <div className="rounded-lg bg-muted/30 p-4">
@@ -94,7 +168,9 @@ export function TaskDetailDialog({
                 </div>
                 <div>
                   <div className="text-muted-foreground">Created</div>
-                  <div className="mt-1">{format(new Date(task.created_at), 'MMM d, yyyy')}</div>
+                  <div className="mt-1">
+                    {format(new Date(task.created_at), 'MMM d, yyyy')}
+                  </div>
                 </div>
                 {task.source && (
                   <div>
@@ -110,12 +186,16 @@ export function TaskDetailDialog({
                 )}
               </div>
             </div>
-            
+
             {/* Status Actions - Placed logically after status */}
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">Update Status</p>
+              <p className="text-xs text-muted-foreground font-medium">
+                Update Status
+              </p>
               <div className="flex gap-2 flex-wrap">
-                {(['pending', 'in_progress', 'completed', 'blocked'] as const).map((status) => (
+                {(
+                  ['pending', 'in_progress', 'completed', 'blocked'] as const
+                ).map((status) => (
                   <Button
                     key={status}
                     size="sm"
@@ -137,40 +217,63 @@ export function TaskDetailDialog({
           {/* AI Analysis */}
           {task.analysis ? (
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">AI Analysis</h3>
-              
+              <h3 className="text-sm font-medium text-muted-foreground">
+                AI Analysis
+              </h3>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-lg bg-muted/20">
                 <div>
-                  <span className="text-xs text-muted-foreground">Priority</span>
+                  <span className="text-xs text-muted-foreground">
+                    Priority
+                  </span>
                   <div className="flex items-center gap-2 mt-1">
-                    <PriorityDot priority={task.analysis.priority} className="h-3 w-3" />
-                    <span className="text-sm font-medium">{task.analysis.priority}/10</span>
+                    <PriorityDot
+                      priority={task.analysis.priority}
+                      className="h-3 w-3"
+                    />
+                    <span className="text-sm font-medium">
+                      {task.analysis.priority}/10
+                    </span>
                   </div>
                 </div>
-                
+
                 <div>
-                  <span className="text-xs text-muted-foreground">Category</span>
+                  <span className="text-xs text-muted-foreground">
+                    Category
+                  </span>
                   <div className="mt-1">
-                    <Badge variant={getCategoryVariant(task.analysis.category)} className="text-xs">
+                    <Badge
+                      variant={getCategoryVariant(task.analysis.category)}
+                      className="text-xs"
+                    >
                       {task.analysis.category}
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div>
-                  <span className="text-xs text-muted-foreground">Complexity</span>
+                  <span className="text-xs text-muted-foreground">
+                    Complexity
+                  </span>
                   <div className="mt-1">
-                    <Badge variant={getComplexityVariant(task.analysis.complexity)} className="text-xs">
+                    <Badge
+                      variant={getComplexityVariant(task.analysis.complexity)}
+                      className="text-xs"
+                    >
                       {task.analysis.complexity}
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div>
-                  <span className="text-xs text-muted-foreground">Time Estimate</span>
+                  <span className="text-xs text-muted-foreground">
+                    Time Estimate
+                  </span>
                   <div className="flex items-center gap-1.5 mt-1">
                     <Clock className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-sm">{task.analysis.estimated_hours}h</span>
+                    <span className="text-sm">
+                      {task.analysis.estimated_hours}h
+                    </span>
                   </div>
                 </div>
               </div>
@@ -178,14 +281,23 @@ export function TaskDetailDialog({
               {task.analysis.confidence_score && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Confidence Score</span>
-                    <span className={task.analysis.confidence_score < 50 ? 'text-destructive font-medium' : 'text-muted-foreground'}>
+                    <span className="text-muted-foreground">
+                      Confidence Score
+                    </span>
+                    <span
+                      className={
+                        task.analysis.confidence_score < 50
+                          ? 'text-destructive font-medium'
+                          : 'text-muted-foreground'
+                      }
+                    >
                       {task.analysis.confidence_score}%
-                      {task.analysis.confidence_score < 50 && ' - Low confidence'}
+                      {task.analysis.confidence_score < 50 &&
+                        ' - Low confidence'}
                     </span>
                   </div>
                   <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/80 to-primary rounded-full transition-all duration-500"
                       style={{ width: `${task.analysis.confidence_score}%` }}
                     />
@@ -196,9 +308,11 @@ export function TaskDetailDialog({
               {task.analysis.implementation_spec && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Implementation Specification</span>
-                    <Button 
-                      size="sm" 
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Implementation Specification
+                    </span>
+                    <Button
+                      size="sm"
                       variant="ghost"
                       onClick={copySpec}
                       className="h-8 px-2 text-xs"
@@ -208,16 +322,21 @@ export function TaskDetailDialog({
                     </Button>
                   </div>
                   <div className="bg-muted/30 p-4 rounded-lg border border-border/30">
-                    <pre className="text-sm whitespace-pre-wrap text-foreground/90 leading-relaxed font-mono">{task.analysis.implementation_spec}</pre>
+                    <pre className="text-sm whitespace-pre-wrap text-foreground/90 leading-relaxed font-mono">
+                      {task.analysis.implementation_spec}
+                    </pre>
                   </div>
                 </div>
               )}
-
             </div>
           ) : (
             <div className="text-center py-8 rounded-lg bg-muted/20">
-              <p className="text-sm text-muted-foreground">AI analysis not available yet</p>
-              <p className="text-xs text-muted-foreground mt-1">Analysis will appear here once processed</p>
+              <p className="text-sm text-muted-foreground">
+                AI analysis not available yet
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Analysis will appear here once processed
+              </p>
             </div>
           )}
         </div>

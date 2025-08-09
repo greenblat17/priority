@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
-import type { Task, TaskWithAnalysis } from '@/types/task'
+import type { Task, TaskWithAnalysis, TaskAttachment } from '@/types/task'
 import type { TaskGroup } from '@/types/task-group'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
@@ -15,6 +15,8 @@ export const taskKeys = {
   list: (filters?: any) => [...taskKeys.lists(), filters] as const,
   details: () => [...taskKeys.all, 'detail'] as const,
   detail: (id: string) => [...taskKeys.details(), id] as const,
+  attachments: (taskId: string) =>
+    [...taskKeys.detail(taskId), 'attachments'] as const,
 }
 
 // Fetch tasks with optional filters
@@ -27,35 +29,35 @@ export function useTasks(filters?: {
 }) {
   const supabase = createClient()
   const queryClient = useQueryClient()
-  
+
   // Set up real-time subscriptions for task updates
   useEffect(() => {
     // Feature flag to disable realtime if needed
     const ENABLE_REALTIME = true
-    
+
     if (!ENABLE_REALTIME) {
       console.log('[Real-time] Realtime subscriptions disabled')
       return
     }
-    
+
     console.log('[Real-time] Setting up task subscriptions...')
-    
+
     // Get the current session for authentication
     supabase.auth.getSession().then(({ data }: { data: { session: any } }) => {
-      const { session } = data;
+      const { session } = data
       if (!session) {
         console.error('[Real-time] No session found for real-time subscription')
         return
       }
-      
+
       console.log('[Real-time] Session found, setting up channel...')
-      
+
       const channel = supabase
         .channel('task-updates', {
           config: {
             broadcast: { self: true },
-            presence: { key: session.user.id }
-          }
+            presence: { key: session.user.id },
+          },
         })
         // Listen for task analysis updates (filter will be handled by RLS)
         .on(
@@ -63,7 +65,7 @@ export function useTasks(filters?: {
           {
             event: '*',
             schema: 'public',
-            table: 'task_analyses'
+            table: 'task_analyses',
           },
           (payload: RealtimePostgresChangesPayload<any>) => {
             console.log('[Real-time] Task analysis update received:', {
@@ -72,61 +74,74 @@ export function useTasks(filters?: {
               schema: payload.schema,
               new: payload.new,
               old: payload.old,
-              errors: payload.errors
+              errors: payload.errors,
             })
-            
+
             // Force refetch all task list queries to update tasks with new analysis
-            queryClient.refetchQueries({ 
+            queryClient.refetchQueries({
               queryKey: taskKeys.all,
-              type: 'active'
+              type: 'active',
             })
-            
+
             // Show toast when analysis completes
             if (payload.eventType === 'INSERT') {
               toast.success('Task analysis completed!', {
-                description: 'AI has finished analyzing your task'
+                description: 'AI has finished analyzing your task',
               })
             }
           }
         )
-      // Listen for task updates (including group changes, filter will be handled by RLS)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'tasks'
-        },
-        (payload: RealtimePostgresChangesPayload<any>) => {
-          console.log('[Real-time] Task grouped:', payload)
-          
-          // Force refetch all task list queries to update tasks with new group
-          queryClient.refetchQueries({ 
-            queryKey: taskKeys.all,
-            type: 'active'
-          })
-        }
+        // Listen for task updates (including group changes, filter will be handled by RLS)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'tasks',
+          },
+          (payload: RealtimePostgresChangesPayload<any>) => {
+            console.log('[Real-time] Task grouped:', payload)
+
+            // Force refetch all task list queries to update tasks with new group
+            queryClient.refetchQueries({
+              queryKey: taskKeys.all,
+              type: 'active',
+            })
+          }
         )
-        .subscribe((status: 'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED', error?: any) => {
-          console.log('[Real-time] Subscription status:', status)
-          if (error) {
-            console.log('[Real-time] Error details:', error)
-          }
-          
-          if (status === 'SUBSCRIBED') {
-            console.log('[Real-time] ✅ Successfully subscribed to task updates')
-          } else if (status === 'CHANNEL_ERROR') {
-            console.warn('[Real-time] ⚠️ Failed to subscribe to task updates. This is normal if RLS policies are restrictive.')
-            console.log('[Real-time] 🔄 Falling back to polling mechanism - no impact on functionality')
+        .subscribe(
+          (
+            status: 'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED',
+            error?: any
+          ) => {
+            console.log('[Real-time] Subscription status:', status)
             if (error) {
-              console.log('[Real-time] Error cause:', error)
+              console.log('[Real-time] Error details:', error)
             }
-          } else if (status === 'TIMED_OUT') {
-            console.warn('[Real-time] ⏱️ Subscription timed out - using polling fallback')
-          } else if (status === 'CLOSED') {
-            console.log('[Real-time] 🔌 Subscription closed')
+
+            if (status === 'SUBSCRIBED') {
+              console.log(
+                '[Real-time] ✅ Successfully subscribed to task updates'
+              )
+            } else if (status === 'CHANNEL_ERROR') {
+              console.warn(
+                '[Real-time] ⚠️ Failed to subscribe to task updates. This is normal if RLS policies are restrictive.'
+              )
+              console.log(
+                '[Real-time] 🔄 Falling back to polling mechanism - no impact on functionality'
+              )
+              if (error) {
+                console.log('[Real-time] Error cause:', error)
+              }
+            } else if (status === 'TIMED_OUT') {
+              console.warn(
+                '[Real-time] ⏱️ Subscription timed out - using polling fallback'
+              )
+            } else if (status === 'CLOSED') {
+              console.log('[Real-time] 🔌 Subscription closed')
+            }
           }
-        })
+        )
 
       // Store channel reference for cleanup
       return () => {
@@ -135,13 +150,14 @@ export function useTasks(filters?: {
       }
     })
   }, [supabase, queryClient])
-  
+
   return useQuery({
     queryKey: taskKeys.list(filters),
     queryFn: async () => {
       let query = supabase
         .from('tasks')
-        .select(`
+        .select(
+          `
           *,
           task_analyses!task_id (*),
           group:task_groups!group_id (
@@ -150,7 +166,8 @@ export function useTasks(filters?: {
             created_at,
             updated_at
           )
-        `)
+        `
+        )
         .order('created_at', { ascending: false })
 
       // Apply filters
@@ -163,22 +180,48 @@ export function useTasks(filters?: {
       const limit = filters?.limit || 50
       const from = (page - 1) * limit
       const to = from + limit - 1
-      
+
       query = query.range(from, to)
 
       const { data, error } = await query
 
       if (error) throw error
-      
+
       // Map to TaskWithAnalysis type with group info
       return data?.map((task: any) => ({
         ...task,
         analysis: task.task_analyses || null,
-        group: task.group || null
+        group: task.group || null,
       })) as Array<TaskWithAnalysis & { group: TaskGroup | null }>
     },
     // Keep previous data while fetching new data
     placeholderData: (previousData) => previousData,
+  })
+}
+
+// Fetch attachments for a task
+export function useTaskAttachments(
+  taskId: string | null,
+  enabled: boolean = true
+) {
+  return useQuery({
+    queryKey: taskId
+      ? taskKeys.attachments(taskId)
+      : ['attachments', 'disabled'],
+    enabled: enabled && !!taskId,
+    queryFn: async () => {
+      const res = await fetch(`/api/tasks/${taskId}/attachments`, {
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Failed to load attachments')
+      return (await res.json()) as Array<TaskAttachment & { url: string }>
+    },
+    // No automatic re-fetching; we trigger manually when opening the detail view
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    placeholderData: (prev) => prev,
   })
 }
 
@@ -193,7 +236,9 @@ export function useCreateTask() {
       source?: string
       customer_info?: string
     }) => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
       const { data, error } = await supabase
@@ -259,7 +304,13 @@ export function useUpdateTaskStatus() {
   const supabase = createClient()
 
   return useMutation({
-    mutationFn: async ({ taskId, status }: { taskId: string; status: string }) => {
+    mutationFn: async ({
+      taskId,
+      status,
+    }: {
+      taskId: string
+      status: string
+    }) => {
       const { data, error } = await supabase
         .from('tasks')
         .update({ status, updated_at: new Date().toISOString() })
@@ -276,15 +327,12 @@ export function useUpdateTaskStatus() {
       const previousTasks = queryClient.getQueryData(taskKeys.lists())
 
       // Update the task in all queries
-      queryClient.setQueriesData(
-        { queryKey: taskKeys.lists() },
-        (old: any) => {
-          if (!old) return old
-          return old.map((task: any) =>
-            task.id === taskId ? { ...task, status } : task
-          )
-        }
-      )
+      queryClient.setQueriesData({ queryKey: taskKeys.lists() }, (old: any) => {
+        if (!old) return old
+        return old.map((task: any) =>
+          task.id === taskId ? { ...task, status } : task
+        )
+      })
 
       return { previousTasks }
     },
@@ -312,10 +360,12 @@ export function usePrefetchTasks() {
       queryFn: async () => {
         const { data, error } = await supabase
           .from('tasks')
-          .select(`
+          .select(
+            `
             *,
             task_analyses!task_id (*)
-          `)
+          `
+          )
           .order('created_at', { ascending: false })
           .limit(50)
 
@@ -373,20 +423,17 @@ export function useDeleteTask() {
       const previousTasks = queryClient.getQueryData(taskKeys.lists())
 
       // Optimistically remove the task
-      queryClient.setQueriesData(
-        { queryKey: taskKeys.lists() },
-        (old: any) => {
-          if (!old) return old
-          return old.filter((task: any) => task.id !== taskId)
-        }
-      )
+      queryClient.setQueriesData({ queryKey: taskKeys.lists() }, (old: any) => {
+        if (!old) return old
+        return old.filter((task: any) => task.id !== taskId)
+      })
 
       return { previousTasks }
     },
     onError: (err, variables, context) => {
       // Rollback to previous state
       queryClient.setQueryData(taskKeys.lists(), context?.previousTasks)
-      
+
       if (err.message !== 'Undo') {
         toast.error('Failed to delete task')
       }
@@ -406,7 +453,13 @@ export function useBulkUpdateTaskStatus() {
   const supabase = createClient()
 
   return useMutation({
-    mutationFn: async ({ taskIds, status }: { taskIds: string[]; status: string }) => {
+    mutationFn: async ({
+      taskIds,
+      status,
+    }: {
+      taskIds: string[]
+      status: string
+    }) => {
       const { data, error } = await supabase
         .from('tasks')
         .update({ status, updated_at: new Date().toISOString() })
@@ -422,15 +475,12 @@ export function useBulkUpdateTaskStatus() {
       const previousTasks = queryClient.getQueryData(taskKeys.lists())
 
       // Update the tasks in all queries
-      queryClient.setQueriesData(
-        { queryKey: taskKeys.lists() },
-        (old: any) => {
-          if (!old) return old
-          return old.map((task: any) =>
-            taskIds.includes(task.id) ? { ...task, status } : task
-          )
-        }
-      )
+      queryClient.setQueriesData({ queryKey: taskKeys.lists() }, (old: any) => {
+        if (!old) return old
+        return old.map((task: any) =>
+          taskIds.includes(task.id) ? { ...task, status } : task
+        )
+      })
 
       return { previousTasks }
     },
@@ -454,10 +504,7 @@ export function useBulkDeleteTasks() {
 
   return useMutation({
     mutationFn: async (taskIds: string[]) => {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .in('id', taskIds)
+      const { error } = await supabase.from('tasks').delete().in('id', taskIds)
 
       if (error) throw error
     },
@@ -467,13 +514,10 @@ export function useBulkDeleteTasks() {
       const previousTasks = queryClient.getQueryData(taskKeys.lists())
 
       // Optimistically remove the tasks
-      queryClient.setQueriesData(
-        { queryKey: taskKeys.lists() },
-        (old: any) => {
-          if (!old) return old
-          return old.filter((task: any) => !taskIds.includes(task.id))
-        }
-      )
+      queryClient.setQueriesData({ queryKey: taskKeys.lists() }, (old: any) => {
+        if (!old) return old
+        return old.filter((task: any) => !taskIds.includes(task.id))
+      })
 
       return { previousTasks }
     },
