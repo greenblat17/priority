@@ -20,8 +20,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { TaskDetailPanel } from './task-detail-panel'
-import { TaskEditDialog } from './task-edit-dialog'
+import dynamic from 'next/dynamic'
+const TaskDetailPanel = dynamic(
+  () => import('./task-detail-panel').then((m) => m.TaskDetailPanel),
+  { ssr: false, loading: () => null }
+)
+const TaskEditDialog = dynamic(
+  () => import('./task-edit-dialog').then((m) => m.TaskEditDialog),
+  { ssr: false, loading: () => null }
+)
 import { TaskGroup } from './task-group'
 import { ConfidenceBadge } from './confidence-badge'
 import { PriorityDot } from './priority-dot'

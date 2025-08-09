@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { containerVariants, listItemVariants, springs } from '@/lib/animations'
+import dynamic from 'next/dynamic'
 import {
   Table,
   TableBody,
@@ -22,9 +21,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { TaskDetailPanel } from './task-detail-panel'
-import { TaskEditDialog } from './task-edit-dialog'
-import { Copy, MoreHorizontal, Eye, Trash2, RefreshCw, Loader2, Edit } from 'lucide-react'
+const TaskDetailPanel = dynamic(
+  () => import('./task-detail-panel').then((m) => m.TaskDetailPanel),
+  { ssr: false, loading: () => null }
+)
+const TaskEditDialog = dynamic(
+  () => import('./task-edit-dialog').then((m) => m.TaskEditDialog),
+  { ssr: false, loading: () => null }
+)
+import {
+  Copy,
+  MoreHorizontal,
+  Eye,
+  Trash2,
+  RefreshCw,
+  Loader2,
+  Edit,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { getSourceLabel } from '@/lib/task-source-utils'
@@ -37,17 +50,20 @@ interface TaskTableProps {
   onDeleteTask: (taskId: string) => void
 }
 
-export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProps) {
-  const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
+export function TaskTable({
+  tasks,
+  onUpdateStatus,
+  onDeleteTask,
+}: TaskTableProps) {
+  const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(
+    null
+  )
   const [editingTask, setEditingTask] = useState<TaskWithAnalysis | null>(null)
   const [selectedIndex, setSelectedIndex] = useState<number>(-1)
 
   // Keyboard navigation
-  useTaskListNavigation(
-    tasks,
-    selectedIndex,
-    setSelectedIndex,
-    (task) => setSelectedTask(task)
+  useTaskListNavigation(tasks, selectedIndex, setSelectedIndex, (task) =>
+    setSelectedTask(task)
   )
 
   // Additional keyboard shortcuts for task actions
@@ -55,21 +71,23 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger when typing in inputs
       const target = e.target as HTMLElement
-      const isFormTag = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || 
-                       target.isContentEditable
-      
+      const isFormTag =
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+        target.isContentEditable
+
       if (isFormTag) return
 
       const selectedTask = tasks[selectedIndex]
-      
+
       // Space - Toggle task status
       if (e.key === ' ' && selectedTask) {
         e.preventDefault()
-        const newStatus = selectedTask.status === 'completed' ? 'pending' : 'completed'
+        const newStatus =
+          selectedTask.status === 'completed' ? 'pending' : 'completed'
         onUpdateStatus(selectedTask.id, newStatus as TaskStatusType)
         toast.success(`Task marked as ${newStatus.replace('_', ' ')}`)
       }
-      
+
       // E - Edit selected task (open detail dialog)
       if (e.key === 'e' && selectedTask) {
         e.preventDefault()
@@ -86,7 +104,9 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
     toast.success('Implementation spec copied to clipboard')
   }
 
-  const getCategoryVariant = (category?: string | null): "default" | "secondary" | "destructive" | "outline" => {
+  const getCategoryVariant = (
+    category?: string | null
+  ): 'default' | 'secondary' | 'destructive' | 'outline' => {
     // All categories use outline style for clean, minimal look
     return 'outline'
   }
@@ -129,7 +149,9 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">No tasks found. Create your first task to get started!</p>
+        <p className="text-gray-600">
+          No tasks found. Create your first task to get started!
+        </p>
       </div>
     )
   }
@@ -138,202 +160,197 @@ export function TaskTable({ tasks, onUpdateStatus, onDeleteTask }: TaskTableProp
     <>
       <Table>
         <TableCaption className="text-gray-600">
-          {tasks.length} task{tasks.length !== 1 ? 's' : ''} • Click on a task to view details
+          {tasks.length} task{tasks.length !== 1 ? 's' : ''} • Click on a task
+          to view details
         </TableCaption>
         <TableHeader>
           <TableRow className="border-b border-gray-100">
-            <TableHead className="w-[40%] text-black font-semibold">Task</TableHead>
+            <TableHead className="w-[40%] text-black font-semibold">
+              Task
+            </TableHead>
             <TableHead className="text-black font-semibold">Category</TableHead>
             <TableHead className="text-black font-semibold">Priority</TableHead>
-            <TableHead className="text-black font-semibold">Complexity</TableHead>
+            <TableHead className="text-black font-semibold">
+              Complexity
+            </TableHead>
             <TableHead className="text-black font-semibold">Status</TableHead>
-            <TableHead className="text-right text-black font-semibold">Actions</TableHead>
+            <TableHead className="text-right text-black font-semibold">
+              Actions
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <AnimatePresence mode="popLayout">
-            {tasks.map((task, index) => {
-              const isKeyboardSelected = index === selectedIndex
-              
-              return (
-                <motion.tr
-                  key={task.id}
-                  layout
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{
-                    ...springs.snappy,
-                    delay: index * 0.05,
-                  }}
-                  whileHover={{ backgroundColor: "rgb(249 250 251)" }}
-                  className={cn(
-                    "cursor-pointer",
-                    isKeyboardSelected && "ring-2 ring-primary ring-inset"
-                  )}
-                  onClick={() => setSelectedTask(task)}
-                  aria-selected={isKeyboardSelected}
-                >
+          {tasks.map((task, index) => {
+            const isKeyboardSelected = index === selectedIndex
+
+            return (
+              <TableRow
+                key={task.id}
+                className={cn(
+                  'cursor-pointer hover:bg-gray-50',
+                  isKeyboardSelected && 'ring-2 ring-primary ring-inset'
+                )}
+                onClick={() => setSelectedTask(task)}
+                aria-selected={isKeyboardSelected}
+              >
                 <TableCell className="font-medium text-black">
-                <div className="max-w-md">
-                  <p className="truncate">{task.description}</p>
-                  {task.source && (
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {getSourceLabel(task.source)}
-                    </p>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                {task.analysis ? (
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    transition={springs.snappy}
-                  >
-                    <Badge 
+                  <div className="max-w-md">
+                    <p className="truncate">{task.description}</p>
+                    {task.source && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {getSourceLabel(task.source)}
+                      </p>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {task.analysis ? (
+                    <Badge
                       variant={getCategoryVariant(task.analysis?.category)}
                       className="border-gray-300 text-gray-700"
                     >
                       {task.analysis.category}
                     </Badge>
-                  </motion.div>
-                ) : (
-                  <motion.div 
-                    className="flex items-center gap-1.5 text-sm text-gray-500"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>analyzing</span>
-                  </motion.div>
-                )}
-              </TableCell>
-              <TableCell>
-                {task.analysis ? (
-                  <span className={`${getPriorityColor(task.analysis.priority)} font-mono`}>
-                    {task.analysis.priority}/10
-                  </span>
-                ) : (
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {task.analysis ? (
-                  <div className="flex items-center gap-1">
-                    <span className={getComplexityColor(task.analysis.complexity)}>
-                      {task.analysis.complexity}
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>analyzing</span>
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {task.analysis ? (
+                    <span
+                      className={`${getPriorityColor(task.analysis.priority)} font-mono`}
+                    >
+                      {task.analysis.priority}/10
                     </span>
-                    {task.analysis.estimated_hours && (
-                      <span className="text-xs text-gray-500">
-                        ({task.analysis.estimated_hours}h)
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {task.analysis ? (
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={getComplexityColor(task.analysis.complexity)}
+                      >
+                        {task.analysis.complexity}
                       </span>
-                    )}
-                  </div>
-                ) : (
-                  <motion.div 
-                    className="flex items-center gap-1.5 text-sm text-gray-500"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>analyzing</span>
-                  </motion.div>
-                )}
-              </TableCell>
-              <TableCell>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  transition={springs.snappy}
-                >
-                  <Badge 
+                      {task.analysis.estimated_hours && (
+                        <span className="text-xs text-gray-500">
+                          ({task.analysis.estimated_hours}h)
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>analyzing</span>
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge
                     variant={getStatusVariant(task.status)}
                     className="font-medium"
                   >
                     {task.status.replace('_', ' ')}
                   </Badge>
-                </motion.div>
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      whileHover={{ scale: 1.1 }}
-                      transition={springs.snappy}
-                      className="h-8 w-8 p-0 rounded-md hover:bg-gray-100 inline-flex items-center justify-center"
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      asChild
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreHorizontal className="h-4 w-4 text-gray-600" />
-                    </motion.button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedTask(task)
-                    }}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingTask(task)
-                    }}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Details
-                    </DropdownMenuItem>
-                    {task.analysis?.implementation_spec && (
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation()
-                        copySpec(task.analysis?.implementation_spec || '')
-                      }}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copy Spec
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="text-xs">Update Status</DropdownMenuLabel>
-                    {(['pending', 'in_progress', 'completed', 'blocked'] as const).map((status) => (
+                      <button className="h-8 w-8 p-0 rounded-md hover:bg-gray-100 inline-flex items-center justify-center">
+                        <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem
-                        key={status}
                         onClick={(e) => {
                           e.stopPropagation()
-                          onUpdateStatus(task.id, status)
+                          setSelectedTask(task)
                         }}
-                        disabled={task.status === status}
                       >
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        {status.replace('_', ' ')}
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
                       </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingTask(task)
-                    }}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDeleteTask(task.id)
-                      }}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-              </motion.tr>
-              )
-            })}
-          </AnimatePresence>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingTask(task)
+                        }}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Details
+                      </DropdownMenuItem>
+                      {task.analysis?.implementation_spec && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            copySpec(task.analysis?.implementation_spec || '')
+                          }}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Copy Spec
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-xs">
+                        Update Status
+                      </DropdownMenuLabel>
+                      {(
+                        [
+                          'pending',
+                          'in_progress',
+                          'completed',
+                          'blocked',
+                        ] as const
+                      ).map((status) => (
+                        <DropdownMenuItem
+                          key={status}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onUpdateStatus(task.id, status)
+                          }}
+                          disabled={task.status === status}
+                        >
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          {status.replace('_', ' ')}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingTask(task)
+                        }}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteTask(task.id)
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
 

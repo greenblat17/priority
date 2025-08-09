@@ -13,20 +13,21 @@ export async function GET(request: NextRequest) {
     let useServiceRole = false
 
     // Try API key authentication first
-    const { authorized: apiKeyAuth, context: apiContext } = await verifyApiKeyAuth(request)
-    
+    const { authorized: apiKeyAuth, context: apiContext } =
+      await verifyApiKeyAuth(request)
+
     if (apiKeyAuth && apiContext) {
       userId = apiContext.userId
       useServiceRole = true
     } else {
       // Fall back to session authentication
       const supabase = await createClient()
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
       if (authError || !user) {
-        return NextResponse.json(
-          { error: 'Unauthorized' },
-          { status: 401 }
-        )
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
       userId = user.id
     }
@@ -38,8 +39,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const category = searchParams.get('category')
-    const limit = parseInt(searchParams.get('limit') || '50')
-    const offset = parseInt(searchParams.get('offset') || '0')
+    const q = searchParams.get('q')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
+    const cursor = searchParams.get('cursor') // format: `${created_at_iso}::${id}`
 
     // Build query
     let query = dbClient
@@ -47,14 +49,28 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
 
     if (status) {
       query = query.eq('status', status)
     }
 
-    // Note: Filtering by category would require a join or subquery
-    // For now, we'll filter on the client side if needed
+    // Cursor pagination: created_at DESC, id as tiebreaker
+    if (cursor) {
+      const [createdAtIso, id] = cursor.split('::')
+      // fetch rows where (created_at < cursorCreatedAt) OR (created_at == cursorCreatedAt AND id < cursorId)
+      query = query.or(
+        `created_at.lt.${createdAtIso},and(created_at.eq.${createdAtIso},id.lt.${id})`
+      )
+    }
+
+    // Full-text search (optional): match against stored tsvector
+    if (q && q.trim().length > 1) {
+      // Use plainto_tsquery over 'simple' config; relies on search_tsv generated column
+      query = query.textSearch('search_tsv', q, { type: 'plain' as any })
+    }
+
+    // Limit after cursor filters
+    query = query.limit(limit)
 
     const { data: tasks, error } = await query
 
@@ -66,7 +82,21 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ tasks })
+    if (error) {
+      console.error('Error fetching tasks:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch tasks' },
+        { status: 500 }
+      )
+    }
+
+    let nextCursor: string | null = null
+    if (tasks && tasks.length === limit) {
+      const last = tasks[tasks.length - 1]
+      nextCursor = `${last.created_at}::${last.id}`
+    }
+
+    return NextResponse.json({ tasks, nextCursor })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json(
@@ -83,20 +113,21 @@ export async function POST(request: NextRequest) {
     let useServiceRole = false
 
     // Try API key authentication first
-    const { authorized: apiKeyAuth, context: apiContext } = await verifyApiKeyAuth(request)
-    
+    const { authorized: apiKeyAuth, context: apiContext } =
+      await verifyApiKeyAuth(request)
+
     if (apiKeyAuth && apiContext) {
       userId = apiContext.userId
       useServiceRole = true // Use service role when authenticated via API key
     } else {
       // Fall back to session authentication
       const supabase = await createClient()
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
       if (authError || !user) {
-        return NextResponse.json(
-          { error: 'Unauthorized' },
-          { status: 401 }
-        )
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
       userId = user.id
     }
@@ -138,13 +169,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Trigger AI analysis (fire and forget)
-    console.log('[API] Task created, triggering analysis. Auth type:', apiKeyAuth ? 'API Key' : 'Session')
+    console.log(
+      '[API] Task created, triggering analysis. Auth type:',
+      apiKeyAuth ? 'API Key' : 'Session'
+    )
     console.log('[API] User ID:', userId)
     console.log('[API] Task ID:', task.id)
-    
+
     // Always use the direct analysis function to avoid authentication issues
     // The analyzeTask function uses service role and bypasses RLS
-    analyzeTask(task.id, userId).catch(error => {
+    analyzeTask(task.id, userId).catch((error) => {
       console.error('[API] Failed to trigger analysis:', error)
     })
 

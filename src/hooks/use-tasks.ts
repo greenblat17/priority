@@ -68,22 +68,24 @@ export function useTasks(filters?: {
             table: 'task_analyses',
           },
           (payload: RealtimePostgresChangesPayload<any>) => {
-            console.log('[Real-time] Task analysis update received:', {
-              eventType: payload.eventType,
-              table: payload.table,
-              schema: payload.schema,
-              new: payload.new,
-              old: payload.old,
-              errors: payload.errors,
-            })
+            console.log('[Real-time] Task analysis update received:', payload)
 
-            // Force refetch all task list queries to update tasks with new analysis
-            queryClient.refetchQueries({
-              queryKey: taskKeys.all,
-              type: 'active',
-            })
+            const updated = payload.new
+            const taskId = updated?.task_id as string | undefined
 
-            // Show toast when analysis completes
+            if (taskId) {
+              // Targeted cache update: merge analysis for the specific task id
+              queryClient.setQueriesData(
+                { queryKey: taskKeys.lists() },
+                (old: any) => {
+                  if (!Array.isArray(old)) return old
+                  return old.map((task: any) =>
+                    task.id === taskId ? { ...task, analysis: updated } : task
+                  )
+                }
+              )
+            }
+
             if (payload.eventType === 'INSERT') {
               toast.success('Task analysis completed!', {
                 description: 'AI has finished analyzing your task',
@@ -100,13 +102,21 @@ export function useTasks(filters?: {
             table: 'tasks',
           },
           (payload: RealtimePostgresChangesPayload<any>) => {
-            console.log('[Real-time] Task grouped:', payload)
-
-            // Force refetch all task list queries to update tasks with new group
-            queryClient.refetchQueries({
-              queryKey: taskKeys.all,
-              type: 'active',
-            })
+            console.log('[Real-time] Task update received:', payload)
+            const updatedTask = payload.new as any
+            const taskId = updatedTask?.id as string | undefined
+            if (taskId) {
+              // Merge only changed fields (status, group_id, updated_at, etc.)
+              queryClient.setQueriesData(
+                { queryKey: taskKeys.lists() },
+                (old: any) => {
+                  if (!Array.isArray(old)) return old
+                  return old.map((task: any) =>
+                    task.id === taskId ? { ...task, ...updatedTask } : task
+                  )
+                }
+              )
+            }
           }
         )
         .subscribe(
@@ -158,13 +168,14 @@ export function useTasks(filters?: {
         .from('tasks')
         .select(
           `
-          *,
-          task_analyses!task_id (*),
+          id, user_id, description, source, customer_info, status, group_id, created_at, updated_at,
+          task_analyses:task_analyses!task_id (
+            category, priority, complexity, estimated_hours, confidence_score,
+            ice_impact, ice_confidence, ice_ease, ice_score
+          ),
           group:task_groups!group_id (
             id,
-            name,
-            created_at,
-            updated_at
+            name
           )
         `
         )
@@ -173,6 +184,21 @@ export function useTasks(filters?: {
       // Apply filters
       if (filters?.status) {
         query = query.eq('status', filters.status)
+      }
+
+      if (filters?.category) {
+        query = query.eq('task_analyses.category', filters.category)
+      }
+
+      // Optional ordering by priority/ICE score
+      if (filters?.sortBy === 'priority') {
+        // Order by ice_score desc, fallback to created_at
+        query = query
+          .order('ice_score', {
+            ascending: false,
+            foreignTable: 'task_analyses',
+          })
+          .order('created_at', { ascending: false })
       }
 
       // Pagination
@@ -194,7 +220,10 @@ export function useTasks(filters?: {
         group: task.group || null,
       })) as Array<TaskWithAnalysis & { group: TaskGroup | null }>
     },
-    // Keep previous data while fetching new data
+    // Cache and fetch behavior tuning
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    keepPreviousData: true,
     placeholderData: (previousData) => previousData,
   })
 }

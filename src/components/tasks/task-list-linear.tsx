@@ -37,8 +37,15 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { highlightSearchTerm } from '@/lib/search-utils'
 import { getSourceLabel } from '@/lib/task-source-utils'
-import { TaskDetailPanel } from './task-detail-panel'
-import { TaskEditDialog } from './task-edit-dialog'
+import dynamic from 'next/dynamic'
+const TaskDetailPanel = dynamic(
+  () => import('./task-detail-panel').then((m) => m.TaskDetailPanel),
+  { ssr: false, loading: () => null }
+)
+const TaskEditDialog = dynamic(
+  () => import('./task-edit-dialog').then((m) => m.TaskEditDialog),
+  { ssr: false, loading: () => null }
+)
 import { toast } from 'sonner'
 
 interface TaskListLinearProps {
