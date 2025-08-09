@@ -3,13 +3,13 @@
 import React, { useState } from 'react'
 import { TaskWithAnalysis, TaskStatusType } from '@/types/task'
 import { DisplaySettings } from '@/types/display'
-import { 
+import {
   Circle,
   CircleDot,
   CircleCheck,
   CircleX,
   Ban,
-  CircleDashed
+  CircleDashed,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge'
 import { ConfidenceBadge } from './confidence-badge'
 import { TaskStatusDropdown } from './task-status-dropdown'
 import { PriorityIcon } from './priority-icon'
+import { ICEScoreBadge } from './ice-score-badge'
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -49,21 +50,26 @@ interface TaskListLinearProps {
 }
 
 type GroupKey = string
-type GroupedTasks = Record<GroupKey, {
-  label: string
-  tasks: TaskWithAnalysis[]
-  order: number
-}>
+type GroupedTasks = Record<
+  GroupKey,
+  {
+    label: string
+    tasks: TaskWithAnalysis[]
+    order: number
+  }
+>
 
 export function TaskListLinear({
   tasks,
   displaySettings,
   onUpdateStatus,
   onDeleteTask,
-  searchQuery = ''
+  searchQuery = '',
 }: TaskListLinearProps) {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
-  const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(null)
+  const [selectedTask, setSelectedTask] = useState<TaskWithAnalysis | null>(
+    null
+  )
   const [editingTask, setEditingTask] = useState<TaskWithAnalysis | null>(null)
 
   const toggleGroup = (groupKey: string) => {
@@ -80,7 +86,7 @@ export function TaskListLinear({
   const groupTasks = (): GroupedTasks => {
     const groups: GroupedTasks = {}
 
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       let groupKey: string
       let label: string
       let order: number
@@ -91,26 +97,26 @@ export function TaskListLinear({
           label = getStatusLabel(task.status)
           order = getStatusOrder(task.status)
           break
-        
+
         case 'category':
           groupKey = task.analysis?.category || 'uncategorized'
           label = getCategoryLabel(groupKey)
           order = getCategoryOrder(groupKey)
           break
-        
+
         case 'priority':
           const priority = task.analysis?.priority || 0
           groupKey = getPriorityGroup(priority)
           label = getPriorityLabel(groupKey)
           order = getPriorityOrder(groupKey)
           break
-        
+
         case 'date':
           groupKey = getDateGroup(task.created_at)
           label = getDateLabel(groupKey)
           order = getDateOrder(groupKey)
           break
-        
+
         case 'none':
         default:
           groupKey = 'all'
@@ -127,7 +133,7 @@ export function TaskListLinear({
 
     // Remove empty groups if setting says so
     if (!displaySettings.showEmptyGroups) {
-      Object.keys(groups).forEach(key => {
+      Object.keys(groups).forEach((key) => {
         if (groups[key].tasks.length === 0) {
           delete groups[key]
         }
@@ -144,7 +150,7 @@ export function TaskListLinear({
       in_progress: 'In Progress',
       done: 'Done',
       canceled: 'Canceled',
-      duplicate: 'Duplicate'
+      duplicate: 'Duplicate',
     }
     return labels[status] || status
   }
@@ -156,7 +162,7 @@ export function TaskListLinear({
       in_progress: 3,
       done: 4,
       canceled: 5,
-      duplicate: 6
+      duplicate: 6,
     }
     return order[status] || 999
   }
@@ -173,7 +179,7 @@ export function TaskListLinear({
       improvement: 3,
       business: 4,
       other: 5,
-      uncategorized: 6
+      uncategorized: 6,
     }
     return order[category] || 999
   }
@@ -192,7 +198,7 @@ export function TaskListLinear({
       high: 'High Priority',
       medium: 'Medium Priority',
       low: 'Low Priority',
-      'no-priority': 'No Priority'
+      'no-priority': 'No Priority',
     }
     return labels[group] || group
   }
@@ -203,7 +209,7 @@ export function TaskListLinear({
       high: 2,
       medium: 3,
       low: 4,
-      'no-priority': 5
+      'no-priority': 5,
     }
     return order[group] || 999
   }
@@ -232,7 +238,7 @@ export function TaskListLinear({
       yesterday: 'Yesterday',
       'this-week': 'This Week',
       'this-month': 'This Month',
-      older: 'Older'
+      older: 'Older',
     }
     return labels[group] || group
   }
@@ -243,7 +249,7 @@ export function TaskListLinear({
       yesterday: 2,
       'this-week': 3,
       'this-month': 4,
-      older: 5
+      older: 5,
     }
     return order[group] || 999
   }
@@ -283,7 +289,7 @@ export function TaskListLinear({
       in_progress: { icon: CircleDot, color: 'text-yellow-500' },
       done: { icon: CircleCheck, color: 'text-green-600' },
       canceled: { icon: CircleX, color: 'text-gray-500' },
-      duplicate: { icon: Ban, color: 'text-gray-500' }
+      duplicate: { icon: Ban, color: 'text-gray-500' },
     }
     return iconMap[status] || { icon: Circle, color: 'text-gray-400' }
   }
@@ -295,11 +301,15 @@ export function TaskListLinear({
 
   const renderTaskRow = (task: TaskWithAnalysis, isFirst: boolean = false) => {
     return (
-      <TableRow 
+      <TableRow
         key={task.id}
         className={cn(
-          "group cursor-pointer hover:bg-gray-50 transition-colors duration-75 h-10",
-          !isFirst && "border-t-0"
+          'group cursor-pointer hover:bg-gray-50 transition-colors duration-75 h-10',
+          task.analysis?.confidence_score !== undefined &&
+            task.analysis?.confidence_score !== null &&
+            task.analysis.confidence_score < 50 &&
+            'bg-red-50 hover:bg-red-100',
+          !isFirst && 'border-t-0'
         )}
         onClick={(e) => {
           setSelectedTask(task)
@@ -313,32 +323,53 @@ export function TaskListLinear({
           />
         </TableCell>
         <TableCell className="font-medium pl-2">
-          <div className="max-w-md flex items-start gap-1">
-            <PriorityIcon
-              priority={task.analysis?.priority}
-              iceScore={task.analysis?.ice_score}
-              iceImpact={task.analysis?.ice_impact}
-              iceConfidence={task.analysis?.ice_confidence}
-              iceEase={task.analysis?.ice_ease}
-              className="mt-0.5 flex-shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm truncate">{searchQuery ? highlightSearchTerm(task.description, searchQuery) : task.description}</div>
-              {task.source && (
-                <div className="text-xs text-muted-foreground">
-                  Source: {searchQuery ? highlightSearchTerm(getSourceLabel(task.source), searchQuery) : getSourceLabel(task.source)}
-                </div>
-              )}
+          <div className="max-w-md">
+            <div className="text-sm truncate">
+              {searchQuery
+                ? highlightSearchTerm(task.description, searchQuery)
+                : task.description}
             </div>
+            {task.source && (
+              <div className="text-xs text-muted-foreground">
+                Source:{' '}
+                {searchQuery
+                  ? highlightSearchTerm(
+                      getSourceLabel(task.source),
+                      searchQuery
+                    )
+                  : getSourceLabel(task.source)}
+              </div>
+            )}
           </div>
         </TableCell>
         <TableCell className="w-[120px]">
-          <Badge variant={getCategoryVariant(task.analysis?.category)} className="text-xs">
-            <span>{searchQuery && task.analysis?.category ? highlightSearchTerm(task.analysis.category, searchQuery) : (task.analysis?.category || 'pending')}</span>
+          <Badge
+            variant={getCategoryVariant(task.analysis?.category)}
+            className="text-xs"
+          >
+            <span>
+              {searchQuery && task.analysis?.category
+                ? highlightSearchTerm(task.analysis.category, searchQuery)
+                : task.analysis?.category || 'pending'}
+            </span>
           </Badge>
         </TableCell>
+        <TableCell className="w-[140px]">
+          <ICEScoreBadge
+            impact={task.analysis?.ice_impact}
+            confidence={task.analysis?.ice_confidence}
+            ease={task.analysis?.ice_ease}
+            score={task.analysis?.ice_score}
+            size="sm"
+          />
+        </TableCell>
         <TableCell className="w-[120px]">
-          <span className={cn("text-xs", getComplexityColor(task.analysis?.complexity))}>
+          <span
+            className={cn(
+              'text-xs',
+              getComplexityColor(task.analysis?.complexity)
+            )}
+          >
             {task.analysis?.complexity || 'analyzing'}
           </span>
           {task.analysis?.estimated_hours && (
@@ -348,9 +379,10 @@ export function TaskListLinear({
           )}
         </TableCell>
         <TableCell className="w-[100px]">
-          {task.analysis?.confidence_score !== undefined && task.analysis.confidence_score !== null ? (
-            <ConfidenceBadge 
-              score={task.analysis.confidence_score} 
+          {task.analysis?.confidence_score !== undefined &&
+          task.analysis.confidence_score !== null ? (
+            <ConfidenceBadge
+              score={task.analysis.confidence_score}
               showWarning={true}
               size="sm"
             />
@@ -361,31 +393,40 @@ export function TaskListLinear({
         <TableCell className="w-[80px] text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation()
-                setSelectedTask(task)
-              }}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedTask(task)
+                }}
+              >
                 View Details
               </DropdownMenuItem>
               {task.analysis?.implementation_spec && (
-                <DropdownMenuItem onClick={(e) => {
-                  e.stopPropagation()
-                  copySpec(task.analysis?.implementation_spec || '')
-                }}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    copySpec(task.analysis?.implementation_spec || '')
+                  }}
+                >
                   Copy Spec
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation()
-                setEditingTask(task)
-              }}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setEditingTask(task)
+                }}
+              >
                 <Edit className="h-3.5 w-3.5 mr-2" />
                 Edit
               </DropdownMenuItem>
@@ -420,6 +461,7 @@ export function TaskListLinear({
               <TableHead className="w-[40px] h-8 pr-0">Status</TableHead>
               <TableHead className="h-8 pl-2">Task</TableHead>
               <TableHead className="w-[120px] h-8">Category</TableHead>
+              <TableHead className="w-[100px] h-8">ICE</TableHead>
               <TableHead className="w-[120px] h-8">Complexity</TableHead>
               <TableHead className="w-[100px] h-8">Confidence</TableHead>
               <TableHead className="w-[80px] text-right h-8">Actions</TableHead>
@@ -455,12 +497,27 @@ export function TaskListLinear({
       <Table>
         <TableHeader>
           <TableRow className="border-0">
-            <TableHead className="w-[40px] h-8 text-xs font-normal text-muted-foreground pr-0">Status</TableHead>
-            <TableHead className="h-8 text-xs font-normal text-muted-foreground pl-2">Task</TableHead>
-            <TableHead className="w-[120px] h-8 text-xs font-normal text-muted-foreground">Category</TableHead>
-            <TableHead className="w-[120px] h-8 text-xs font-normal text-muted-foreground">Complexity</TableHead>
-            <TableHead className="w-[100px] h-8 text-xs font-normal text-muted-foreground">Confidence</TableHead>
-            <TableHead className="w-[80px] text-right h-8 text-xs font-normal text-muted-foreground">Actions</TableHead>
+            <TableHead className="w-[40px] h-8 text-xs font-normal text-muted-foreground pr-0">
+              Status
+            </TableHead>
+            <TableHead className="h-8 text-xs font-normal text-muted-foreground pl-2">
+              Task
+            </TableHead>
+            <TableHead className="w-[120px] h-8 text-xs font-normal text-muted-foreground">
+              Category
+            </TableHead>
+            <TableHead className="w-[100px] h-8 text-xs font-normal text-muted-foreground">
+              ICE
+            </TableHead>
+            <TableHead className="w-[120px] h-8 text-xs font-normal text-muted-foreground">
+              Complexity
+            </TableHead>
+            <TableHead className="w-[100px] h-8 text-xs font-normal text-muted-foreground">
+              Confidence
+            </TableHead>
+            <TableHead className="w-[80px] text-right h-8 text-xs font-normal text-muted-foreground">
+              Actions
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -471,21 +528,26 @@ export function TaskListLinear({
             return (
               <React.Fragment key={`group-${groupKey}`}>
                 <TableRow className="h-10 bg-gray-50 border-t border-gray-200">
-                  <TableCell colSpan={6} className="p-0">
+                  <TableCell colSpan={7} className="p-0">
                     <button
                       onClick={() => toggleGroup(groupKey)}
                       className="w-full flex items-center h-10 px-3 py-2 text-sm font-medium hover:bg-gray-100 transition-colors cursor-pointer"
                     >
-                      {displaySettings.grouping === 'status' && (() => {
-                        const statusInfo = getStatusIcon(groupKey)
-                        const StatusIcon = statusInfo.icon
-                        return (
-                          <>
-                            <StatusIcon className={cn("h-5 w-5 mr-2", statusInfo.color)} />
-                            <span className="text-gray-900">{group.label}</span>
-                          </>
-                        )
-                      })()}
+                      {displaySettings.grouping === 'status' &&
+                        (() => {
+                          const statusInfo = getStatusIcon(groupKey)
+                          const StatusIcon = statusInfo.icon
+                          return (
+                            <>
+                              <StatusIcon
+                                className={cn('h-5 w-5 mr-2', statusInfo.color)}
+                              />
+                              <span className="text-gray-900">
+                                {group.label}
+                              </span>
+                            </>
+                          )
+                        })()}
                       {displaySettings.grouping !== 'status' && (
                         <span>{group.label}</span>
                       )}
@@ -495,7 +557,10 @@ export function TaskListLinear({
                     </button>
                   </TableCell>
                 </TableRow>
-                {!isCollapsed && group.tasks.map((task, idx) => renderTaskRow(task, idx === 0))}
+                {!isCollapsed &&
+                  group.tasks.map((task, idx) =>
+                    renderTaskRow(task, idx === 0)
+                  )}
               </React.Fragment>
             )
           })}
