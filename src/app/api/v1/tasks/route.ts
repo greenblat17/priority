@@ -46,7 +46,19 @@ export async function GET(request: NextRequest) {
     // Build query
     let query = dbClient
       .from('tasks')
-      .select('*')
+      .select(
+        `
+        id, user_id, description, source, customer_info, status, created_at, updated_at, group_id,
+        task_analyses:task_analyses!task_id (
+          category, priority, complexity, estimated_hours, confidence_score,
+          ice_impact, ice_confidence, ice_ease, ice_score
+        ),
+        group:task_groups!group_id (
+          id,
+          name
+        )
+      `
+      )
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
@@ -72,7 +84,7 @@ export async function GET(request: NextRequest) {
     // Limit after cursor filters
     query = query.limit(limit)
 
-    const { data: tasks, error } = await query
+    const { data, error } = await query
 
     if (error) {
       console.error('Error fetching tasks:', error)
@@ -91,10 +103,16 @@ export async function GET(request: NextRequest) {
     }
 
     let nextCursor: string | null = null
-    if (tasks && tasks.length === limit) {
-      const last = tasks[tasks.length - 1]
+    if (data && data.length === limit) {
+      const last = data[data.length - 1]
       nextCursor = `${last.created_at}::${last.id}`
     }
+
+    const tasks = (data || []).map((task: any) => ({
+      ...task,
+      analysis: task.task_analyses || null,
+      group: task.group || null,
+    }))
 
     return NextResponse.json({ tasks, nextCursor })
   } catch (error) {
